@@ -11,14 +11,43 @@ import {
   Settings,
   ChevronRight,
   Building2,
+  Calendar,
+  FolderOpen,
+  LayoutTemplate,
+  Zap,
+  Activity,
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/kanban', label: 'Kanban Board', icon: Kanban },
-  { href: '/timeline', label: 'Timeline', icon: GanttChart },
-  { href: '/documents', label: 'Documents', icon: FileText },
-  { href: '/settings', label: 'Settings', icon: Settings },
+const NAV_GROUPS = [
+  {
+    label: 'Main',
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/kanban', label: 'Kanban Board', icon: Kanban },
+      { href: '/timeline', label: 'Timeline', icon: GanttChart },
+      { href: '/calendar', label: 'Calendar', icon: Calendar },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { href: '/documents', label: 'Documents', icon: FileText },
+      { href: '/assets', label: 'Assets', icon: FolderOpen },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { href: '/templates', label: 'Templates', icon: LayoutTemplate },
+      { href: '/automations', label: 'Automations', icon: Zap },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { href: '/health', label: 'Client Health', icon: Activity },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -41,30 +70,37 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        <div className="space-y-0.5">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + '/');
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  active
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                <Icon size={16} />
-                {label}
-              </Link>
-            );
-          })}
-        </div>
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="mb-5">
+            <div className="px-3 mb-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+              {group.label}
+            </div>
+            <div className="space-y-0.5">
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                      active
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    <Icon size={16} />
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
 
         {/* Clients */}
-        <div className="mt-6">
-          <div className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-            <Building2 size={11} />
+        <div className="mt-1">
+          <div className="px-3 mb-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+            <Building2 size={10} />
             Clients
           </div>
           <div className="space-y-0.5">
@@ -104,6 +140,12 @@ export default function Sidebar() {
             <div className="text-sm font-medium truncate">Joe Pellegrino</div>
             <div className="text-xs text-gray-400">Owner</div>
           </div>
+          <Link
+            href="/settings"
+            className="text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            <Settings size={14} />
+          </Link>
         </div>
       </div>
     </aside>

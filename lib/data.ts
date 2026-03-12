@@ -7,6 +7,7 @@ export interface TeamMember {
   role: string;
   initials: string;
   color: string;
+  isOwner?: boolean;
 }
 
 export interface Client {
@@ -16,6 +17,14 @@ export interface Client {
   location: string;
   color: string;
   logo: string;
+}
+
+export interface ApprovalEntry {
+  id: string;
+  action: 'approved' | 'rejected';
+  approverId: string;
+  timestamp: string;
+  note?: string;
 }
 
 export interface Task {
@@ -31,6 +40,8 @@ export interface Task {
   description: string;
   dependencies?: string[];
   isMilestone?: boolean;
+  approvalHistory?: ApprovalEntry[];
+  type?: 'social' | 'ad' | 'blog' | 'report' | 'meeting' | 'design' | 'other';
 }
 
 export interface Comment {
@@ -61,9 +72,57 @@ export interface Document {
   updatedAt: string;
 }
 
+export interface TaskTemplate {
+  id: string;
+  title: string;
+  description: string;
+  defaultAssigneeRole: string;
+  defaultPriority: Priority;
+  estimatedDuration: number; // days
+  type: Task['type'];
+  dueRule: string; // human-readable
+  category: string;
+}
+
+export interface Automation {
+  id: string;
+  clientId: string;
+  templateId: string;
+  frequency: 'monthly' | 'weekly' | 'custom';
+  customFrequency?: string;
+  assigneeId: string;
+  status: 'active' | 'paused';
+  nextRunDate: string;
+  lastRunDate: string;
+  createdAt: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  taskId: string;
+  clientId: string;
+  memberId: string;
+  date: string;
+  durationMinutes: number;
+  note?: string;
+}
+
+export interface Asset {
+  id: string;
+  clientId: string;
+  filename: string;
+  fileType: 'image' | 'document' | 'video' | 'logo';
+  uploadDate: string;
+  uploadedBy: string;
+  tags: string[];
+  size: string;
+  color: string; // for placeholder thumbnail bg
+  versions: { id: string; date: string; note: string }[];
+}
+
 export const TEAM_MEMBERS: TeamMember[] = [
-  { id: 'joe', name: 'Joe Pellegrino', role: 'Owner', initials: 'JP', color: '#6366f1' },
-  { id: 'rick', name: 'Rick McDonald', role: 'Owner', initials: 'RM', color: '#8b5cf6' },
+  { id: 'joe', name: 'Joe Pellegrino', role: 'Owner', initials: 'JP', color: '#6366f1', isOwner: true },
+  { id: 'rick', name: 'Rick McDonald', role: 'Owner', initials: 'RM', color: '#8b5cf6', isOwner: true },
   { id: 'sarah', name: 'Sarah Chen', role: 'Content Manager', initials: 'SC', color: '#ec4899' },
   { id: 'marcus', name: 'Marcus Rivera', role: 'Social Media Specialist', initials: 'MR', color: '#f59e0b' },
 ];
@@ -109,6 +168,10 @@ export const TASKS: Task[] = [
     endDate: '2026-03-05',
     description: 'Plan and schedule 30 days of social content across Instagram, Facebook, and X for Happy Days dispensary.',
     dependencies: [],
+    type: 'social',
+    approvalHistory: [
+      { id: 'ah-1', action: 'approved', approverId: 'joe', timestamp: '2026-03-05T16:00:00Z', note: 'Great work — calendar looks solid.' },
+    ],
   },
   {
     id: 'hd-2',
@@ -122,6 +185,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-18',
     description: 'Launch targeted Facebook ad campaign for new product arrivals. Optimize for dispensary foot traffic.',
     dependencies: ['hd-1'],
+    type: 'ad',
   },
   {
     id: 'hd-3',
@@ -135,6 +199,10 @@ export const TASKS: Task[] = [
     endDate: '2026-02-28',
     description: 'Update hours, photos, services, and menu on Google Business Profile.',
     dependencies: [],
+    type: 'other',
+    approvalHistory: [
+      { id: 'ah-2', action: 'approved', approverId: 'rick', timestamp: '2026-02-28T14:00:00Z' },
+    ],
   },
   {
     id: 'hd-4',
@@ -148,6 +216,8 @@ export const TASKS: Task[] = [
     endDate: '2026-03-25',
     description: 'Full redesign of homepage with new hero section, product highlights, and compliance-friendly copy.',
     dependencies: ['hd-3'],
+    type: 'other',
+    approvalHistory: [],
   },
   {
     id: 'hd-5',
@@ -161,6 +231,10 @@ export const TASKS: Task[] = [
     endDate: '2026-03-07',
     description: 'Compile GA4, Meta Ads, and Google Business insights for February performance review.',
     dependencies: [],
+    type: 'report',
+    approvalHistory: [
+      { id: 'ah-3', action: 'approved', approverId: 'joe', timestamp: '2026-03-07T17:00:00Z' },
+    ],
   },
   {
     id: 'hd-6',
@@ -174,6 +248,7 @@ export const TASKS: Task[] = [
     endDate: '2026-04-02',
     description: 'Coordinate product photography session for new spring inventory. Source photographer and prep shot list.',
     dependencies: ['hd-4'],
+    type: 'other',
   },
   {
     id: 'hd-7',
@@ -187,6 +262,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-20',
     description: 'Draft and design March email newsletter highlighting spring product drops and loyalty rewards.',
     dependencies: ['hd-1'],
+    type: 'social',
   },
   {
     id: 'hd-8',
@@ -200,6 +276,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-31',
     description: 'Monitor and respond to Google and Yelp reviews weekly. Escalate negative reviews within 24hrs.',
     dependencies: [],
+    type: 'other',
   },
   {
     id: 'hd-9',
@@ -213,6 +290,7 @@ export const TASKS: Task[] = [
     endDate: '2026-04-10',
     description: 'SEO-optimized blog post covering wellness and medical cannabis trends to drive organic traffic.',
     dependencies: [],
+    type: 'blog',
   },
   {
     id: 'hd-10',
@@ -226,7 +304,24 @@ export const TASKS: Task[] = [
     endDate: '2026-04-01',
     description: 'Design suite of graphics for 420 celebration event — social posts, stories, flyers, and email header.',
     dependencies: ['hd-7'],
-    isMilestone: false,
+    type: 'design',
+  },
+  {
+    id: 'hd-11',
+    title: 'Monthly Client Meeting — March',
+    clientId: 'happy-days',
+    assigneeId: 'joe',
+    status: 'done',
+    priority: 'High',
+    dueDate: '2026-03-28',
+    startDate: '2026-03-28',
+    endDate: '2026-03-28',
+    description: 'Monthly strategy meeting with Happy Days ownership team.',
+    dependencies: [],
+    type: 'meeting',
+    approvalHistory: [
+      { id: 'ah-11', action: 'approved', approverId: 'rick', timestamp: '2026-03-28T18:00:00Z', note: 'Meeting completed — great session.' },
+    ],
   },
   {
     id: 'hd-m1',
@@ -241,6 +336,7 @@ export const TASKS: Task[] = [
     description: 'Q2 campaign goes live across all channels.',
     dependencies: ['hd-2', 'hd-10'],
     isMilestone: true,
+    type: 'ad',
   },
 
   // K. Pacho
@@ -256,6 +352,10 @@ export const TASKS: Task[] = [
     endDate: '2026-03-01',
     description: 'Create content calendar for March featuring Taco Tuesday promotions, seasonal specials, and behind-the-scenes.',
     dependencies: [],
+    type: 'social',
+    approvalHistory: [
+      { id: 'ah-4', action: 'approved', approverId: 'joe', timestamp: '2026-03-01T12:00:00Z' },
+    ],
   },
   {
     id: 'kp-2',
@@ -269,6 +369,10 @@ export const TASKS: Task[] = [
     endDate: '2026-03-14',
     description: 'Run targeted local Facebook ads for new happy hour specials (3–6 PM weekdays).',
     dependencies: ['kp-1'],
+    type: 'ad',
+    approvalHistory: [
+      { id: 'ah-5', action: 'rejected', approverId: 'rick', timestamp: '2026-03-10T09:00:00Z', note: 'Creative needs revision — headline too generic. Try "Happy Hour just got happier" angle.' },
+    ],
   },
   {
     id: 'kp-3',
@@ -282,6 +386,10 @@ export const TASKS: Task[] = [
     endDate: '2026-02-25',
     description: 'Add spring menu items, update photos, and respond to pending reviews.',
     dependencies: [],
+    type: 'other',
+    approvalHistory: [
+      { id: 'ah-6', action: 'approved', approverId: 'joe', timestamp: '2026-02-25T16:30:00Z' },
+    ],
   },
   {
     id: 'kp-4',
@@ -295,6 +403,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-22',
     description: 'Full food photography session for new spring menu items. Deliverables: 25+ edited photos.',
     dependencies: ['kp-3'],
+    type: 'design',
   },
   {
     id: 'kp-5',
@@ -308,6 +417,10 @@ export const TASKS: Task[] = [
     endDate: '2026-03-06',
     description: 'February performance report covering website, social, and ad metrics.',
     dependencies: [],
+    type: 'report',
+    approvalHistory: [
+      { id: 'ah-7', action: 'approved', approverId: 'joe', timestamp: '2026-03-06T15:00:00Z' },
+    ],
   },
   {
     id: 'kp-6',
@@ -321,6 +434,7 @@ export const TASKS: Task[] = [
     endDate: '2026-04-15',
     description: 'Early preview newsletter for Cinco de Mayo specials and reservations.',
     dependencies: ['kp-4'],
+    type: 'social',
   },
   {
     id: 'kp-7',
@@ -334,6 +448,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-28',
     description: 'Update website menu page with new spring items and updated pricing.',
     dependencies: ['kp-4'],
+    type: 'other',
   },
   {
     id: 'kp-8',
@@ -347,6 +462,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-31',
     description: 'Weekly review monitoring and response for Google, Yelp, and TripAdvisor.',
     dependencies: [],
+    type: 'other',
   },
   {
     id: 'kp-9',
@@ -360,6 +476,24 @@ export const TASKS: Task[] = [
     endDate: '2026-04-08',
     description: 'SEO blog targeting local food discovery searches.',
     dependencies: [],
+    type: 'blog',
+  },
+  {
+    id: 'kp-10',
+    title: 'Monthly Client Meeting — March',
+    clientId: 'k-pacho',
+    assigneeId: 'rick',
+    status: 'done',
+    priority: 'High',
+    dueDate: '2026-03-27',
+    startDate: '2026-03-27',
+    endDate: '2026-03-27',
+    description: 'Monthly strategy review with K. Pacho ownership.',
+    dependencies: [],
+    type: 'meeting',
+    approvalHistory: [
+      { id: 'ah-kp10', action: 'approved', approverId: 'joe', timestamp: '2026-03-27T17:00:00Z' },
+    ],
   },
   {
     id: 'kp-m1',
@@ -374,6 +508,7 @@ export const TASKS: Task[] = [
     description: 'Spring menu officially launches across all platforms.',
     dependencies: ['kp-4', 'kp-7'],
     isMilestone: true,
+    type: 'other',
   },
 
   // The Refuge
@@ -389,6 +524,10 @@ export const TASKS: Task[] = [
     endDate: '2026-02-20',
     description: 'Full campaign strategy for The Refuge grand opening event in Melville.',
     dependencies: [],
+    type: 'ad',
+    approvalHistory: [
+      { id: 'ah-8', action: 'approved', approverId: 'rick', timestamp: '2026-02-20T18:00:00Z' },
+    ],
   },
   {
     id: 'tr-2',
@@ -402,6 +541,10 @@ export const TASKS: Task[] = [
     endDate: '2026-02-28',
     description: 'Content calendar for pre-launch hype, grand opening day, and post-opening buzz.',
     dependencies: ['tr-1'],
+    type: 'social',
+    approvalHistory: [
+      { id: 'ah-9', action: 'approved', approverId: 'joe', timestamp: '2026-02-28T14:00:00Z' },
+    ],
   },
   {
     id: 'tr-3',
@@ -415,6 +558,10 @@ export const TASKS: Task[] = [
     endDate: '2026-03-07',
     description: 'Paid social campaign targeting Melville/Huntington area for grand opening awareness and RSVPs.',
     dependencies: ['tr-2'],
+    type: 'ad',
+    approvalHistory: [
+      { id: 'ah-10', action: 'approved', approverId: 'rick', timestamp: '2026-03-07T10:00:00Z' },
+    ],
   },
   {
     id: 'tr-4',
@@ -428,6 +575,10 @@ export const TASKS: Task[] = [
     endDate: '2026-02-27',
     description: 'Full graphic suite: social posts, stories, event flyer, email header, and digital signage.',
     dependencies: ['tr-1'],
+    type: 'design',
+    approvalHistory: [
+      { id: 'ah-tr4', action: 'approved', approverId: 'joe', timestamp: '2026-02-27T16:00:00Z' },
+    ],
   },
   {
     id: 'tr-5',
@@ -441,6 +592,10 @@ export const TASKS: Task[] = [
     endDate: '2026-02-25',
     description: 'Complete Google Business Profile from scratch — hours, menu, photos, category, and description.',
     dependencies: ['tr-1'],
+    type: 'other',
+    approvalHistory: [
+      { id: 'ah-tr5', action: 'approved', approverId: 'rick', timestamp: '2026-02-25T15:00:00Z' },
+    ],
   },
   {
     id: 'tr-6',
@@ -454,6 +609,8 @@ export const TASKS: Task[] = [
     endDate: '2026-03-14',
     description: 'Build and launch restaurant website with menu, reservations, about, and contact pages.',
     dependencies: ['tr-4', 'tr-5'],
+    type: 'other',
+    approvalHistory: [],
   },
   {
     id: 'tr-7',
@@ -467,6 +624,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-14',
     description: 'Inaugural analytics report covering grand opening campaign performance and baseline metrics.',
     dependencies: ['tr-3'],
+    type: 'report',
   },
   {
     id: 'tr-8',
@@ -480,6 +638,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-20',
     description: 'Professional food photography for menu and website. 30+ edited hero shots.',
     dependencies: ['tr-6'],
+    type: 'design',
   },
   {
     id: 'tr-9',
@@ -493,6 +652,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-22',
     description: 'Launch email to collected reservations list introducing the brand story and upcoming events.',
     dependencies: ['tr-8'],
+    type: 'social',
   },
   {
     id: 'tr-10',
@@ -506,6 +666,7 @@ export const TASKS: Task[] = [
     endDate: '2026-03-20',
     description: 'Establish review monitoring workflow and respond to first wave of opening reviews.',
     dependencies: ['tr-5'],
+    type: 'other',
   },
   {
     id: 'tr-11',
@@ -519,6 +680,22 @@ export const TASKS: Task[] = [
     endDate: '2026-04-05',
     description: 'Brand story blog post covering the owners vision, concept, and Melville community connection.',
     dependencies: [],
+    type: 'blog',
+  },
+  {
+    id: 'tr-12',
+    title: 'Monthly Client Meeting — March',
+    clientId: 'the-refuge',
+    assigneeId: 'joe',
+    status: 'review',
+    priority: 'High',
+    dueDate: '2026-03-31',
+    startDate: '2026-03-31',
+    endDate: '2026-03-31',
+    description: 'Monthly strategy meeting with The Refuge ownership.',
+    dependencies: [],
+    type: 'meeting',
+    approvalHistory: [],
   },
   {
     id: 'tr-m1',
@@ -533,6 +710,10 @@ export const TASKS: Task[] = [
     description: 'The Refuge officially opens to the public.',
     dependencies: ['tr-2', 'tr-4', 'tr-5'],
     isMilestone: true,
+    type: 'other',
+    approvalHistory: [
+      { id: 'ah-tr-m1', action: 'approved', approverId: 'rick', timestamp: '2026-03-07T20:00:00Z', note: 'Grand opening was a massive success!' },
+    ],
   },
   {
     id: 'tr-m2',
@@ -547,6 +728,127 @@ export const TASKS: Task[] = [
     description: 'Website goes live and is fully indexed.',
     dependencies: ['tr-6'],
     isMilestone: true,
+    type: 'other',
+    approvalHistory: [],
+  },
+
+  // April tasks for Calendar
+  {
+    id: 'hd-apr-1',
+    title: 'Ad Campaign Review — April',
+    clientId: 'happy-days',
+    assigneeId: 'marcus',
+    status: 'todo',
+    priority: 'High',
+    dueDate: '2026-04-15',
+    startDate: '2026-04-13',
+    endDate: '2026-04-15',
+    description: 'Monthly ad campaign performance review and optimization.',
+    type: 'report',
+  },
+  {
+    id: 'kp-apr-1',
+    title: 'Cinco de Mayo Campaign Launch',
+    clientId: 'k-pacho',
+    assigneeId: 'marcus',
+    status: 'todo',
+    priority: 'Urgent',
+    dueDate: '2026-04-20',
+    startDate: '2026-04-15',
+    endDate: '2026-04-20',
+    description: 'Launch Cinco de Mayo promotional campaign across all channels.',
+    type: 'ad',
+  },
+  {
+    id: 'tr-apr-1',
+    title: 'Social Media Content Calendar — April',
+    clientId: 'the-refuge',
+    assigneeId: 'marcus',
+    status: 'todo',
+    priority: 'High',
+    dueDate: '2026-03-25',
+    startDate: '2026-03-22',
+    endDate: '2026-03-25',
+    description: 'April content calendar for The Refuge.',
+    type: 'social',
+  },
+  {
+    id: 'hd-apr-2',
+    title: 'Social Media Content Calendar — April',
+    clientId: 'happy-days',
+    assigneeId: 'sarah',
+    status: 'todo',
+    priority: 'High',
+    dueDate: '2026-03-25',
+    startDate: '2026-03-22',
+    endDate: '2026-03-25',
+    description: 'April content calendar for Happy Days.',
+    type: 'social',
+  },
+  {
+    id: 'kp-apr-2',
+    title: 'Monthly Analytics Report — March',
+    clientId: 'k-pacho',
+    assigneeId: 'rick',
+    status: 'todo',
+    priority: 'Medium',
+    dueDate: '2026-04-07',
+    startDate: '2026-04-05',
+    endDate: '2026-04-07',
+    description: 'March performance analytics report for K. Pacho.',
+    type: 'report',
+  },
+  {
+    id: 'hd-apr-3',
+    title: 'Monthly Analytics Report — March',
+    clientId: 'happy-days',
+    assigneeId: 'rick',
+    status: 'todo',
+    priority: 'Medium',
+    dueDate: '2026-04-07',
+    startDate: '2026-04-05',
+    endDate: '2026-04-07',
+    description: 'March performance analytics report for Happy Days.',
+    type: 'report',
+  },
+  {
+    id: 'tr-apr-2',
+    title: 'Monthly Analytics Report — March',
+    clientId: 'the-refuge',
+    assigneeId: 'rick',
+    status: 'todo',
+    priority: 'Medium',
+    dueDate: '2026-04-07',
+    startDate: '2026-04-05',
+    endDate: '2026-04-07',
+    description: 'March performance analytics report for The Refuge.',
+    type: 'report',
+  },
+  {
+    id: 'hd-apr-4',
+    title: 'Google Business Profile Update — April',
+    clientId: 'happy-days',
+    assigneeId: 'sarah',
+    status: 'todo',
+    priority: 'Medium',
+    dueDate: '2026-04-01',
+    startDate: '2026-04-01',
+    endDate: '2026-04-01',
+    description: 'Monthly Google Business Profile update.',
+    type: 'other',
+  },
+  {
+    id: 'tr-apr-3',
+    title: 'Monthly Client Meeting — April',
+    clientId: 'the-refuge',
+    assigneeId: 'joe',
+    status: 'todo',
+    priority: 'High',
+    dueDate: '2026-04-30',
+    startDate: '2026-04-30',
+    endDate: '2026-04-30',
+    description: 'Monthly strategy meeting with The Refuge.',
+    type: 'meeting',
   },
 ];
 
@@ -632,60 +934,22 @@ We track performance weekly using GA4, Meta Ads Manager, and Google Business Ins
       {
         id: 'c1',
         authorId: 'rick',
-        text: 'Budget allocation looks solid. Can we add a line item for influencer marketing under The Refuge? I think micro-influencers in the Long Island food scene could amplify the grand opening.',
+        text: 'Budget allocation looks solid. Can we add a line item for influencer marketing under The Refuge?',
         createdAt: '2026-03-05T10:30:00Z',
         replies: [
           {
             id: 'c1-r1',
             authorId: 'joe',
-            text: 'Agree. I\'ll allocate $500 from the content budget and identify 3-5 LI food bloggers with 5k-20k followers. Sarah, can you put together a shortlist?',
+            text: "Agree. I'll allocate $500 from the content budget and identify 3-5 LI food bloggers.",
             createdAt: '2026-03-05T11:15:00Z',
-          },
-          {
-            id: 'c1-r2',
-            authorId: 'sarah',
-            text: 'On it. I already follow a few — @lifeonlongisland and @linyc_eats are good candidates. Will send a list by EOD.',
-            createdAt: '2026-03-05T14:00:00Z',
-          },
-        ],
-      },
-      {
-        id: 'c2',
-        authorId: 'sarah',
-        text: 'The KPIs section should include TikTok metrics for Happy Days — they\'ve been getting traction there and I think we should make it an official channel this quarter.',
-        createdAt: '2026-03-06T09:00:00Z',
-        replies: [
-          {
-            id: 'c2-r1',
-            authorId: 'joe',
-            text: 'Good call. Let\'s add TikTok as a secondary channel. Be mindful of cannabis advertising restrictions though — mostly lifestyle and education content.',
-            createdAt: '2026-03-06T10:45:00Z',
           },
         ],
       },
     ],
     versions: [
-      {
-        id: 'v3',
-        version: 'v3.0',
-        authorId: 'joe',
-        createdAt: '2026-03-05T09:00:00Z',
-        summary: 'Added budget table, finalized KPIs section, updated The Refuge timeline',
-      },
-      {
-        id: 'v2',
-        version: 'v2.0',
-        authorId: 'sarah',
-        createdAt: '2026-02-28T16:30:00Z',
-        summary: 'Expanded content pillars section, added K. Pacho spring menu objectives',
-      },
-      {
-        id: 'v1',
-        version: 'v1.0',
-        authorId: 'rick',
-        createdAt: '2026-02-20T11:00:00Z',
-        summary: 'Initial draft — executive summary and client objectives',
-      },
+      { id: 'v3', version: 'v3.0', authorId: 'joe', createdAt: '2026-03-05T09:00:00Z', summary: 'Added budget table, finalized KPIs section' },
+      { id: 'v2', version: 'v2.0', authorId: 'sarah', createdAt: '2026-02-28T16:30:00Z', summary: 'Expanded content pillars section' },
+      { id: 'v1', version: 'v1.0', authorId: 'rick', createdAt: '2026-02-20T11:00:00Z', summary: 'Initial draft' },
     ],
     createdAt: '2026-02-20T11:00:00Z',
     updatedAt: '2026-03-05T09:00:00Z',
@@ -695,116 +959,11 @@ We track performance weekly using GA4, Meta Ads Manager, and Google Business Ins
     title: 'Happy Days Brand Guidelines',
     clientId: 'happy-days',
     collaborators: ['sarah'],
-    content: `# Happy Days — Brand Guidelines
-*Medical Cannabis Dispensary | Farmingdale, NY*
-
-## Brand Overview
-
-Happy Days is a warm, welcoming medical cannabis dispensary focused on patient education and wellness. The brand balances approachability with credibility — we want patients to feel comfortable, informed, and confident in their choices.
-
-**Brand Personality:** Knowledgeable, Compassionate, Trustworthy, Approachable
-
-**Tone of Voice:** Friendly but professional. Educational without being clinical. Never slang or stoner stereotypes. Always compliance-aware.
-
----
-
-## Color Palette
-
-### Primary Colors
-- **Happy Green:** #10B981 — Used for CTAs, accents, and brand emphasis
-- **Deep Forest:** #065F46 — Headlines, footers, depth
-- **Off-White:** #F9FAFB — Backgrounds, breathing room
-
-### Secondary Colors
-- **Warm Gold:** #F59E0B — Special offers, highlights
-- **Charcoal:** #374151 — Body copy, descriptions
-- **Light Sage:** #D1FAE5 — Soft backgrounds, cards
-
----
-
-## Typography
-
-**Primary Font:** Inter (Google Fonts)
-- H1: 48px / Bold / Deep Forest
-- H2: 36px / SemiBold / Deep Forest
-- H3: 24px / SemiBold / Charcoal
-- Body: 16px / Regular / Charcoal
-- Caption: 14px / Regular / #6B7280
-
-**Accent Font:** Playfair Display
-- Used for lifestyle headlines and feature callouts only
-- Never for compliance copy
-
----
-
-## Logo Usage
-
-- Minimum size: 120px wide
-- Clear space: 1x logo height on all sides
-- Approved backgrounds: White, Off-White, Happy Green (reversed)
-- Never stretch, rotate, or recolor the logo
-- Never place on busy photographic backgrounds
-
----
-
-## Photography Style
-
-**Do:**
-- Warm, natural lighting
-- Lifestyle and wellness contexts (reading, yoga, outdoors)
-- Diverse, professional patients 35-65
-- Clean, minimalist product shots with white/sage backgrounds
-- Staff in professional yet approachable settings
-
-**Don't:**
-- Anything resembling recreational use imagery
-- Paraphernalia or smoking imagery
-- Youth-adjacent settings or talent
-- Overly clinical or pharmaceutical aesthetics
-
----
-
-## Social Media Guidelines
-
-**Instagram:** 1:1 and 4:5 feed posts, Stories with link sticker, Reels for education
-**Facebook:** Event posts, educational articles, community engagement
-**Content Ratio:** 60% educational / 30% product showcase / 10% promotions
-
-**Compliance note:** All cannabis content must comply with NY State cannabis advertising rules. No health claims. No targeting under 21. Always include "For adult medical patients only."
-
----
-
-## Content Dos and Don'ts
-
-**DO use:**
-- "Wellness," "relief," "comfort," "plant-based"
-- Educational framing ("Did you know...")
-- Patient testimonials (pre-approved)
-
-**DON'T use:**
-- "Get high," "stoned," recreational slang
-- Specific medical claims ("cures," "treats," "heals")
-- Price-first messaging
-
----
-
-*Document Owner: Sarah Chen | Version 1.2 | Updated February 2026*`,
+    content: `# Happy Days — Brand Guidelines\n*Medical Cannabis Dispensary | Farmingdale, NY*\n\n## Brand Overview\n\nHappy Days is a warm, welcoming medical cannabis dispensary focused on patient education and wellness.`,
     comments: [],
     versions: [
-      {
-        id: 'v2',
-        version: 'v1.2',
-        authorId: 'sarah',
-        createdAt: '2026-02-15T14:00:00Z',
-        summary: 'Added compliance section, updated photography guidelines',
-      },
-      {
-        id: 'v1',
-        version: 'v1.0',
-        authorId: 'sarah',
-        createdAt: '2026-01-20T10:00:00Z',
-        summary: 'Initial brand guidelines document',
-      },
+      { id: 'v2', version: 'v1.2', authorId: 'sarah', createdAt: '2026-02-15T14:00:00Z', summary: 'Added compliance section' },
+      { id: 'v1', version: 'v1.0', authorId: 'sarah', createdAt: '2026-01-20T10:00:00Z', summary: 'Initial brand guidelines' },
     ],
     createdAt: '2026-01-20T10:00:00Z',
     updatedAt: '2026-02-15T14:00:00Z',
@@ -814,178 +973,196 @@ Happy Days is a warm, welcoming medical cannabis dispensary focused on patient e
     title: 'The Refuge Grand Opening Campaign Brief',
     clientId: 'the-refuge',
     collaborators: ['joe', 'rick', 'marcus'],
-    content: `# The Refuge — Grand Opening Campaign Brief
-*Restaurant | Melville, NY | Opening: March 7, 2026*
-
-## Campaign Overview
-
-**Campaign Name:** "Find Your Refuge"
-**Duration:** February 21 – March 14, 2026 (3-week campaign)
-**Budget:** $3,200 paid social + production
-**Goal:** 500+ grand opening attendees, 1,000 social followers, 50+ first-week reviews
-
----
-
-## The Restaurant
-
-The Refuge is a modern American restaurant in Melville, NY focused on elevated comfort food in a welcoming, neighborhood atmosphere. Think warm wood interiors, an open kitchen, craft cocktails, and dishes that feel like home — but better.
-
-**Concept:** Modern American comfort food
-**Price Point:** Mid-to-upscale ($18–$42 entrees)
-**Target Audience:** Melville/Huntington/Dix Hills residents, 30–55, dining enthusiasts
-
----
-
-## Campaign Phases
-
-### Phase 1: Pre-Launch Hype (Feb 21 – Mar 6)
-**Objective:** Build anticipation and grow social following before opening day
-
-Tactics:
-- Teaser content: behind-the-scenes kitchen prep, interior reveals
-- "Coming Soon" countdown on Instagram Stories
-- Soft launch invite to local food influencers (5 micro-influencers)
-- Facebook event creation with RSVP tracking
-- Paid campaign: Awareness targeting Melville/Huntington radius (15 miles)
-- Local press outreach: Newsday, Long Island Restaurant News, HuntingtonNow.com
-
-**Creative Concept:** Dark, moody restaurant interior photos with text overlay "Something special is coming to Melville."
-
-### Phase 2: Grand Opening (Mar 7)
-**Objective:** Maximum attendance and social buzz on opening day
-
-Tactics:
-- Live Stories coverage: chef interviews, crowd shots, first dishes
-- Influencer check-ins with tagged posts
-- Paid boost on opening announcement post
-- Email blast to reservation list (pre-collected)
-- Respond to all comments and DMs within 2 hours
-
-**Creative Concept:** Warm, celebratory imagery. "We're open. Come find your Refuge."
-
-### Phase 3: Post-Launch Momentum (Mar 8 – 14)
-**Objective:** Sustain buzz, collect reviews, drive repeat visits
-
-Tactics:
-- Retargeting campaign to event RSVPs and page visitors
-- Review request email to attendees
-- "Behind the menu" content series (chef spotlights)
-- Weekly analytics report to client by March 14
-
----
-
-## Ad Creative Specifications
-
-### Facebook/Instagram Feed
-- Format: Single image + carousel
-- Dimensions: 1080x1080 (1:1), 1080x1350 (4:5)
-- Copy: Short-form, curiosity-driven. Max 125 characters primary text.
-- CTA: "Learn More" (Phase 1), "Get Directions" (Phase 2+)
-
-### Instagram Stories
-- Format: Vertical video + static
-- Dimensions: 1080x1920
-- Duration: 7–15 seconds for video
-- Interactive elements: Poll, countdown sticker, link sticker
-
----
-
-## Messaging Framework
-
-**Headline options:**
-- "Melville's new favorite table is set."
-- "Find Your Refuge. Now Open in Melville."
-- "Modern American comfort. Right here."
-- "The neighborhood needed this. We delivered."
-
-**Value propositions:**
-- Locally owned, community-first
-- Farm-to-table inspired sourcing
-- Award-winning cocktail program
-- Private dining for events
-
----
-
-## Success Metrics
-
-| Metric | Target |
-|--------|--------|
-| Grand opening attendance | 500+ |
-| Instagram followers (by 3/14) | 1,000 |
-| Facebook page likes (by 3/14) | 750 |
-| Google reviews (first week) | 25+ |
-| Average review rating | 4.5+ |
-| Website visits (launch month) | 2,500+ |
-| Email list signups | 300+ |
-
----
-
-## Approvals Required
-
-- [ ] Client sign-off on creative brief — **DUE: Feb 25**
-- [ ] Final ad creative approval — **DUE: Feb 27**
-- [ ] Campaign launch confirmation — **DUE: Feb 28**
-- [x] ~~Strategy document approved~~ — Completed Feb 20
-
----
-
-*Document Owner: Joe Pellegrino | Contributors: Rick McDonald, Marcus Rivera*
-*Created: February 20, 2026 | Last Updated: March 1, 2026*`,
+    content: `# The Refuge — Grand Opening Campaign Brief\n*Restaurant | Melville, NY | Opening: March 7, 2026*\n\n## Campaign Overview\n\n**Campaign Name:** "Find Your Refuge"\n**Duration:** February 21 – March 14, 2026\n**Budget:** $3,200 paid social + production\n**Goal:** 500+ grand opening attendees, 1,000 social followers, 50+ first-week reviews`,
     comments: [
       {
         id: 'c3',
         authorId: 'rick',
-        text: 'The influencer strategy looks good. I connected with @linyc_eats and they\'re interested. Their rate is $300 for a story set + feed post. Should we move forward?',
+        text: "The influencer strategy looks good. I connected with @linyc_eats and they're interested.",
         createdAt: '2026-02-22T09:15:00Z',
-        replies: [
-          {
-            id: 'c3-r1',
-            authorId: 'joe',
-            text: 'Yes — $300 is reasonable for their engagement rate. Sign them up. Marcus, can you coordinate the logistics and brief them on the shoot date?',
-            createdAt: '2026-02-22T10:00:00Z',
-          },
-          {
-            id: 'c3-r2',
-            authorId: 'marcus',
-            text: 'Will do. I\'ll reach out today and schedule a walkthrough the day before soft launch so they can get content ahead of opening day.',
-            createdAt: '2026-02-22T11:30:00Z',
-          },
-        ],
-      },
-      {
-        id: 'c4',
-        authorId: 'marcus',
-        text: 'Phase 1 teaser content performed really well — the kitchen reveal reel hit 3,200 views organically in 48 hours. We\'re already at 340 followers before we\'ve even opened.',
-        createdAt: '2026-03-01T16:00:00Z',
         replies: [],
       },
     ],
     versions: [
-      {
-        id: 'v3',
-        version: 'v3.0',
-        authorId: 'joe',
-        createdAt: '2026-03-01T10:00:00Z',
-        summary: 'Added Phase 3 details, updated success metrics based on early engagement data',
-      },
-      {
-        id: 'v2',
-        version: 'v2.0',
-        authorId: 'marcus',
-        createdAt: '2026-02-24T15:00:00Z',
-        summary: 'Added ad creative specs and messaging framework',
-      },
-      {
-        id: 'v1',
-        version: 'v1.0',
-        authorId: 'joe',
-        createdAt: '2026-02-20T12:00:00Z',
-        summary: 'Initial campaign brief — phases 1 and 2, objectives, budget',
-      },
+      { id: 'v3', version: 'v3.0', authorId: 'joe', createdAt: '2026-03-01T10:00:00Z', summary: 'Added Phase 3 details' },
+      { id: 'v1', version: 'v1.0', authorId: 'joe', createdAt: '2026-02-20T12:00:00Z', summary: 'Initial campaign brief' },
     ],
     createdAt: '2026-02-20T12:00:00Z',
     updatedAt: '2026-03-01T10:00:00Z',
   },
+];
+
+export const TASK_TEMPLATES: TaskTemplate[] = [
+  {
+    id: 'tmpl-1',
+    title: 'Monthly Analytics Report',
+    description: 'Compile GA4, Meta Ads, and Google Business insights for the previous month\'s performance review. Deliver by the 5th of each month.',
+    defaultAssigneeRole: 'Owner',
+    defaultPriority: 'Medium',
+    estimatedDuration: 3,
+    type: 'report',
+    dueRule: '5th of each month',
+    category: 'Reporting',
+  },
+  {
+    id: 'tmpl-2',
+    title: 'Social Media Content Calendar',
+    description: 'Plan and schedule 30 days of social content across Instagram, Facebook, and X. Due the 25th of the prior month.',
+    defaultAssigneeRole: 'Content Manager',
+    defaultPriority: 'High',
+    estimatedDuration: 5,
+    type: 'social',
+    dueRule: '25th of prior month',
+    category: 'Content',
+  },
+  {
+    id: 'tmpl-3',
+    title: 'Ad Campaign Review',
+    description: 'Monthly review and optimization of all active paid social and search campaigns. Check ROAS, adjust bids, refresh creatives as needed.',
+    defaultAssigneeRole: 'Social Media Specialist',
+    defaultPriority: 'High',
+    estimatedDuration: 2,
+    type: 'ad',
+    dueRule: '15th of each month',
+    category: 'Paid Media',
+  },
+  {
+    id: 'tmpl-4',
+    title: 'Google Business Profile Update',
+    description: 'Update hours, photos, posts, and Q&A on Google Business Profile. Respond to any new reviews.',
+    defaultAssigneeRole: 'Content Manager',
+    defaultPriority: 'Medium',
+    estimatedDuration: 1,
+    type: 'other',
+    dueRule: '1st of each month',
+    category: 'Local SEO',
+  },
+  {
+    id: 'tmpl-5',
+    title: 'Monthly Client Meeting Prep',
+    description: 'Prepare monthly client meeting agenda, pull performance data, and draft talking points. Includes scheduling and post-meeting notes.',
+    defaultAssigneeRole: 'Owner',
+    defaultPriority: 'High',
+    estimatedDuration: 1,
+    type: 'meeting',
+    dueRule: 'Last business day of month',
+    category: 'Client Relations',
+  },
+  {
+    id: 'tmpl-6',
+    title: 'Review Response Management',
+    description: 'Monitor and respond to Google, Yelp, and TripAdvisor reviews. Escalate negative reviews within 24 hours.',
+    defaultAssigneeRole: 'Social Media Specialist',
+    defaultPriority: 'Low',
+    estimatedDuration: 1,
+    type: 'other',
+    dueRule: 'Weekly (every Monday)',
+    category: 'Reputation',
+  },
+  {
+    id: 'tmpl-7',
+    title: 'SEO Blog Post',
+    description: 'Research, write, and publish an SEO-optimized blog post targeting a local or industry keyword. Includes keyword research and on-page optimization.',
+    defaultAssigneeRole: 'Content Manager',
+    defaultPriority: 'Low',
+    estimatedDuration: 5,
+    type: 'blog',
+    dueRule: 'Monthly (custom date)',
+    category: 'Content',
+  },
+  {
+    id: 'tmpl-8',
+    title: 'Email Newsletter',
+    description: 'Draft, design, and schedule the monthly email newsletter. Includes list segmentation, A/B subject line testing, and post-send reporting.',
+    defaultAssigneeRole: 'Content Manager',
+    defaultPriority: 'Medium',
+    estimatedDuration: 3,
+    type: 'social',
+    dueRule: 'Monthly (20th)',
+    category: 'Email Marketing',
+  },
+];
+
+export const AUTOMATIONS: Automation[] = [
+  // Happy Days
+  { id: 'auto-1', clientId: 'happy-days', templateId: 'tmpl-1', frequency: 'monthly', assigneeId: 'rick', status: 'active', nextRunDate: '2026-04-05', lastRunDate: '2026-03-05', createdAt: '2026-01-01' },
+  { id: 'auto-2', clientId: 'happy-days', templateId: 'tmpl-2', frequency: 'monthly', assigneeId: 'sarah', status: 'active', nextRunDate: '2026-03-25', lastRunDate: '2026-02-25', createdAt: '2026-01-01' },
+  { id: 'auto-3', clientId: 'happy-days', templateId: 'tmpl-3', frequency: 'monthly', assigneeId: 'marcus', status: 'active', nextRunDate: '2026-04-15', lastRunDate: '2026-03-15', createdAt: '2026-01-01' },
+  { id: 'auto-4', clientId: 'happy-days', templateId: 'tmpl-4', frequency: 'monthly', assigneeId: 'sarah', status: 'paused', nextRunDate: '2026-04-01', lastRunDate: '2026-03-01', createdAt: '2026-01-01' },
+  // K. Pacho
+  { id: 'auto-5', clientId: 'k-pacho', templateId: 'tmpl-1', frequency: 'monthly', assigneeId: 'rick', status: 'active', nextRunDate: '2026-04-05', lastRunDate: '2026-03-05', createdAt: '2026-01-15' },
+  { id: 'auto-6', clientId: 'k-pacho', templateId: 'tmpl-2', frequency: 'monthly', assigneeId: 'marcus', status: 'active', nextRunDate: '2026-03-25', lastRunDate: '2026-02-25', createdAt: '2026-01-15' },
+  { id: 'auto-7', clientId: 'k-pacho', templateId: 'tmpl-6', frequency: 'weekly', assigneeId: 'marcus', status: 'active', nextRunDate: '2026-03-16', lastRunDate: '2026-03-09', createdAt: '2026-01-15' },
+  { id: 'auto-8', clientId: 'k-pacho', templateId: 'tmpl-5', frequency: 'monthly', assigneeId: 'joe', status: 'active', nextRunDate: '2026-03-31', lastRunDate: '2026-02-28', createdAt: '2026-01-15' },
+  // The Refuge
+  { id: 'auto-9', clientId: 'the-refuge', templateId: 'tmpl-1', frequency: 'monthly', assigneeId: 'rick', status: 'active', nextRunDate: '2026-04-05', lastRunDate: '2026-03-14', createdAt: '2026-02-15' },
+  { id: 'auto-10', clientId: 'the-refuge', templateId: 'tmpl-2', frequency: 'monthly', assigneeId: 'marcus', status: 'active', nextRunDate: '2026-03-25', lastRunDate: '2026-02-28', createdAt: '2026-02-15' },
+  { id: 'auto-11', clientId: 'the-refuge', templateId: 'tmpl-4', frequency: 'monthly', assigneeId: 'sarah', status: 'active', nextRunDate: '2026-04-01', lastRunDate: '2026-03-01', createdAt: '2026-02-15' },
+  { id: 'auto-12', clientId: 'the-refuge', templateId: 'tmpl-3', frequency: 'monthly', assigneeId: 'marcus', status: 'paused', nextRunDate: '2026-04-15', lastRunDate: '2026-03-15', createdAt: '2026-02-15' },
+];
+
+export const TIME_ENTRIES: TimeEntry[] = [
+  // Happy Days
+  { id: 'te-1', taskId: 'hd-1', clientId: 'happy-days', memberId: 'sarah', date: '2026-02-17', durationMinutes: 120, note: 'Initial calendar planning' },
+  { id: 'te-2', taskId: 'hd-1', clientId: 'happy-days', memberId: 'sarah', date: '2026-02-19', durationMinutes: 180, note: 'Content writing and scheduling' },
+  { id: 'te-3', taskId: 'hd-1', clientId: 'happy-days', memberId: 'sarah', date: '2026-02-24', durationMinutes: 90, note: 'Final review and approval' },
+  { id: 'te-4', taskId: 'hd-2', clientId: 'happy-days', memberId: 'marcus', date: '2026-03-03', durationMinutes: 150, note: 'Campaign setup and targeting' },
+  { id: 'te-5', taskId: 'hd-2', clientId: 'happy-days', memberId: 'marcus', date: '2026-03-06', durationMinutes: 120, note: 'Ad creative build' },
+  { id: 'te-6', taskId: 'hd-2', clientId: 'happy-days', memberId: 'marcus', date: '2026-03-10', durationMinutes: 60, note: 'Performance check and bid adjustments' },
+  { id: 'te-7', taskId: 'hd-4', clientId: 'happy-days', memberId: 'joe', date: '2026-03-01', durationMinutes: 240, note: 'Design and dev work' },
+  { id: 'te-8', taskId: 'hd-4', clientId: 'happy-days', memberId: 'joe', date: '2026-03-05', durationMinutes: 180, note: 'Revisions round 1' },
+  { id: 'te-9', taskId: 'hd-5', clientId: 'happy-days', memberId: 'rick', date: '2026-03-04', durationMinutes: 90, note: 'Data pull and analysis' },
+  { id: 'te-10', taskId: 'hd-5', clientId: 'happy-days', memberId: 'rick', date: '2026-03-06', durationMinutes: 60, note: 'Report finalization' },
+  { id: 'te-11', taskId: 'hd-7', clientId: 'happy-days', memberId: 'sarah', date: '2026-03-10', durationMinutes: 120, note: 'Newsletter draft' },
+  { id: 'te-12', taskId: 'hd-7', clientId: 'happy-days', memberId: 'sarah', date: '2026-03-12', durationMinutes: 90, note: 'Design and layout' },
+  // K. Pacho
+  { id: 'te-13', taskId: 'kp-1', clientId: 'k-pacho', memberId: 'marcus', date: '2026-02-20', durationMinutes: 120, note: 'Calendar planning' },
+  { id: 'te-14', taskId: 'kp-1', clientId: 'k-pacho', memberId: 'marcus', date: '2026-02-25', durationMinutes: 150, note: 'Content writing' },
+  { id: 'te-15', taskId: 'kp-2', clientId: 'k-pacho', memberId: 'marcus', date: '2026-03-05', durationMinutes: 180, note: 'Ad setup and creative' },
+  { id: 'te-16', taskId: 'kp-2', clientId: 'k-pacho', memberId: 'marcus', date: '2026-03-08', durationMinutes: 90, note: 'Optimization and reporting' },
+  { id: 'te-17', taskId: 'kp-4', clientId: 'k-pacho', memberId: 'sarah', date: '2026-03-08', durationMinutes: 240, note: 'Photography session coordination' },
+  { id: 'te-18', taskId: 'kp-4', clientId: 'k-pacho', memberId: 'sarah', date: '2026-03-12', durationMinutes: 180, note: 'Photo editing and delivery' },
+  { id: 'te-19', taskId: 'kp-5', clientId: 'k-pacho', memberId: 'rick', date: '2026-03-04', durationMinutes: 75, note: 'Data pull' },
+  { id: 'te-20', taskId: 'kp-5', clientId: 'k-pacho', memberId: 'rick', date: '2026-03-06', durationMinutes: 45, note: 'Report write-up' },
+  // The Refuge
+  { id: 'te-21', taskId: 'tr-1', clientId: 'the-refuge', memberId: 'joe', date: '2026-02-10', durationMinutes: 300, note: 'Full strategy build' },
+  { id: 'te-22', taskId: 'tr-2', clientId: 'the-refuge', memberId: 'marcus', date: '2026-02-21', durationMinutes: 180, note: 'Content planning' },
+  { id: 'te-23', taskId: 'tr-3', clientId: 'the-refuge', memberId: 'marcus', date: '2026-02-28', durationMinutes: 240, note: 'Campaign setup' },
+  { id: 'te-24', taskId: 'tr-3', clientId: 'the-refuge', memberId: 'marcus', date: '2026-03-03', durationMinutes: 120, note: 'Performance monitoring' },
+  { id: 'te-25', taskId: 'tr-4', clientId: 'the-refuge', memberId: 'marcus', date: '2026-02-21', durationMinutes: 360, note: 'Full graphic suite design' },
+  { id: 'te-26', taskId: 'tr-5', clientId: 'the-refuge', memberId: 'sarah', date: '2026-02-18', durationMinutes: 120, note: 'Profile setup' },
+  { id: 'te-27', taskId: 'tr-6', clientId: 'the-refuge', memberId: 'joe', date: '2026-02-25', durationMinutes: 480, note: 'Website dev kickoff' },
+  { id: 'te-28', taskId: 'tr-6', clientId: 'the-refuge', memberId: 'joe', date: '2026-03-02', durationMinutes: 360, note: 'Content pages and menu' },
+  { id: 'te-29', taskId: 'tr-7', clientId: 'the-refuge', memberId: 'rick', date: '2026-03-08', durationMinutes: 120, note: 'First 30-day data pull' },
+  { id: 'te-30', taskId: 'tr-8', clientId: 'the-refuge', memberId: 'sarah', date: '2026-03-10', durationMinutes: 300, note: 'Photo session' },
+  { id: 'te-31', taskId: 'tr-8', clientId: 'the-refuge', memberId: 'sarah', date: '2026-03-12', durationMinutes: 180, note: 'Editing and delivery' },
+];
+
+export const ASSETS: Asset[] = [
+  // Happy Days
+  { id: 'ast-1', clientId: 'happy-days', filename: 'HappyDays_Logo_Primary.svg', fileType: 'logo', uploadDate: '2026-01-15', uploadedBy: 'joe', tags: ['logo', 'brand', 'primary'], size: '42 KB', color: '#10b981', versions: [{ id: 'v1', date: '2026-01-15', note: 'Initial upload' }] },
+  { id: 'ast-2', clientId: 'happy-days', filename: 'HappyDays_Logo_White.svg', fileType: 'logo', uploadDate: '2026-01-15', uploadedBy: 'joe', tags: ['logo', 'brand', 'white'], size: '38 KB', color: '#065f46', versions: [{ id: 'v1', date: '2026-01-15', note: 'Initial upload' }] },
+  { id: 'ast-3', clientId: 'happy-days', filename: 'Menu_Photo_Tinctures_001.jpg', fileType: 'image', uploadDate: '2026-02-05', uploadedBy: 'sarah', tags: ['product', 'tinctures', 'photography'], size: '2.4 MB', color: '#6ee7b7', versions: [{ id: 'v1', date: '2026-02-05', note: 'Raw upload' }, { id: 'v2', date: '2026-02-10', note: 'Color corrected' }] },
+  { id: 'ast-4', clientId: 'happy-days', filename: 'Menu_Photo_Edibles_002.jpg', fileType: 'image', uploadDate: '2026-02-05', uploadedBy: 'sarah', tags: ['product', 'edibles', 'photography'], size: '1.9 MB', color: '#a7f3d0', versions: [{ id: 'v1', date: '2026-02-05', note: 'Raw upload' }] },
+  { id: 'ast-5', clientId: 'happy-days', filename: 'Ad_Creative_Spring_Banner.jpg', fileType: 'image', uploadDate: '2026-03-01', uploadedBy: 'marcus', tags: ['ad', 'creative', 'spring', 'banner'], size: '856 KB', color: '#34d399', versions: [{ id: 'v1', date: '2026-03-01', note: 'v1' }, { id: 'v2', date: '2026-03-05', note: 'Headline update' }] },
+  { id: 'ast-6', clientId: 'happy-days', filename: 'Ad_Creative_Spring_Story.jpg', fileType: 'image', uploadDate: '2026-03-01', uploadedBy: 'marcus', tags: ['ad', 'creative', 'spring', 'story'], size: '724 KB', color: '#10b981', versions: [{ id: 'v1', date: '2026-03-01', note: 'v1' }] },
+  { id: 'ast-7', clientId: 'happy-days', filename: 'HappyDays_BrandGuide_2026.pdf', fileType: 'document', uploadDate: '2026-01-20', uploadedBy: 'sarah', tags: ['brand', 'guidelines', 'PDF'], size: '4.2 MB', color: '#059669', versions: [{ id: 'v1', date: '2026-01-20', note: 'Initial guide' }, { id: 'v2', date: '2026-02-15', note: 'Updated compliance section' }] },
+  { id: 'ast-8', clientId: 'happy-days', filename: 'StoreFront_Video_Tour.mp4', fileType: 'video', uploadDate: '2026-02-20', uploadedBy: 'marcus', tags: ['video', 'storefront', 'social'], size: '48 MB', color: '#047857', versions: [{ id: 'v1', date: '2026-02-20', note: 'Raw footage' }] },
+  // K. Pacho
+  { id: 'ast-9', clientId: 'k-pacho', filename: 'KPacho_Logo_Color.svg', fileType: 'logo', uploadDate: '2026-01-10', uploadedBy: 'joe', tags: ['logo', 'brand', 'color'], size: '56 KB', color: '#f59e0b', versions: [{ id: 'v1', date: '2026-01-10', note: 'Initial upload' }] },
+  { id: 'ast-10', clientId: 'k-pacho', filename: 'KPacho_Logo_Dark.svg', fileType: 'logo', uploadDate: '2026-01-10', uploadedBy: 'joe', tags: ['logo', 'brand', 'dark'], size: '51 KB', color: '#92400e', versions: [{ id: 'v1', date: '2026-01-10', note: 'Initial upload' }] },
+  { id: 'ast-11', clientId: 'k-pacho', filename: 'FoodPhoto_Tacos_Hero.jpg', fileType: 'image', uploadDate: '2026-02-10', uploadedBy: 'sarah', tags: ['food', 'photography', 'tacos', 'hero'], size: '3.1 MB', color: '#fcd34d', versions: [{ id: 'v1', date: '2026-02-10', note: 'Session 1' }, { id: 'v2', date: '2026-02-18', note: 'Final edit' }] },
+  { id: 'ast-12', clientId: 'k-pacho', filename: 'FoodPhoto_Margaritas.jpg', fileType: 'image', uploadDate: '2026-02-10', uploadedBy: 'sarah', tags: ['food', 'photography', 'drinks'], size: '2.7 MB', color: '#fbbf24', versions: [{ id: 'v1', date: '2026-02-10', note: 'Session 1' }] },
+  { id: 'ast-13', clientId: 'k-pacho', filename: 'EventFlyer_HappyHour_March.jpg', fileType: 'image', uploadDate: '2026-03-04', uploadedBy: 'marcus', tags: ['event', 'flyer', 'happy hour'], size: '1.1 MB', color: '#f59e0b', versions: [{ id: 'v1', date: '2026-03-04', note: 'v1' }, { id: 'v2', date: '2026-03-06', note: 'Date/time updated' }] },
+  { id: 'ast-14', clientId: 'k-pacho', filename: 'SocialTemplate_TacoTuesday.psd', fileType: 'document', uploadDate: '2026-02-15', uploadedBy: 'marcus', tags: ['template', 'social', 'taco tuesday'], size: '8.4 MB', color: '#d97706', versions: [{ id: 'v1', date: '2026-02-15', note: 'Master template' }] },
+  // The Refuge
+  { id: 'ast-15', clientId: 'the-refuge', filename: 'TheRefuge_Logo_Primary.svg', fileType: 'logo', uploadDate: '2026-02-01', uploadedBy: 'joe', tags: ['logo', 'brand', 'primary'], size: '63 KB', color: '#3b82f6', versions: [{ id: 'v1', date: '2026-02-01', note: 'Initial upload' }, { id: 'v2', date: '2026-02-10', note: 'Tag line added' }] },
+  { id: 'ast-16', clientId: 'the-refuge', filename: 'TheRefuge_Logo_Gold.svg', fileType: 'logo', uploadDate: '2026-02-01', uploadedBy: 'joe', tags: ['logo', 'brand', 'gold', 'alternate'], size: '59 KB', color: '#1d4ed8', versions: [{ id: 'v1', date: '2026-02-01', note: 'Initial upload' }] },
+  { id: 'ast-17', clientId: 'the-refuge', filename: 'Interior_Bar_Area.jpg', fileType: 'image', uploadDate: '2026-02-25', uploadedBy: 'sarah', tags: ['interior', 'bar', 'ambiance'], size: '4.2 MB', color: '#60a5fa', versions: [{ id: 'v1', date: '2026-02-25', note: 'Pre-opening shoot' }] },
+  { id: 'ast-18', clientId: 'the-refuge', filename: 'Interior_Dining_Room.jpg', fileType: 'image', uploadDate: '2026-02-25', uploadedBy: 'sarah', tags: ['interior', 'dining', 'ambiance'], size: '3.8 MB', color: '#93c5fd', versions: [{ id: 'v1', date: '2026-02-25', note: 'Pre-opening shoot' }] },
+  { id: 'ast-19', clientId: 'the-refuge', filename: 'MenuDesign_Dinner_v3.pdf', fileType: 'document', uploadDate: '2026-03-01', uploadedBy: 'joe', tags: ['menu', 'design', 'PDF', 'dinner'], size: '2.1 MB', color: '#2563eb', versions: [{ id: 'v1', date: '2026-02-20', note: 'Initial' }, { id: 'v2', date: '2026-02-25', note: 'Pricing update' }, { id: 'v3', date: '2026-03-01', note: 'Final' }] },
+  { id: 'ast-20', clientId: 'the-refuge', filename: 'EventGraphics_GrandOpening.zip', fileType: 'document', uploadDate: '2026-02-27', uploadedBy: 'marcus', tags: ['event', 'grand opening', 'graphics', 'package'], size: '22 MB', color: '#3b82f6', versions: [{ id: 'v1', date: '2026-02-27', note: 'Full package delivered' }] },
+  { id: 'ast-21', clientId: 'the-refuge', filename: 'GrandOpening_Recap_Video.mp4', fileType: 'video', uploadDate: '2026-03-08', uploadedBy: 'marcus', tags: ['video', 'grand opening', 'recap', 'social'], size: '112 MB', color: '#1e40af', versions: [{ id: 'v1', date: '2026-03-08', note: 'Rough cut' }, { id: 'v2', date: '2026-03-10', note: 'Final edit' }] },
 ];
 
 export const STATUS_LABELS: Record<Status, string> = {
@@ -1007,4 +1184,14 @@ export const PRIORITY_DOT: Record<Priority, string> = {
   Medium: 'bg-blue-500',
   High: 'bg-amber-500',
   Urgent: 'bg-red-500',
+};
+
+export const TYPE_ICONS: Record<NonNullable<Task['type']>, string> = {
+  social: '📱',
+  ad: '📣',
+  blog: '✍️',
+  report: '📊',
+  meeting: '🤝',
+  design: '🎨',
+  other: '📋',
 };
