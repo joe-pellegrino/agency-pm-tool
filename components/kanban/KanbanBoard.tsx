@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -19,8 +19,8 @@ import {
 } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { TASKS, CLIENTS, TEAM_MEMBERS, PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry } from '@/lib/data';
-import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History } from 'lucide-react';
+import { TASKS, CLIENTS, TEAM_MEMBERS, TIME_ENTRIES, PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry } from '@/lib/data';
+import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
@@ -185,7 +185,280 @@ function ApprovalModal({
   );
 }
 
-function TaskCard({ task, isDragging = false, onOpenApproval }: { task: Task; isDragging?: boolean; onOpenApproval?: (task: Task) => void }) {
+function TaskDetailModal({
+  task,
+  onClose,
+  onOpenApproval,
+}: {
+  task: Task;
+  onClose: () => void;
+  onOpenApproval: (task: Task) => void;
+}) {
+  const client = CLIENTS.find(c => c.id === task.clientId)!;
+  const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
+
+  // Time tracking state
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>(
+    TIME_ENTRIES.filter(e => e.taskId === task.id)
+  );
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0); // seconds
+  const [showManual, setShowManual] = useState(false);
+  const [manualMinutes, setManualMinutes] = useState('');
+  const [manualNote, setManualNote] = useState('');
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isRunning) {
+      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isRunning]);
+
+  const formatElapsed = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const stopTimer = () => {
+    setIsRunning(false);
+    if (elapsed >= 60) {
+      const entry: TimeEntry = {
+        id: `te-live-${Date.now()}`,
+        taskId: task.id,
+        clientId: task.clientId,
+        memberId: CURRENT_USER_ID,
+        date: new Date().toISOString().split('T')[0],
+        durationMinutes: Math.round(elapsed / 60),
+        note: 'Timer session',
+      };
+      setTimeEntries(prev => [entry, ...prev]);
+    }
+    setElapsed(0);
+  };
+
+  const addManualEntry = () => {
+    const mins = parseInt(manualMinutes);
+    if (!mins || mins <= 0) return;
+    const entry: TimeEntry = {
+      id: `te-manual-${Date.now()}`,
+      taskId: task.id,
+      clientId: task.clientId,
+      memberId: CURRENT_USER_ID,
+      date: new Date().toISOString().split('T')[0],
+      durationMinutes: mins,
+      note: manualNote || undefined,
+    };
+    setTimeEntries(prev => [entry, ...prev]);
+    setManualMinutes('');
+    setManualNote('');
+    setShowManual(false);
+  };
+
+  const totalMinutes = timeEntries.reduce((sum, e) => sum + e.durationMinutes, 0);
+  const totalHours = (totalMinutes / 60).toFixed(1);
+
+  const isOwner = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.isOwner;
+  const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
+          <div className="flex-1 pr-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: client.color + '18', color: client.color }}
+              >
+                {client.name}
+              </span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[task.priority]}`}>
+                {task.priority}
+              </span>
+              {overdue && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700">
+                  Overdue
+                </span>
+              )}
+            </div>
+            <h2 className="font-semibold text-gray-900 dark:text-white text-lg leading-snug">{task.title}</h2>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+          {/* Meta row */}
+          <div className="flex items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                style={{ backgroundColor: assignee.color }}
+              >
+                {assignee.initials}
+              </div>
+              <span>{assignee.name}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <CalendarDays size={12} />
+              <span>Due {new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+            <div className={`capitalize px-2 py-0.5 rounded-full font-medium ${
+              task.status === 'done' ? 'bg-green-100 text-green-700' :
+              task.status === 'review' ? 'bg-amber-100 text-amber-700' :
+              task.status === 'inprogress' ? 'bg-blue-100 text-blue-700' :
+              'bg-gray-100 text-gray-600'
+            }`}>
+              {task.status === 'inprogress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+            </div>
+          </div>
+
+          {/* Description */}
+          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{task.description}</p>
+
+          {/* Approval action if in review */}
+          {task.status === 'review' && isOwner && (
+            <button
+              onClick={() => { onClose(); onOpenApproval(task); }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-sm font-medium transition-colors"
+            >
+              <CheckCircle size={15} />
+              Open Review &amp; Approve
+            </button>
+          )}
+
+          {/* Time Tracking */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Timer size={14} className="text-indigo-600" />
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Time Tracking</span>
+              </div>
+              <div className="text-sm text-gray-500">
+                Total: <span className="font-semibold text-gray-900 dark:text-white">{totalHours}h</span>
+                <span className="text-xs ml-1">({totalMinutes} min)</span>
+              </div>
+            </div>
+
+            <div className="p-4">
+              {/* Timer controls */}
+              <div className="flex items-center gap-3 mb-4">
+                {!isRunning ? (
+                  <button
+                    onClick={() => setIsRunning(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Play size={14} />
+                    Start Timer
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopTimer}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Square size={14} />
+                    Stop — {formatElapsed(elapsed)}
+                  </button>
+                )}
+                {isRunning && (
+                  <div className="flex items-center gap-2 text-sm text-indigo-600 font-mono font-medium">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    {formatElapsed(elapsed)}
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowManual(!showManual)}
+                  className="flex items-center gap-1.5 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors ml-auto"
+                >
+                  <Edit3 size={13} />
+                  Manual entry
+                </button>
+              </div>
+
+              {/* Manual entry form */}
+              {showManual && (
+                <div className="flex items-end gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Minutes</label>
+                    <input
+                      type="number"
+                      value={manualMinutes}
+                      onChange={e => setManualMinutes(e.target.value)}
+                      placeholder="60"
+                      min="1"
+                      className="w-20 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Note (optional)</label>
+                    <input
+                      type="text"
+                      value={manualNote}
+                      onChange={e => setManualNote(e.target.value)}
+                      placeholder="What did you work on?"
+                      className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <button
+                    onClick={addManualEntry}
+                    disabled={!manualMinutes || parseInt(manualMinutes) <= 0}
+                    className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
+
+              {/* Time log */}
+              {timeEntries.length > 0 ? (
+                <div className="space-y-2">
+                  {timeEntries.map(entry => {
+                    const member = TEAM_MEMBERS.find(m => m.id === entry.memberId);
+                    const hours = Math.floor(entry.durationMinutes / 60);
+                    const mins = entry.durationMinutes % 60;
+                    const durationStr = hours > 0
+                      ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`.trim()
+                      : `${mins}m`;
+                    return (
+                      <div key={entry.id} className="flex items-center gap-3 py-2 text-xs border-b border-gray-100 dark:border-gray-800 last:border-0">
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
+                          style={{ backgroundColor: member?.color || '#6366f1' }}
+                        >
+                          {member?.initials || '?'}
+                        </div>
+                        <span className="text-gray-500 w-20 flex-shrink-0">
+                          {new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <span className="font-semibold text-gray-900 dark:text-white w-16 flex-shrink-0">{durationStr}</span>
+                        <span className="text-gray-500 flex-1 truncate">{entry.note || '—'}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-4">No time entries yet. Start the timer or add a manual entry.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { task: Task; isDragging?: boolean; onOpenApproval?: (task: Task) => void; onOpenDetail?: (task: Task) => void }) {
   const client = CLIENTS.find(c => c.id === task.clientId)!;
   const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
   const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
@@ -193,6 +466,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval }: { task: Task; is
 
   return (
     <div
+      onClick={() => !isDragging && onOpenDetail?.(task)}
       className={`task-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3.5 ${
         isDragging ? 'shadow-2xl rotate-2 opacity-95 ring-2 ring-indigo-400' : 'shadow-sm hover:shadow-md'
       } cursor-grab active:cursor-grabbing`}
@@ -271,7 +545,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval }: { task: Task; is
   );
 }
 
-function SortableTaskCard({ task, onOpenApproval }: { task: Task; onOpenApproval?: (task: Task) => void }) {
+function SortableTaskCard({ task, onOpenApproval, onOpenDetail }: { task: Task; onOpenApproval?: (task: Task) => void; onOpenDetail?: (task: Task) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
 
   const style = {
@@ -282,7 +556,7 @@ function SortableTaskCard({ task, onOpenApproval }: { task: Task; onOpenApproval
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard task={task} onOpenApproval={onOpenApproval} />
+      <TaskCard task={task} onOpenApproval={onOpenApproval} onOpenDetail={onOpenDetail} />
     </div>
   );
 }
@@ -293,12 +567,14 @@ function Column({
   color,
   tasks,
   onOpenApproval,
+  onOpenDetail,
 }: {
   id: Status;
   label: string;
   color: string;
   tasks: Task[];
   onOpenApproval?: (task: Task) => void;
+  onOpenDetail?: (task: Task) => void;
 }) {
   const colBg: Record<Status, string> = {
     todo: 'bg-gray-50 dark:bg-gray-800/40',
@@ -326,7 +602,7 @@ function Column({
       <div className="flex-1 p-3 space-y-2 overflow-y-auto max-h-[70vh]">
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map(task => (
-            <SortableTaskCard key={task.id} task={task} onOpenApproval={onOpenApproval} />
+            <SortableTaskCard key={task.id} task={task} onOpenApproval={onOpenApproval} onOpenDetail={onOpenDetail} />
           ))}
         </SortableContext>
         {tasks.length === 0 && (
@@ -350,6 +626,7 @@ export default function KanbanBoard() {
   const [filterPriority, setFilterPriority] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [approvalTask, setApprovalTask] = useState<Task | null>(null);
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -455,8 +732,22 @@ export default function KanbanBoard() {
 
   const activeFilters = (filterClient !== 'all' ? 1 : 0) + (filterAssignee !== 'all' ? 1 : 0) + (filterPriority !== 'all' ? 1 : 0);
 
+  const openDetail = (task: Task) => {
+    const latest = taskState.find(t => t.id === task.id) || task;
+    setDetailTask(latest);
+  };
+
   return (
     <div>
+      {/* Task Detail Modal */}
+      {detailTask && (
+        <TaskDetailModal
+          task={detailTask}
+          onClose={() => setDetailTask(null)}
+          onOpenApproval={(task) => { setDetailTask(null); openApproval(task); }}
+        />
+      )}
+
       {/* Approval Modal */}
       {approvalTask && (
         <ApprovalModal
@@ -585,6 +876,7 @@ export default function KanbanBoard() {
               color={col.color}
               tasks={getColumnTasks(col.id)}
               onOpenApproval={openApproval}
+              onOpenDetail={openDetail}
             />
           ))}
         </div>
