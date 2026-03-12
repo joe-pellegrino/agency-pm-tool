@@ -6,7 +6,7 @@ export default function KanbanPage() {
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Kanban Board" subtitle="Drag and drop tasks to update status" />
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Suspense fallback={<div className="text-gray-500">Loading board...</div>}>
           <KanbanBoard />
         </Suspense>

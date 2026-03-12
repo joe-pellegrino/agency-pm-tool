@@ -172,7 +172,7 @@ function ClientHealthCard({ client }: { client: Client }) {
         </div>
 
         {/* Task stats grid */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-4">
           {[
             { label: 'Total', value: clientTasks.length, color: 'text-gray-700 dark:text-gray-200', bg: 'bg-gray-100 dark:bg-gray-700' },
             { label: 'Done', value: completed, color: 'text-green-700', bg: 'bg-green-100 dark:bg-green-900/30' },
@@ -249,9 +249,9 @@ export default function HealthPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Client Health" subtitle="Relationship scores, sentiment, and task performance per client" />
 
-      <div className="p-8">
+      <div className="pt-16 p-4 sm:p-8">
         {/* Summary bar */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             {
               icon: <Activity size={20} className="text-indigo-600" />,
@@ -306,18 +306,18 @@ export default function HealthPage() {
             {CLIENTS.map(client => {
               const health = CLIENT_HEALTH[client.id];
               return (
-                <div key={client.id} className="flex items-center gap-4">
-                  <div className="w-28 text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{client.name}</div>
+                <div key={client.id} className="flex items-center gap-2 sm:gap-4">
+                  <div className="w-20 sm:w-28 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 truncate flex-shrink-0">{client.name}</div>
                   <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                     <div
                       className={`h-full rounded-full bg-gradient-to-r ${getScoreBg(health.score)} transition-all duration-700`}
                       style={{ width: `${health.score}%` }}
                     />
                   </div>
-                  <div className="w-10 text-right">
+                  <div className="w-8 sm:w-10 text-right flex-shrink-0">
                     <span className={`text-sm font-bold ${getScoreColor(health.score)}`}>{health.score}</span>
                   </div>
-                  <div className="w-16 flex items-center gap-1">
+                  <div className="hidden sm:flex w-16 items-center gap-1">
                     <TrendIcon trend={health.trend} />
                     <span className="text-xs text-gray-500 capitalize">{health.trend}</span>
                   </div>
@@ -328,14 +328,14 @@ export default function HealthPage() {
         </div>
 
         {/* Client cards */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {CLIENTS.map(client => (
             <ClientHealthCard key={client.id} client={client} />
           ))}
         </div>
 
         {/* Score legend */}
-        <div className="mt-6 flex items-center gap-6 text-xs text-gray-500">
+        <div className="mt-6 flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-gray-500">
           <span className="font-medium text-gray-600 dark:text-gray-400">Score legend:</span>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-green-500" />

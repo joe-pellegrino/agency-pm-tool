@@ -112,7 +112,7 @@ export default function GanttChart() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 flex-wrap gap-y-2">
+      <div className="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 flex-wrap gap-y-2">
         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
           {(['day', 'week', 'month'] as ZoomLevel[]).map(z => (
             <button
@@ -159,8 +159,8 @@ export default function GanttChart() {
           </select>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-3 ml-2">
+        {/* Legend — hidden on very small screens */}
+        <div className="hidden sm:flex items-center gap-3 ml-2">
           {CLIENTS.map(c => (
             <div key={c.id} className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: c.color }} />

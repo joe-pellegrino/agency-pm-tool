@@ -1,7 +1,8 @@
 'use client';
 
-import { Bell, Search, Sun, Moon } from 'lucide-react';
+import { Bell, Search, Sun, Moon, Menu } from 'lucide-react';
 import { useState } from 'react';
+import { useSidebar } from './SidebarContext';
 
 interface TopBarProps {
   title: string;
@@ -18,14 +19,24 @@ const NOTIFICATIONS = [
 export default function TopBar({ title, subtitle }: TopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const { toggleMobile } = useSidebar();
   const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 flex items-center px-6 gap-4 z-20">
+    <header className="fixed top-0 left-0 right-0 lg:left-64 h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-3 z-20">
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={toggleMobile}
+        className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Title */}
-      <div className="flex-1">
-        <h1 className="text-base font-semibold text-gray-900">{title}</h1>
-        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+      <div className="flex-1 min-w-0">
+        <h1 className="text-base font-semibold text-gray-900 truncate">{title}</h1>
+        {subtitle && <p className="text-xs text-gray-500 hidden sm:block">{subtitle}</p>}
       </div>
 
       {/* Search */}
@@ -44,7 +55,7 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
           setDark(!dark);
           document.documentElement.classList.toggle('dark');
         }}
-        className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         title="Toggle dark mode"
       >
         {dark ? <Sun size={16} /> : <Moon size={16} />}
@@ -54,7 +65,7 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
       <div className="relative">
         <button
           onClick={() => setNotifOpen(!notifOpen)}
-          className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <Bell size={16} />
           {unreadCount > 0 && (
@@ -67,7 +78,7 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
         {notifOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
-            <div className="absolute right-0 top-10 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-20 overflow-hidden">
+            <div className="absolute right-0 top-10 w-72 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-20 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <span className="font-semibold text-sm text-gray-900">Notifications</span>
                 <span className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline">
@@ -100,7 +111,7 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
       </div>
 
       {/* User avatar */}
-      <div className="flex items-center gap-2 cursor-pointer">
+      <div className="flex items-center gap-2 cursor-pointer flex-shrink-0">
         <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
           JP
         </div>

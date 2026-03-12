@@ -759,7 +759,7 @@ export default function KanbanBoard() {
       )}
 
       {/* Filter bar */}
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors ${
@@ -807,7 +807,7 @@ export default function KanbanBoard() {
         )}
 
         {/* Reviewer indicator */}
-        <div className="ml-auto flex items-center gap-2 text-xs text-gray-500">
+        <div className="ml-auto hidden sm:flex items-center gap-2 text-xs text-gray-500">
           <div
             className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
             style={{ backgroundColor: TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.color }}
@@ -819,7 +819,7 @@ export default function KanbanBoard() {
       </div>
 
       {showFilters && (
-        <div className="flex gap-3 mb-5 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-wrap gap-3 mb-5 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1.5">Client</label>
             <select
@@ -867,18 +867,22 @@ export default function KanbanBoard() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-4 gap-4">
-          {COLUMNS.map(col => (
-            <Column
-              key={col.id}
-              id={col.id}
-              label={col.label}
-              color={col.color}
-              tasks={getColumnTasks(col.id)}
-              onOpenApproval={openApproval}
-              onOpenDetail={openDetail}
-            />
-          ))}
+        {/* Mobile: horizontal scroll; Desktop: 4-col grid */}
+        <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 pb-4">
+          <div className="flex gap-4 lg:grid lg:grid-cols-4" style={{ minWidth: 'max-content' }}>
+            {COLUMNS.map(col => (
+              <div key={col.id} className="w-[85vw] sm:w-80 lg:w-auto flex-shrink-0 lg:flex-shrink">
+                <Column
+                  id={col.id}
+                  label={col.label}
+                  color={col.color}
+                  tasks={getColumnTasks(col.id)}
+                  onOpenApproval={openApproval}
+                  onOpenDetail={openDetail}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>

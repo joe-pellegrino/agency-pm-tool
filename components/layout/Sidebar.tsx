@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CLIENTS } from '@/lib/data';
+import { useSidebar } from './SidebarContext';
 import {
   LayoutDashboard,
   Kanban,
@@ -16,6 +17,7 @@ import {
   LayoutTemplate,
   Zap,
   Activity,
+  X,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -52,13 +54,21 @@ const NAV_GROUPS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { mobileOpen, closeMobile } = useSidebar();
 
-  return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-gray-950 text-white flex flex-col z-30">
-      {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-800">
+  const sidebarContent = (
+    <aside
+      className={`
+        fixed left-0 top-0 h-full w-64 bg-gray-950 text-white flex flex-col z-40
+        transform transition-transform duration-300 ease-in-out
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 lg:z-30
+      `}
+    >
+      {/* Logo / Header */}
+      <div className="px-6 py-5 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-sm">
+          <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">
             RJ
           </div>
           <div>
@@ -66,6 +76,14 @@ export default function Sidebar() {
             <div className="text-xs text-gray-400">Agency Dashboard</div>
           </div>
         </div>
+        {/* Close button — mobile only */}
+        <button
+          onClick={closeMobile}
+          className="lg:hidden p-1 text-gray-400 hover:text-white transition-colors"
+          aria-label="Close menu"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       {/* Nav */}
@@ -82,7 +100,8 @@ export default function Sidebar() {
                   <Link
                     key={href}
                     href={href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    onClick={closeMobile}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors min-h-[44px] ${
                       active
                         ? 'bg-indigo-600 text-white'
                         : 'text-gray-400 hover:text-white hover:bg-gray-800'
@@ -111,7 +130,8 @@ export default function Sidebar() {
                 <Link
                   key={client.id}
                   href={href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group ${
+                  onClick={closeMobile}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group min-h-[44px] ${
                     active ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
                   }`}
                 >
@@ -133,7 +153,7 @@ export default function Sidebar() {
       {/* User */}
       <div className="px-4 py-4 border-t border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">
+          <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
             JP
           </div>
           <div className="flex-1 min-w-0">
@@ -142,12 +162,26 @@ export default function Sidebar() {
           </div>
           <Link
             href="/settings"
-            className="text-gray-500 hover:text-gray-300 transition-colors"
+            onClick={closeMobile}
+            className="text-gray-500 hover:text-gray-300 transition-colors p-1 min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <Settings size={14} />
           </Link>
         </div>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={closeMobile}
+        />
+      )}
+      {sidebarContent}
+    </>
   );
 }

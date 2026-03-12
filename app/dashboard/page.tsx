@@ -11,7 +11,7 @@ function StatCard({ label, value, sub, icon: Icon, color }: {
   color: string;
 }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${color}`}>
@@ -46,18 +46,18 @@ export default function DashboardPage() {
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Dashboard" subtitle="Welcome back, Joe" />
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+        {/* Stats — 1 col mobile, 2 col sm, 4 col lg */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <StatCard label="Total Tasks" value={totalTasks} sub="Across all clients" icon={CheckCircle2} color="bg-indigo-100 text-indigo-600" />
           <StatCard label="In Progress" value={inProgressTasks} sub="Currently active" icon={Clock} color="bg-amber-100 text-amber-600" />
           <StatCard label="Completed" value={doneTasks} sub={`${Math.round((doneTasks/totalTasks)*100)}% completion rate`} icon={TrendingUp} color="bg-green-100 text-green-600" />
           <StatCard label="Urgent Items" value={urgentTasks} sub="Needs attention" icon={AlertCircle} color="bg-red-100 text-red-600" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Client Overview */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900 dark:text-white">Client Overview</h2>
               <Link href="/kanban" className="text-xs text-indigo-600 hover:underline flex items-center gap-1">
@@ -73,7 +73,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2.5">
                         <span
-                          className="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center"
+                          className="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0"
                           style={{ backgroundColor: client.color + '20', color: client.color }}
                         >
                           {client.logo}
@@ -102,7 +102,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Team Activity */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Users size={15} className="text-indigo-500" />
@@ -123,12 +123,12 @@ export default function DashboardPage() {
                     >
                       {member.initials}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-900 dark:text-white">{member.name.split(' ')[0]}</span>
                         <span className="text-xs text-gray-500">{memberTasks.length} tasks</span>
                       </div>
-                      <div className="text-xs text-gray-400">{member.role}</div>
+                      <div className="text-xs text-gray-400 truncate">{member.role}</div>
                       {urgent > 0 && (
                         <span className="inline-flex items-center gap-0.5 text-xs text-red-600 mt-0.5">
                           <AlertCircle size={10} /> {urgent} urgent
@@ -143,14 +143,66 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Tasks */}
-        <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div className="mt-4 sm:mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900 dark:text-white">Upcoming Deadlines</h2>
             <Link href="/kanban" className="text-xs text-indigo-600 hover:underline flex items-center gap-1">
               View board <ArrowRight size={12} />
             </Link>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile: card list */}
+          <div className="sm:hidden space-y-3">
+            {recentTasks.map(task => {
+              const client = CLIENTS.find(c => c.id === task.clientId)!;
+              const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
+              const statusColors: Record<string, string> = {
+                todo: 'bg-gray-100 text-gray-600',
+                inprogress: 'bg-blue-100 text-blue-700',
+                review: 'bg-amber-100 text-amber-700',
+                done: 'bg-green-100 text-green-700',
+              };
+              const statusLabels: Record<string, string> = {
+                todo: 'To Do',
+                inprogress: 'In Progress',
+                review: 'Review',
+                done: 'Done',
+              };
+              return (
+                <div key={task.id} className="flex flex-col gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium text-gray-900 dark:text-white text-sm leading-snug">{task.title}</span>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${statusColors[task.status]}`}>
+                      {statusLabels[task.status]}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap text-xs text-gray-500">
+                    <span
+                      className="inline-flex items-center gap-1 font-medium px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: client.color + '18', color: client.color }}
+                    >
+                      {client.name}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                        style={{ backgroundColor: assignee.color }}
+                      >
+                        {assignee.initials}
+                      </div>
+                      <span>{assignee.name.split(' ')[0]}</span>
+                    </div>
+                    <span className="flex items-center gap-0.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
+                      {task.priority}
+                    </span>
+                    <span>{new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Desktop: table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left">

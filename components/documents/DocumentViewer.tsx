@@ -175,26 +175,26 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
         </div>
       </div>
 
-      <div className="flex gap-6 flex-1">
+      <div className="flex flex-col lg:flex-row gap-6 flex-1">
         {/* Editor */}
         <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2">
-              <FileText size={14} className="text-indigo-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{doc.title}</span>
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText size={14} className="text-indigo-500 flex-shrink-0" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{doc.title}</span>
             </div>
-            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-              {activeVersion.version} — read only preview
+            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full whitespace-nowrap ml-2">
+              {activeVersion.version} — preview
             </span>
           </div>
           <div
-            className="p-8 overflow-y-auto max-h-[75vh]"
+            className="p-4 sm:p-8 overflow-y-auto max-h-[60vh] lg:max-h-[75vh]"
             dangerouslySetInnerHTML={{ __html: renderContent(doc.content) }}
           />
         </div>
 
-        {/* Sidebar */}
-        <div className="w-80 flex flex-col gap-0">
+        {/* Sidebar — full width on mobile, fixed width on lg+ */}
+        <div className="w-full lg:w-80 flex flex-col gap-0">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col flex-1">
             {/* Tabs */}
             <div className="flex border-b border-gray-200 dark:border-gray-700">
