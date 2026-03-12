@@ -19,8 +19,8 @@ import {
 } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { TASKS, CLIENTS, TEAM_MEMBERS, TIME_ENTRIES, PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry } from '@/lib/data';
-import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3 } from 'lucide-react';
+import { TASKS, CLIENTS, TEAM_MEMBERS, TIME_ENTRIES, PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry, PROJECTS } from '@/lib/data';
+import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
@@ -327,6 +327,51 @@ function TaskDetailModal({
           {/* Description */}
           <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{task.description}</p>
 
+          {/* Dependencies */}
+          {((task.dependencies && task.dependencies.length > 0) || TASKS.some(t => t.dependencies?.includes(task.id))) && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                <Lock size={13} className="text-gray-500" />
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dependencies</span>
+              </div>
+              <div className="px-4 py-3 space-y-2">
+                {task.dependencies && task.dependencies.length > 0 && (
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 mb-1.5">Blocked by</div>
+                    {task.dependencies.map(depId => {
+                      const dep = TASKS.find(t => t.id === depId);
+                      if (!dep) return null;
+                      const isBlocked = dep.status !== 'done';
+                      return (
+                        <div key={depId} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs mb-1 ${isBlocked ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'}`}>
+                          {isBlocked ? <Lock size={10} /> : <CheckCircle size={10} />}
+                          <span className="flex-1 font-medium truncate">{dep.title}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] capitalize ${isBlocked ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                            {dep.status === 'done' ? 'Done' : dep.status === 'inprogress' ? 'In Progress' : dep.status}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {TASKS.filter(t => t.dependencies?.includes(task.id)).length > 0 && (
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 mb-1.5">Blocks</div>
+                    {TASKS.filter(t => t.dependencies?.includes(task.id)).map(blocking => (
+                      <div key={blocking.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 mb-1">
+                        <ArrowRight size={10} />
+                        <span className="flex-1 font-medium truncate">{blocking.title}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-600 capitalize">
+                          {blocking.status === 'inprogress' ? 'In Progress' : blocking.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Approval action if in review */}
           {task.status === 'review' && isOwner && (
             <button
@@ -464,10 +509,18 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
   const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
   const isOwner = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.isOwner;
 
+  // Check if this task is blocked (has unfinished dependencies)
+  const isBlocked = !isDragging && task.status !== 'done' && (task.dependencies || []).some(depId => {
+    const dep = TASKS.find(t => t.id === depId);
+    return dep && dep.status !== 'done';
+  });
+
   return (
     <div
       onClick={() => !isDragging && onOpenDetail?.(task)}
-      className={`task-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3.5 ${
+      className={`task-card bg-white dark:bg-gray-800 rounded-lg border p-3.5 ${
+        isBlocked ? 'border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-900/10' : 'border-gray-200 dark:border-gray-700'
+      } ${
         isDragging ? 'shadow-2xl rotate-2 opacity-95 ring-2 ring-indigo-400' : 'shadow-sm hover:shadow-md'
       } cursor-grab active:cursor-grabbing`}
     >
@@ -485,8 +538,16 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
         </span>
       </div>
 
+      {/* Blocked indicator */}
+      {isBlocked && (
+        <div className="flex items-center gap-1.5 mb-2 text-xs text-red-600 dark:text-red-400">
+          <Lock size={11} />
+          <span>Blocked</span>
+        </div>
+      )}
+
       {/* Title */}
-      <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug mb-3">
+      <p className={`text-sm font-medium leading-snug mb-3 ${isBlocked ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
         {task.title}
       </p>
 
@@ -624,6 +685,7 @@ export default function KanbanBoard() {
   const [filterClient, setFilterClient] = useState(clientFilter);
   const [filterAssignee, setFilterAssignee] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [filterProject, setFilterProject] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [approvalTask, setApprovalTask] = useState<Task | null>(null);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
@@ -636,6 +698,10 @@ export default function KanbanBoard() {
     if (filterClient !== 'all' && task.clientId !== filterClient) return false;
     if (filterAssignee !== 'all' && task.assigneeId !== filterAssignee) return false;
     if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
+    if (filterProject !== 'all') {
+      const project = PROJECTS.find(p => p.id === filterProject);
+      if (!project || !project.taskIds.includes(task.id)) return false;
+    }
     return true;
   });
 
@@ -730,7 +796,7 @@ export default function KanbanBoard() {
     setApprovalTask(latest);
   };
 
-  const activeFilters = (filterClient !== 'all' ? 1 : 0) + (filterAssignee !== 'all' ? 1 : 0) + (filterPriority !== 'all' ? 1 : 0);
+  const activeFilters = (filterClient !== 'all' ? 1 : 0) + (filterAssignee !== 'all' ? 1 : 0) + (filterPriority !== 'all' ? 1 : 0) + (filterProject !== 'all' ? 1 : 0);
 
   const openDetail = (task: Task) => {
     const latest = taskState.find(t => t.id === task.id) || task;
@@ -780,7 +846,7 @@ export default function KanbanBoard() {
 
         {activeFilters > 0 && (
           <button
-            onClick={() => { setFilterClient('all'); setFilterAssignee('all'); setFilterPriority('all'); }}
+            onClick={() => { setFilterClient('all'); setFilterAssignee('all'); setFilterPriority('all'); setFilterProject('all'); }}
             className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X size={12} /> Clear filters
@@ -854,6 +920,17 @@ export default function KanbanBoard() {
               <option value="High">High</option>
               <option value="Medium">Medium</option>
               <option value="Low">Low</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Project</label>
+            <select
+              value={filterProject}
+              onChange={e => setFilterProject(e.target.value)}
+              className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="all">All Projects</option>
+              {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
         </div>

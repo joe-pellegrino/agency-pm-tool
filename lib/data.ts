@@ -1195,3 +1195,415 @@ export const TYPE_ICONS: Record<NonNullable<Task['type']>, string> = {
   design: '🎨',
   other: '📋',
 };
+
+// ============================================================
+// PHASE 3: Strategy, Projects, Workflow Templates
+// ============================================================
+
+export interface KPI {
+  id: string;
+  name: string;
+  target: number;
+  current: number;
+  unit: string;
+}
+
+export interface StrategyPillar {
+  id: string;
+  name: string;
+  description: string;
+  projectIds: string[];
+  kpis: KPI[];
+}
+
+export interface Strategy {
+  id: string;
+  clientId: string;
+  name: string;
+  quarter: string;
+  startDate: string;
+  endDate: string;
+  pillars: StrategyPillar[];
+  status: 'planning' | 'active' | 'complete';
+}
+
+export interface Project {
+  id: string;
+  clientId: string;
+  strategyId?: string;
+  pillarId?: string;
+  name: string;
+  description: string;
+  status: 'planning' | 'active' | 'complete' | 'on-hold';
+  startDate: string;
+  endDate: string;
+  progress: number;
+  workflowTemplateId?: string;
+  taskIds: string[];
+}
+
+export interface WorkflowStep {
+  id: string;
+  order: number;
+  title: string;
+  description: string;
+  defaultDurationDays: number;
+  dependsOn: string[];
+  assigneeRole: string;
+}
+
+export interface WorkflowTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  defaultDurationDays: number;
+  steps: WorkflowStep[];
+}
+
+export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
+  {
+    id: 'wt-1',
+    name: 'Monthly Ad Campaign Management',
+    description: 'Full-cycle paid media campaign management from strategy to end-of-month reporting.',
+    category: 'Paid Media',
+    defaultDurationDays: 30,
+    steps: [
+      { id: 'wt1-s1', order: 1, title: 'Strategy & Budget Review', description: 'Review monthly budget allocation, audience targeting, and campaign goals.', defaultDurationDays: 2, dependsOn: [], assigneeRole: 'Owner' },
+      { id: 'wt1-s2', order: 2, title: 'Creative Brief', description: 'Document creative direction, messaging, CTAs, and visual requirements.', defaultDurationDays: 2, dependsOn: ['wt1-s1'], assigneeRole: 'Content Manager' },
+      { id: 'wt1-s3', order: 3, title: 'Ad Creative Design', description: 'Design static images, video assets, and copy variations for all placements.', defaultDurationDays: 4, dependsOn: ['wt1-s2'], assigneeRole: 'Content Manager' },
+      { id: 'wt1-s4', order: 4, title: 'Campaign Setup', description: 'Build campaigns in Meta Ads Manager — audiences, placements, budgets, and tracking.', defaultDurationDays: 2, dependsOn: ['wt1-s3'], assigneeRole: 'Social Media Specialist' },
+      { id: 'wt1-s5', order: 5, title: 'Launch & Monitor', description: 'Launch campaigns and monitor daily performance for first 5 days.', defaultDurationDays: 5, dependsOn: ['wt1-s4'], assigneeRole: 'Social Media Specialist' },
+      { id: 'wt1-s6', order: 6, title: 'Mid-Month Optimization', description: 'Adjust bids, budgets, and creative based on 2-week performance data.', defaultDurationDays: 2, dependsOn: ['wt1-s5'], assigneeRole: 'Social Media Specialist' },
+      { id: 'wt1-s7', order: 7, title: 'End-of-Month Report', description: 'Compile full performance report with ROAS, CPC, reach, and recommendations.', defaultDurationDays: 2, dependsOn: ['wt1-s6'], assigneeRole: 'Owner' },
+    ],
+  },
+  {
+    id: 'wt-2',
+    name: 'Website Build',
+    description: 'Full website design and development from discovery to launch.',
+    category: 'Web Dev',
+    defaultDurationDays: 60,
+    steps: [
+      { id: 'wt2-s1', order: 1, title: 'Discovery & Requirements', description: 'Gather brand assets, define site structure, and document all requirements.', defaultDurationDays: 5, dependsOn: [], assigneeRole: 'Owner' },
+      { id: 'wt2-s2', order: 2, title: 'Sitemap & Wireframes', description: 'Build site architecture and low-fidelity wireframes for all key pages.', defaultDurationDays: 5, dependsOn: ['wt2-s1'], assigneeRole: 'Owner' },
+      { id: 'wt2-s3', order: 3, title: 'Visual Design', description: 'Create high-fidelity mockups applying brand guidelines.', defaultDurationDays: 8, dependsOn: ['wt2-s2'], assigneeRole: 'Content Manager' },
+      { id: 'wt2-s4', order: 4, title: 'Development', description: 'Build out all pages in WordPress/Next.js with responsive layouts.', defaultDurationDays: 15, dependsOn: ['wt2-s3'], assigneeRole: 'Owner' },
+      { id: 'wt2-s5', order: 5, title: 'Content Population', description: 'Add all copy, images, menu items, and media to the CMS.', defaultDurationDays: 5, dependsOn: ['wt2-s4'], assigneeRole: 'Content Manager' },
+      { id: 'wt2-s6', order: 6, title: 'QA & Testing', description: 'Cross-browser and mobile testing, performance checks, and bug fixes.', defaultDurationDays: 5, dependsOn: ['wt2-s5'], assigneeRole: 'Owner' },
+      { id: 'wt2-s7', order: 7, title: 'Client Review', description: 'Client walkthrough, feedback round, and revision implementation.', defaultDurationDays: 5, dependsOn: ['wt2-s6'], assigneeRole: 'Owner' },
+      { id: 'wt2-s8', order: 8, title: 'Launch', description: 'DNS cutover, final QA, Google indexing submission, and analytics verification.', defaultDurationDays: 2, dependsOn: ['wt2-s7'], assigneeRole: 'Owner' },
+    ],
+  },
+  {
+    id: 'wt-3',
+    name: 'Monthly Social Media Management',
+    description: 'End-to-end monthly social media execution from content planning to analytics.',
+    category: 'Social Media',
+    defaultDurationDays: 30,
+    steps: [
+      { id: 'wt3-s1', order: 1, title: 'Content Calendar Planning', description: 'Map out all posts for the month — topics, formats, and publishing schedule.', defaultDurationDays: 3, dependsOn: [], assigneeRole: 'Content Manager' },
+      { id: 'wt3-s2', order: 2, title: 'Content Creation (Copy)', description: 'Write all captions, hashtag sets, and story copy.', defaultDurationDays: 5, dependsOn: ['wt3-s1'], assigneeRole: 'Content Manager' },
+      { id: 'wt3-s3', order: 3, title: 'Content Creation (Graphics)', description: 'Design all static images, carousels, and Reel covers.', defaultDurationDays: 5, dependsOn: ['wt3-s1'], assigneeRole: 'Social Media Specialist' },
+      { id: 'wt3-s4', order: 4, title: 'Scheduling & Publishing', description: 'Schedule all content in Buffer/Later and publish time-sensitive posts manually.', defaultDurationDays: 2, dependsOn: ['wt3-s2', 'wt3-s3'], assigneeRole: 'Content Manager' },
+      { id: 'wt3-s5', order: 5, title: 'Community Engagement', description: 'Daily response to comments, DMs, mentions, and story interactions.', defaultDurationDays: 20, dependsOn: ['wt3-s4'], assigneeRole: 'Social Media Specialist' },
+      { id: 'wt3-s6', order: 6, title: 'Monthly Analytics Report', description: 'Compile reach, engagement, follower growth, and top-performing content.', defaultDurationDays: 2, dependsOn: ['wt3-s5'], assigneeRole: 'Owner' },
+    ],
+  },
+  {
+    id: 'wt-4',
+    name: 'New Client Onboarding',
+    description: 'Structured onboarding process to get a new client fully set up and strategy-ready.',
+    category: 'Onboarding',
+    defaultDurationDays: 14,
+    steps: [
+      { id: 'wt4-s1', order: 1, title: 'Intake Call & Brief', description: 'Discovery call to capture brand story, goals, competitors, and target audience.', defaultDurationDays: 1, dependsOn: [], assigneeRole: 'Owner' },
+      { id: 'wt4-s2', order: 2, title: 'Account Access Setup', description: 'Gain access to Meta Business, Google, website, and email platform.', defaultDurationDays: 2, dependsOn: ['wt4-s1'], assigneeRole: 'Owner' },
+      { id: 'wt4-s3', order: 3, title: 'Brand Audit', description: 'Review existing brand assets, social presence, website, and online reputation.', defaultDurationDays: 3, dependsOn: ['wt4-s2'], assigneeRole: 'Content Manager' },
+      { id: 'wt4-s4', order: 4, title: 'Competitor Analysis', description: 'Research 3-5 direct competitors across digital channels.', defaultDurationDays: 2, dependsOn: ['wt4-s3'], assigneeRole: 'Owner' },
+      { id: 'wt4-s5', order: 5, title: 'Strategy Proposal', description: 'Present 90-day marketing strategy with goals, channels, and budget allocation.', defaultDurationDays: 3, dependsOn: ['wt4-s4'], assigneeRole: 'Owner' },
+      { id: 'wt4-s6', order: 6, title: 'Client Kickoff Meeting', description: 'Present strategy, align on KPIs, set expectations, and begin execution.', defaultDurationDays: 1, dependsOn: ['wt4-s5'], assigneeRole: 'Owner' },
+    ],
+  },
+  {
+    id: 'wt-5',
+    name: 'Monthly SEO Management',
+    description: 'Comprehensive SEO management covering technical audits, content, and link building.',
+    category: 'SEO',
+    defaultDurationDays: 30,
+    steps: [
+      { id: 'wt5-s1', order: 1, title: 'Technical Audit', description: 'Check site speed, crawl errors, Core Web Vitals, and schema markup.', defaultDurationDays: 3, dependsOn: [], assigneeRole: 'Owner' },
+      { id: 'wt5-s2', order: 2, title: 'Keyword Research', description: 'Identify target keywords, track rankings, and find gap opportunities.', defaultDurationDays: 3, dependsOn: [], assigneeRole: 'Content Manager' },
+      { id: 'wt5-s3', order: 3, title: 'On-Page Optimization', description: 'Update title tags, meta descriptions, H-tags, and internal linking.', defaultDurationDays: 4, dependsOn: ['wt5-s1', 'wt5-s2'], assigneeRole: 'Owner' },
+      { id: 'wt5-s4', order: 4, title: 'Content Planning', description: 'Define blog topics, landing page updates, and FAQ content based on keyword data.', defaultDurationDays: 2, dependsOn: ['wt5-s2'], assigneeRole: 'Content Manager' },
+      { id: 'wt5-s5', order: 5, title: 'Content Creation', description: 'Write and publish SEO blog posts and updated landing page copy.', defaultDurationDays: 7, dependsOn: ['wt5-s4'], assigneeRole: 'Content Manager' },
+      { id: 'wt5-s6', order: 6, title: 'Link Building Outreach', description: 'Pitch local directories, industry blogs, and partners for backlinks.', defaultDurationDays: 5, dependsOn: ['wt5-s3'], assigneeRole: 'Owner' },
+      { id: 'wt5-s7', order: 7, title: 'Monthly Report', description: 'Document ranking changes, traffic trends, and recommendations.', defaultDurationDays: 2, dependsOn: ['wt5-s5', 'wt5-s6'], assigneeRole: 'Owner' },
+    ],
+  },
+  {
+    id: 'wt-6',
+    name: 'Quarterly Strategy Review',
+    description: 'End-of-quarter performance review and strategy planning for the next quarter.',
+    category: 'Strategy',
+    defaultDurationDays: 14,
+    steps: [
+      { id: 'wt6-s1', order: 1, title: 'Data Collection', description: 'Pull all quarterly data from Meta, Google Analytics, and email platforms.', defaultDurationDays: 2, dependsOn: [], assigneeRole: 'Owner' },
+      { id: 'wt6-s2', order: 2, title: 'Performance Analysis', description: 'Analyze KPI performance against quarterly targets and identify trends.', defaultDurationDays: 3, dependsOn: ['wt6-s1'], assigneeRole: 'Owner' },
+      { id: 'wt6-s3', order: 3, title: 'Competitive Landscape', description: 'Review competitor activity and market changes over the quarter.', defaultDurationDays: 2, dependsOn: ['wt6-s1'], assigneeRole: 'Content Manager' },
+      { id: 'wt6-s4', order: 4, title: 'Strategy Recommendations', description: 'Draft next-quarter strategy with updated goals and channel mix.', defaultDurationDays: 3, dependsOn: ['wt6-s2', 'wt6-s3'], assigneeRole: 'Owner' },
+      { id: 'wt6-s5', order: 5, title: 'Client Presentation', description: 'Present quarterly recap and next-quarter strategy to client.', defaultDurationDays: 1, dependsOn: ['wt6-s4'], assigneeRole: 'Owner' },
+      { id: 'wt6-s6', order: 6, title: 'Strategy Finalization', description: 'Incorporate client feedback and finalize approved strategy document.', defaultDurationDays: 2, dependsOn: ['wt6-s5'], assigneeRole: 'Owner' },
+    ],
+  },
+];
+
+export const PROJECTS: Project[] = [
+  // Happy Days
+  {
+    id: 'proj-hd-1',
+    clientId: 'happy-days',
+    strategyId: 'strat-hd-1',
+    pillarId: 'pillar-hd-2',
+    name: 'Monthly Ad Campaign — April 2026',
+    description: 'Full paid media campaign management for Happy Days April, targeting local dispensary traffic.',
+    status: 'active',
+    startDate: '2026-04-01',
+    endDate: '2026-04-30',
+    progress: 35,
+    workflowTemplateId: 'wt-1',
+    taskIds: ['hd-2', 'hd-m1', 'hd-apr-1'],
+  },
+  {
+    id: 'proj-hd-2',
+    clientId: 'happy-days',
+    strategyId: 'strat-hd-1',
+    pillarId: 'pillar-hd-1',
+    name: 'Monthly Social Media — April 2026',
+    description: 'April social media content calendar, copy, graphics, scheduling, and community engagement.',
+    status: 'active',
+    startDate: '2026-03-25',
+    endDate: '2026-04-30',
+    progress: 20,
+    workflowTemplateId: 'wt-3',
+    taskIds: ['hd-apr-2', 'hd-1', 'hd-7'],
+  },
+  {
+    id: 'proj-hd-3',
+    clientId: 'happy-days',
+    strategyId: 'strat-hd-1',
+    pillarId: 'pillar-hd-3',
+    name: 'Website Redesign',
+    description: 'Full homepage and product page redesign with updated compliance-friendly copy and photography.',
+    status: 'active',
+    startDate: '2026-03-01',
+    endDate: '2026-04-15',
+    progress: 60,
+    workflowTemplateId: 'wt-2',
+    taskIds: ['hd-3', 'hd-4', 'hd-6', 'hd-9'],
+  },
+  // K. Pacho
+  {
+    id: 'proj-kp-1',
+    clientId: 'k-pacho',
+    strategyId: 'strat-kp-1',
+    pillarId: 'pillar-kp-1',
+    name: 'Monthly Social Media — April 2026',
+    description: 'April content calendar, Cinco de Mayo prep content, and community engagement for K. Pacho.',
+    status: 'planning',
+    startDate: '2026-03-25',
+    endDate: '2026-04-30',
+    progress: 10,
+    workflowTemplateId: 'wt-3',
+    taskIds: ['kp-1', 'kp-apr-2', 'kp-6'],
+  },
+  {
+    id: 'proj-kp-2',
+    clientId: 'k-pacho',
+    strategyId: 'strat-kp-1',
+    pillarId: 'pillar-kp-1',
+    name: 'Cinco de Mayo Event Campaign',
+    description: 'Full campaign for Cinco de Mayo including ads, graphics, email, and social.',
+    status: 'planning',
+    startDate: '2026-04-01',
+    endDate: '2026-05-05',
+    progress: 5,
+    taskIds: ['kp-apr-1', 'kp-2', 'kp-4'],
+  },
+  {
+    id: 'proj-kp-3',
+    clientId: 'k-pacho',
+    strategyId: 'strat-kp-1',
+    pillarId: 'pillar-kp-2',
+    name: 'Monthly SEO — April 2026',
+    description: 'Technical SEO, local keyword optimization, and content for K. Pacho April cycle.',
+    status: 'planning',
+    startDate: '2026-04-01',
+    endDate: '2026-04-30',
+    progress: 0,
+    workflowTemplateId: 'wt-5',
+    taskIds: ['kp-3', 'kp-7', 'kp-9'],
+  },
+  // The Refuge
+  {
+    id: 'proj-tr-1',
+    clientId: 'the-refuge',
+    strategyId: 'strat-tr-1',
+    pillarId: 'pillar-tr-1',
+    name: 'Grand Opening Campaign',
+    description: 'Full launch campaign for The Refuge grand opening — strategy, social, ads, graphics, and PR.',
+    status: 'complete',
+    startDate: '2026-02-10',
+    endDate: '2026-03-14',
+    progress: 100,
+    workflowTemplateId: 'wt-1',
+    taskIds: ['tr-1', 'tr-2', 'tr-3', 'tr-4', 'tr-m1'],
+  },
+  {
+    id: 'proj-tr-2',
+    clientId: 'the-refuge',
+    strategyId: 'strat-tr-1',
+    pillarId: 'pillar-tr-1',
+    name: 'PR Outreach',
+    description: 'Media outreach to Long Island food press, influencers, and local bloggers.',
+    status: 'active',
+    startDate: '2026-02-25',
+    endDate: '2026-04-01',
+    progress: 40,
+    taskIds: ['tr-5', 'tr-10', 'tr-11'],
+  },
+  {
+    id: 'proj-tr-3',
+    clientId: 'the-refuge',
+    strategyId: 'strat-tr-1',
+    pillarId: 'pillar-tr-2',
+    name: 'Monthly Social Media — April 2026',
+    description: 'First full month of ongoing social media management for The Refuge.',
+    status: 'planning',
+    startDate: '2026-03-25',
+    endDate: '2026-04-30',
+    progress: 5,
+    workflowTemplateId: 'wt-3',
+    taskIds: ['tr-apr-1', 'tr-2', 'tr-9'],
+  },
+  {
+    id: 'proj-tr-4',
+    clientId: 'the-refuge',
+    strategyId: 'strat-tr-1',
+    pillarId: 'pillar-tr-2',
+    name: 'New Client Onboarding',
+    description: 'Full onboarding process for The Refuge including brand audit, access setup, and kickoff.',
+    status: 'complete',
+    startDate: '2026-02-10',
+    endDate: '2026-02-24',
+    progress: 100,
+    workflowTemplateId: 'wt-4',
+    taskIds: ['tr-5', 'tr-6', 'tr-7'],
+  },
+];
+
+export const STRATEGIES: Strategy[] = [
+  {
+    id: 'strat-hd-1',
+    clientId: 'happy-days',
+    name: 'Q2 2026 Growth Strategy',
+    quarter: 'Q2 2026',
+    startDate: '2026-04-01',
+    endDate: '2026-06-30',
+    status: 'active',
+    pillars: [
+      {
+        id: 'pillar-hd-1',
+        name: 'Brand Awareness',
+        description: 'Grow social following and increase local visibility in Farmingdale and surrounding areas.',
+        projectIds: ['proj-hd-2'],
+        kpis: [
+          { id: 'kpi-hd-1', name: 'Social Followers', target: 5000, current: 3200, unit: 'followers' },
+          { id: 'kpi-hd-2', name: 'Monthly Impressions', target: 100000, current: 65000, unit: 'impressions' },
+        ],
+      },
+      {
+        id: 'pillar-hd-2',
+        name: 'Revenue Growth',
+        description: 'Drive dispensary foot traffic and convert paid ad spend into measurable store visits.',
+        projectIds: ['proj-hd-1'],
+        kpis: [
+          { id: 'kpi-hd-3', name: 'Ad ROAS', target: 4.0, current: 3.2, unit: 'x' },
+          { id: 'kpi-hd-4', name: 'Monthly Store Visits from Ads', target: 500, current: 320, unit: 'visits' },
+        ],
+      },
+      {
+        id: 'pillar-hd-3',
+        name: 'Digital Presence',
+        description: 'Redesign website and improve SEO to capture organic search traffic.',
+        projectIds: ['proj-hd-3'],
+        kpis: [
+          { id: 'kpi-hd-5', name: 'Website Traffic', target: 8000, current: 5500, unit: '/mo' },
+          { id: 'kpi-hd-6', name: 'Bounce Rate', target: 35, current: 48, unit: '%' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'strat-kp-1',
+    clientId: 'k-pacho',
+    name: 'Q2 2026 Engagement Strategy',
+    quarter: 'Q2 2026',
+    startDate: '2026-04-01',
+    endDate: '2026-06-30',
+    status: 'planning',
+    pillars: [
+      {
+        id: 'pillar-kp-1',
+        name: 'Community Engagement',
+        description: 'Build a loyal local community through events, social engagement, and Cinco de Mayo activation.',
+        projectIds: ['proj-kp-1', 'proj-kp-2'],
+        kpis: [
+          { id: 'kpi-kp-1', name: 'Event RSVPs', target: 200, current: 0, unit: 'RSVPs' },
+          { id: 'kpi-kp-2', name: 'Engagement Rate', target: 5, current: 3.1, unit: '%' },
+        ],
+      },
+      {
+        id: 'pillar-kp-2',
+        name: 'Reputation Management',
+        description: 'Improve Google rating and build a steady stream of positive reviews.',
+        projectIds: ['proj-kp-3'],
+        kpis: [
+          { id: 'kpi-kp-3', name: 'Google Rating', target: 4.7, current: 4.4, unit: '★' },
+          { id: 'kpi-kp-4', name: 'Monthly Reviews', target: 20, current: 12, unit: 'reviews' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'strat-tr-1',
+    clientId: 'the-refuge',
+    name: 'Q2 2026 Launch Strategy',
+    quarter: 'Q2 2026',
+    startDate: '2026-04-01',
+    endDate: '2026-06-30',
+    status: 'active',
+    pillars: [
+      {
+        id: 'pillar-tr-1',
+        name: 'Grand Opening Push',
+        description: 'Maximize launch visibility and establish The Refuge as the premier dining destination in Melville.',
+        projectIds: ['proj-tr-1', 'proj-tr-2'],
+        kpis: [
+          { id: 'kpi-tr-1', name: 'Opening Week Covers', target: 800, current: 0, unit: 'covers' },
+          { id: 'kpi-tr-2', name: 'Press Mentions', target: 5, current: 2, unit: 'mentions' },
+        ],
+      },
+      {
+        id: 'pillar-tr-2',
+        name: 'Ongoing Marketing Foundation',
+        description: 'Establish recurring monthly marketing to build long-term awareness and lead flow.',
+        projectIds: ['proj-tr-3', 'proj-tr-4'],
+        kpis: [
+          { id: 'kpi-tr-3', name: 'Social Following', target: 3000, current: 1200, unit: 'followers' },
+          { id: 'kpi-tr-4', name: 'Monthly Ad Leads', target: 150, current: 45, unit: 'leads' },
+        ],
+      },
+    ],
+  },
+];

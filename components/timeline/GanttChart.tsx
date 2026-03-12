@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { TASKS, CLIENTS, TEAM_MEMBERS, Task } from '@/lib/data';
+import { TASKS, CLIENTS, TEAM_MEMBERS, Task, PROJECTS } from '@/lib/data';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Flag } from 'lucide-react';
 import { addDays, addWeeks, addMonths, format, startOfWeek, differenceInDays, eachDayOfInterval, eachWeekOfInterval, isSameDay, parseISO, isWithinInterval, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 
@@ -29,6 +29,7 @@ export default function GanttChart() {
   const [zoom, setZoom] = useState<ZoomLevel>('week');
   const [viewStart, setViewStart] = useState(new Date('2026-02-09'));
   const [filterClient, setFilterClient] = useState('all');
+  const [filterProject, setFilterProject] = useState('all');
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
 
   // Config per zoom level
@@ -82,6 +83,10 @@ export default function GanttChart() {
   const displayTasks = TASKS
     .filter(t => filterClient === 'all' || t.clientId === filterClient)
     .filter(t => {
+      if (filterProject !== 'all') {
+        const project = PROJECTS.find(p => p.id === filterProject);
+        if (!project || !project.taskIds.includes(t.id)) return false;
+      }
       const s = parseISO(t.startDate);
       const e = parseISO(t.endDate);
       return s <= viewEnd && e >= viewStart;
@@ -148,7 +153,15 @@ export default function GanttChart() {
           Today
         </button>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <select
+            value={filterProject}
+            onChange={e => setFilterProject(e.target.value)}
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="all">All Projects</option>
+            {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
           <select
             value={filterClient}
             onChange={e => setFilterClient(e.target.value)}
@@ -229,6 +242,10 @@ export default function GanttChart() {
                 const w = barWidth(s, e);
                 const color = getClientColor(task.clientId);
                 const isHovered = hoveredTask === task.id;
+                const isBlocked = task.status !== 'done' && (task.dependencies || []).some(depId => {
+                  const dep = displayTasks.find(t => t.id === depId);
+                  return dep && dep.status !== 'done';
+                });
 
                 return (
                   <div
@@ -290,21 +307,22 @@ export default function GanttChart() {
                       ) : (
                         /* Task bar */
                         <div
-                          className="absolute top-1/2 -translate-y-1/2 rounded-md gantt-bar flex items-center px-2 z-10 cursor-pointer"
+                          className={`absolute top-1/2 -translate-y-1/2 rounded-md gantt-bar flex items-center px-2 z-10 cursor-pointer ${isBlocked ? 'opacity-40' : ''}`}
                           style={{
                             left: `${x}%`,
                             width: `${w}%`,
-                            backgroundColor: color,
-                            opacity: isHovered ? 1 : 0.85,
+                            backgroundColor: isBlocked ? '#9ca3af' : color,
+                            opacity: isBlocked ? 0.5 : isHovered ? 1 : 0.85,
                             height: 26,
                             minWidth: 4,
-                            boxShadow: isHovered ? `0 2px 8px ${color}60` : 'none',
+                            boxShadow: isHovered && !isBlocked ? `0 2px 8px ${color}60` : 'none',
+                            backgroundImage: isBlocked ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.25) 4px, rgba(255,255,255,0.25) 8px)' : 'none',
                           }}
-                          title={`${task.title}\n${format(s, 'MMM d')} → ${format(e, 'MMM d')}`}
+                          title={`${task.title}\n${format(s, 'MMM d')} → ${format(e, 'MMM d')}${isBlocked ? '\n⚠ Blocked' : ''}`}
                         >
                           {w > 8 && (
                             <span className="text-white text-[10px] font-medium truncate leading-none">
-                              {task.title}
+                              {isBlocked ? '🔒 ' : ''}{task.title}
                             </span>
                           )}
                         </div>

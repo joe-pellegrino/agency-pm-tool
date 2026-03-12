@@ -18,6 +18,8 @@ import {
   Zap,
   Activity,
   X,
+  Layers,
+  Target,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -25,6 +27,7 @@ const NAV_GROUPS = [
     label: 'Main',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/projects', label: 'Projects', icon: Layers },
       { href: '/kanban', label: 'Kanban Board', icon: Kanban },
       { href: '/timeline', label: 'Timeline', icon: GanttChart },
       { href: '/calendar', label: 'Calendar', icon: Calendar },
@@ -40,7 +43,7 @@ const NAV_GROUPS = [
   {
     label: 'Operations',
     items: [
-      { href: '/templates', label: 'Templates', icon: LayoutTemplate },
+      { href: '/templates', label: 'Workflow Templates', icon: LayoutTemplate },
       { href: '/automations', label: 'Automations', icon: Zap },
     ],
   },
@@ -48,6 +51,7 @@ const NAV_GROUPS = [
     label: 'Insights',
     items: [
       { href: '/health', label: 'Client Health', icon: Activity },
+      { href: '/strategy', label: 'Strategy', icon: Target },
     ],
   },
 ];
