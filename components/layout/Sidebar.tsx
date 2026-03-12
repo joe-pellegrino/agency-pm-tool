@@ -20,6 +20,8 @@ import {
   X,
   Layers,
   Target,
+  Briefcase,
+  Users,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -27,6 +29,8 @@ const NAV_GROUPS = [
     label: 'Main',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/clients', label: 'Clients', icon: Users },
+      { href: '/services', label: 'Services', icon: Briefcase },
       { href: '/projects', label: 'Projects', icon: Layers },
       { href: '/kanban', label: 'Kanban Board', icon: Kanban },
       { href: '/timeline', label: 'Timeline', icon: GanttChart },
@@ -128,8 +132,8 @@ export default function Sidebar() {
           </div>
           <div className="space-y-0.5">
             {CLIENTS.map((client) => {
-              const href = `/kanban?client=${client.id}`;
-              const active = pathname.includes('client=' + client.id) || pathname === `/clients/${client.id}`;
+              const href = `/clients/${client.id}`;
+              const active = pathname === `/clients/${client.id}` || pathname.startsWith(`/clients/${client.id}`);
               return (
                 <Link
                   key={client.id}

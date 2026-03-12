@@ -1607,3 +1607,560 @@ export const STRATEGIES: Strategy[] = [
     ],
   },
 ];
+
+
+// ============================================================
+// PHASE 4: Services Layer + Hierarchical Strategy
+// ============================================================
+
+export type ServiceCategory = 'Paid Media' | 'SEO' | 'Content' | 'Social Media' | 'Email Marketing' | 'Web Development' | 'Tech Support' | 'Strategy Consulting';
+
+export interface Service {
+  id: string;
+  name: string;
+  category: ServiceCategory;
+  description: string;
+  icon: string;
+  defaultCadence: 'monthly' | 'quarterly' | 'one-time';
+}
+
+export type ClientServiceStatus = 'active' | 'paused' | 'cancelled' | 'planning';
+
+export interface ClientService {
+  id: string;
+  clientId: string;
+  serviceId: string;
+  status: ClientServiceStatus;
+  startDate: string;
+  monthlyCadence?: string;
+  linkedStrategyId?: string;
+  linkedProjects: string[];
+}
+
+export interface ServiceStrategyKPI {
+  id: string;
+  name: string;
+  target: number;
+  current: number;
+  unit: string;
+}
+
+export interface ServiceStrategyPillar {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface ServiceStrategy {
+  id: string;
+  clientServiceId: string;
+  clientStrategyId: string;
+  name: string;
+  summary: string;
+  pillars: ServiceStrategyPillar[];
+  kpis: ServiceStrategyKPI[];
+}
+
+export const SERVICES: Service[] = [
+  {
+    id: 'paid-ads',
+    name: 'Paid Ads',
+    category: 'Paid Media',
+    description: 'Meta, Google, and local paid advertising campaigns — managed start to finish.',
+    icon: '📣',
+    defaultCadence: 'monthly',
+  },
+  {
+    id: 'seo',
+    name: 'SEO',
+    category: 'SEO',
+    description: 'Technical SEO, on-page optimization, local listings, and content strategy.',
+    icon: '🔍',
+    defaultCadence: 'monthly',
+  },
+  {
+    id: 'content-creation',
+    name: 'Content Creation',
+    category: 'Content',
+    description: 'Video production, photography, and creative content for social and web.',
+    icon: '🎬',
+    defaultCadence: 'monthly',
+  },
+  {
+    id: 'social-media',
+    name: 'Social Media Management',
+    category: 'Social Media',
+    description: 'Full social media management: calendars, publishing, community engagement, and reporting.',
+    icon: '📱',
+    defaultCadence: 'monthly',
+  },
+  {
+    id: 'email-marketing',
+    name: 'Email Marketing',
+    category: 'Email Marketing',
+    description: 'Email list management, newsletter design, automation flows, and deliverability.',
+    icon: '✉️',
+    defaultCadence: 'monthly',
+  },
+  {
+    id: 'web-development',
+    name: 'Web Development',
+    category: 'Web Development',
+    description: 'Website design, development, launch, and ongoing maintenance.',
+    icon: '🌐',
+    defaultCadence: 'one-time',
+  },
+  {
+    id: 'tech-support',
+    name: 'Tech Support / Virtual CIO',
+    category: 'Tech Support',
+    description: 'Technical operations support, platform management, and virtual CIO advisory.',
+    icon: '🛠️',
+    defaultCadence: 'monthly',
+  },
+  {
+    id: 'strategy-consulting',
+    name: 'Strategy Consulting',
+    category: 'Strategy Consulting',
+    description: 'Quarterly strategy planning, competitive analysis, and growth roadmaps.',
+    icon: '🎯',
+    defaultCadence: 'quarterly',
+  },
+];
+
+export const CLIENT_SERVICES: ClientService[] = [
+  // ── Happy Days ──────────────────────────────────────────────
+  {
+    id: 'cs-hd-paid-ads',
+    clientId: 'happy-days',
+    serviceId: 'paid-ads',
+    status: 'active',
+    startDate: '2026-01-01',
+    monthlyCadence: 'Full monthly Meta Ads management + ad creative',
+    linkedStrategyId: 'strat-hd-1',
+    linkedProjects: ['proj-hd-1'],
+  },
+  {
+    id: 'cs-hd-seo',
+    clientId: 'happy-days',
+    serviceId: 'seo',
+    status: 'active',
+    startDate: '2026-01-01',
+    monthlyCadence: 'Monthly SEO — technical audit + local optimization + blog content',
+    linkedStrategyId: 'strat-hd-1',
+    linkedProjects: ['proj-hd-3'],
+  },
+  {
+    id: 'cs-hd-social',
+    clientId: 'happy-days',
+    serviceId: 'social-media',
+    status: 'active',
+    startDate: '2026-01-01',
+    monthlyCadence: 'Monthly social media management — calendar, copy, graphics, scheduling',
+    linkedStrategyId: 'strat-hd-1',
+    linkedProjects: ['proj-hd-2'],
+  },
+  {
+    id: 'cs-hd-content',
+    clientId: 'happy-days',
+    serviceId: 'content-creation',
+    status: 'active',
+    startDate: '2026-02-01',
+    monthlyCadence: 'Monthly photo/video content sessions for product and lifestyle',
+    linkedStrategyId: 'strat-hd-1',
+    linkedProjects: ['proj-hd-2'],
+  },
+  {
+    id: 'cs-hd-web',
+    clientId: 'happy-days',
+    serviceId: 'web-development',
+    status: 'active',
+    startDate: '2026-03-01',
+    monthlyCadence: 'Website redesign + ongoing maintenance',
+    linkedStrategyId: 'strat-hd-1',
+    linkedProjects: ['proj-hd-3'],
+  },
+  {
+    id: 'cs-hd-email',
+    clientId: 'happy-days',
+    serviceId: 'email-marketing',
+    status: 'cancelled',
+    startDate: '',
+    linkedProjects: [],
+  },
+  {
+    id: 'cs-hd-tech',
+    clientId: 'happy-days',
+    serviceId: 'tech-support',
+    status: 'cancelled',
+    startDate: '',
+    linkedProjects: [],
+  },
+
+  // ── K. Pacho ────────────────────────────────────────────────
+  {
+    id: 'cs-kp-paid-ads',
+    clientId: 'k-pacho',
+    serviceId: 'paid-ads',
+    status: 'active',
+    startDate: '2026-01-15',
+    monthlyCadence: 'Monthly Meta Ads — restaurant specials and event promotion',
+    linkedStrategyId: 'strat-kp-1',
+    linkedProjects: ['proj-kp-2'],
+  },
+  {
+    id: 'cs-kp-social',
+    clientId: 'k-pacho',
+    serviceId: 'social-media',
+    status: 'active',
+    startDate: '2026-01-15',
+    monthlyCadence: 'Monthly social management — calendar, Reels, community engagement',
+    linkedStrategyId: 'strat-kp-1',
+    linkedProjects: ['proj-kp-1'],
+  },
+  {
+    id: 'cs-kp-seo',
+    clientId: 'k-pacho',
+    serviceId: 'seo',
+    status: 'active',
+    startDate: '2026-01-15',
+    monthlyCadence: 'Monthly local SEO — Google Business, reviews, directory listings',
+    linkedStrategyId: 'strat-kp-1',
+    linkedProjects: ['proj-kp-3'],
+  },
+  {
+    id: 'cs-kp-content',
+    clientId: 'k-pacho',
+    serviceId: 'content-creation',
+    status: 'active',
+    startDate: '2026-02-01',
+    monthlyCadence: 'Monthly food photography + short-form video content',
+    linkedStrategyId: 'strat-kp-1',
+    linkedProjects: ['proj-kp-1', 'proj-kp-2'],
+  },
+  {
+    id: 'cs-kp-email',
+    clientId: 'k-pacho',
+    serviceId: 'email-marketing',
+    status: 'active',
+    startDate: '2026-02-01',
+    monthlyCadence: 'Monthly email newsletter + event announcements',
+    linkedStrategyId: 'strat-kp-1',
+    linkedProjects: ['proj-kp-1'],
+  },
+  {
+    id: 'cs-kp-web',
+    clientId: 'k-pacho',
+    serviceId: 'web-development',
+    status: 'cancelled',
+    startDate: '',
+    linkedProjects: [],
+  },
+  {
+    id: 'cs-kp-tech',
+    clientId: 'k-pacho',
+    serviceId: 'tech-support',
+    status: 'cancelled',
+    startDate: '',
+    linkedProjects: [],
+  },
+
+  // ── The Refuge ──────────────────────────────────────────────
+  {
+    id: 'cs-tr-web',
+    clientId: 'the-refuge',
+    serviceId: 'web-development',
+    status: 'active',
+    startDate: '2026-02-15',
+    monthlyCadence: 'Website build + launch + maintenance',
+    linkedStrategyId: 'strat-tr-1',
+    linkedProjects: ['proj-tr-4'],
+  },
+  {
+    id: 'cs-tr-seo',
+    clientId: 'the-refuge',
+    serviceId: 'seo',
+    status: 'active',
+    startDate: '2026-02-15',
+    monthlyCadence: 'Local SEO launch — Google Business setup + ongoing optimization',
+    linkedStrategyId: 'strat-tr-1',
+    linkedProjects: ['proj-tr-2'],
+  },
+  {
+    id: 'cs-tr-social',
+    clientId: 'the-refuge',
+    serviceId: 'social-media',
+    status: 'active',
+    startDate: '2026-02-15',
+    monthlyCadence: 'Monthly social management — launch content + ongoing growth',
+    linkedStrategyId: 'strat-tr-1',
+    linkedProjects: ['proj-tr-1', 'proj-tr-3'],
+  },
+  {
+    id: 'cs-tr-paid-ads',
+    clientId: 'the-refuge',
+    serviceId: 'paid-ads',
+    status: 'planning',
+    startDate: '2026-04-01',
+    monthlyCadence: 'Monthly Meta Ads — post-launch growth campaigns',
+    linkedStrategyId: 'strat-tr-1',
+    linkedProjects: [],
+  },
+  {
+    id: 'cs-tr-content',
+    clientId: 'the-refuge',
+    serviceId: 'content-creation',
+    status: 'cancelled',
+    startDate: '',
+    linkedProjects: [],
+  },
+  {
+    id: 'cs-tr-email',
+    clientId: 'the-refuge',
+    serviceId: 'email-marketing',
+    status: 'cancelled',
+    startDate: '',
+    linkedProjects: [],
+  },
+  {
+    id: 'cs-tr-tech',
+    clientId: 'the-refuge',
+    serviceId: 'tech-support',
+    status: 'active',
+    startDate: '2026-02-15',
+    monthlyCadence: 'Platform management: POS, reservations, Google integrations',
+    linkedStrategyId: 'strat-tr-1',
+    linkedProjects: ['proj-tr-4'],
+  },
+];
+
+export const SERVICE_STRATEGIES: ServiceStrategy[] = [
+  // ── Happy Days ──────────────────────────────────────────────
+  {
+    id: 'ss-hd-paid-ads',
+    clientServiceId: 'cs-hd-paid-ads',
+    clientStrategyId: 'strat-hd-1',
+    name: 'Happy Days — Paid Ads Q2 Strategy',
+    summary: 'Drive dispensary foot traffic via hyper-local Meta campaigns targeting 25–54 wellness-conscious adults in Nassau County. Ad spend anchors the Revenue Growth pillar.',
+    pillars: [
+      { id: 'ss-hd-pa-p1', name: 'Audience Expansion', description: 'Broaden targeting to lookalike audiences based on existing customer list.' },
+      { id: 'ss-hd-pa-p2', name: 'Creative Refresh', description: 'Monthly creative rotation to reduce ad fatigue and test new angles.' },
+      { id: 'ss-hd-pa-p3', name: 'Conversion Tracking', description: 'Implement in-store visit attribution and pixel events for full-funnel reporting.' },
+    ],
+    kpis: [
+      { id: 'ss-hd-pa-k1', name: 'Ad ROAS', target: 4.0, current: 3.2, unit: 'x' },
+      { id: 'ss-hd-pa-k2', name: 'Monthly Ad Spend', target: 2400, current: 2400, unit: '$' },
+      { id: 'ss-hd-pa-k3', name: 'CPC (avg)', target: 0.85, current: 1.12, unit: '$' },
+    ],
+  },
+  {
+    id: 'ss-hd-seo',
+    clientServiceId: 'cs-hd-seo',
+    clientStrategyId: 'strat-hd-1',
+    name: 'Happy Days — SEO Q2 Strategy',
+    summary: 'Own "dispensary near me" and "medical cannabis Long Island" search intent. Website redesign enables major on-page improvements this quarter.',
+    pillars: [
+      { id: 'ss-hd-seo-p1', name: 'Local Pack Dominance', description: 'Optimize Google Business Profile to rank in the local 3-pack for dispensary searches.' },
+      { id: 'ss-hd-seo-p2', name: 'Content SEO', description: 'Publish 2 optimized blog posts/month targeting high-intent wellness keywords.' },
+      { id: 'ss-hd-seo-p3', name: 'Technical Health', description: 'Improve Core Web Vitals and fix crawl errors from site redesign migration.' },
+    ],
+    kpis: [
+      { id: 'ss-hd-seo-k1', name: 'Organic Sessions/mo', target: 8000, current: 5500, unit: 'sessions' },
+      { id: 'ss-hd-seo-k2', name: 'Google Ranking (top KW)', target: 3, current: 7, unit: 'pos' },
+      { id: 'ss-hd-seo-k3', name: 'Backlinks', target: 80, current: 54, unit: 'links' },
+    ],
+  },
+  {
+    id: 'ss-hd-social',
+    clientServiceId: 'cs-hd-social',
+    clientStrategyId: 'strat-hd-1',
+    name: 'Happy Days — Social Media Q2 Strategy',
+    summary: 'Build a loyal community of cannabis wellness advocates. Focus on educational content, product spotlights, and user-generated content to grow organic reach.',
+    pillars: [
+      { id: 'ss-hd-sm-p1', name: 'Educational Content', description: 'Weekly wellness education posts addressing common cannabis questions.' },
+      { id: 'ss-hd-sm-p2', name: 'Product Showcasing', description: 'Monthly product feature series across Instagram and Facebook.' },
+      { id: 'ss-hd-sm-p3', name: 'UGC Amplification', description: 'Repost and incentivize customer-generated content to build social proof.' },
+    ],
+    kpis: [
+      { id: 'ss-hd-sm-k1', name: 'Followers', target: 5000, current: 3200, unit: 'followers' },
+      { id: 'ss-hd-sm-k2', name: 'Avg Engagement Rate', target: 4.5, current: 3.1, unit: '%' },
+      { id: 'ss-hd-sm-k3', name: 'Monthly Reach', target: 100000, current: 65000, unit: 'reach' },
+    ],
+  },
+  {
+    id: 'ss-hd-content',
+    clientServiceId: 'cs-hd-content',
+    clientStrategyId: 'strat-hd-1',
+    name: 'Happy Days — Content Creation Q2 Strategy',
+    summary: 'Produce high-quality visual content that elevates the Happy Days brand and feeds all marketing channels — social, ads, email, and web.',
+    pillars: [
+      { id: 'ss-hd-cc-p1', name: 'Product Photography', description: 'Monthly photo sessions showcasing new arrivals and featured products.' },
+      { id: 'ss-hd-cc-p2', name: 'Short-Form Video', description: 'Weekly Reels covering product education, staff features, and store atmosphere.' },
+    ],
+    kpis: [
+      { id: 'ss-hd-cc-k1', name: 'Content Pieces/mo', target: 20, current: 14, unit: 'pieces' },
+      { id: 'ss-hd-cc-k2', name: 'Reel Avg Views', target: 5000, current: 2800, unit: 'views' },
+    ],
+  },
+  {
+    id: 'ss-hd-web',
+    clientServiceId: 'cs-hd-web',
+    clientStrategyId: 'strat-hd-1',
+    name: 'Happy Days — Web Dev Q2 Strategy',
+    summary: 'Redesign homepage and product pages to improve conversions, support SEO goals, and meet evolving cannabis advertising compliance requirements.',
+    pillars: [
+      { id: 'ss-hd-wd-p1', name: 'Compliance-First Design', description: 'Ensure all copy and design meets state cannabis advertising regulations.' },
+      { id: 'ss-hd-wd-p2', name: 'Conversion Optimization', description: 'Add clear CTAs, product filtering, and store directions to convert visitors.' },
+    ],
+    kpis: [
+      { id: 'ss-hd-wd-k1', name: 'Bounce Rate', target: 35, current: 48, unit: '%' },
+      { id: 'ss-hd-wd-k2', name: 'Avg Session Duration', target: 180, current: 95, unit: 'sec' },
+    ],
+  },
+
+  // ── K. Pacho ────────────────────────────────────────────────
+  {
+    id: 'ss-kp-paid-ads',
+    clientServiceId: 'cs-kp-paid-ads',
+    clientStrategyId: 'strat-kp-1',
+    name: 'K. Pacho — Paid Ads Q2 Strategy',
+    summary: 'Drive reservation volume and event attendance through local Meta campaigns. Cinco de Mayo is the quarter\'s marquee activation.',
+    pillars: [
+      { id: 'ss-kp-pa-p1', name: 'Event-Based Campaigns', description: 'Dedicated ad flights for Happy Hour, Taco Tuesday, and Cinco de Mayo.' },
+      { id: 'ss-kp-pa-p2', name: 'Local Awareness', description: 'Always-on reach campaign targeting 5-mile radius of New Hyde Park.' },
+    ],
+    kpis: [
+      { id: 'ss-kp-pa-k1', name: 'Ad ROAS', target: 3.5, current: 2.8, unit: 'x' },
+      { id: 'ss-kp-pa-k2', name: 'Monthly Ad Spend', target: 1800, current: 1800, unit: '$' },
+      { id: 'ss-kp-pa-k3', name: 'Event RSVPs from Ads', target: 120, current: 0, unit: 'RSVPs' },
+    ],
+  },
+  {
+    id: 'ss-kp-social',
+    clientServiceId: 'cs-kp-social',
+    clientStrategyId: 'strat-kp-1',
+    name: 'K. Pacho — Social Media Q2 Strategy',
+    summary: 'Build an engaged local following around K. Pacho\'s authentic Mexican cuisine. Taco Tuesday and event content drive weekly recurring engagement.',
+    pillars: [
+      { id: 'ss-kp-sm-p1', name: 'Food Content Series', description: 'Weekly hero food shots and Reels featuring seasonal specials and chef processes.' },
+      { id: 'ss-kp-sm-p2', name: 'Community Building', description: 'Engage local food communities, share user photos, and run monthly giveaways.' },
+    ],
+    kpis: [
+      { id: 'ss-kp-sm-k1', name: 'Followers', target: 2000, current: 1450, unit: 'followers' },
+      { id: 'ss-kp-sm-k2', name: 'Engagement Rate', target: 5.0, current: 3.1, unit: '%' },
+      { id: 'ss-kp-sm-k3', name: 'Monthly Reach', target: 40000, current: 22000, unit: 'reach' },
+    ],
+  },
+  {
+    id: 'ss-kp-seo',
+    clientServiceId: 'cs-kp-seo',
+    clientStrategyId: 'strat-kp-1',
+    name: 'K. Pacho — SEO Q2 Strategy',
+    summary: 'Dominate "Mexican restaurant New Hyde Park" and surrounding local search terms. Review velocity is a key lever for local pack ranking.',
+    pillars: [
+      { id: 'ss-kp-seo-p1', name: 'Google Business Optimization', description: 'Weekly posts, photo updates, and Q&A management on GBP.' },
+      { id: 'ss-kp-seo-p2', name: 'Review Generation', description: 'Implement post-visit review request system via SMS and receipts.' },
+    ],
+    kpis: [
+      { id: 'ss-kp-seo-k1', name: 'Google Rating', target: 4.7, current: 4.4, unit: '★' },
+      { id: 'ss-kp-seo-k2', name: 'Monthly Reviews', target: 20, current: 12, unit: 'reviews' },
+      { id: 'ss-kp-seo-k3', name: 'Local Pack Ranking', target: 2, current: 4, unit: 'pos' },
+    ],
+  },
+  {
+    id: 'ss-kp-content',
+    clientServiceId: 'cs-kp-content',
+    clientStrategyId: 'strat-kp-1',
+    name: 'K. Pacho — Content Creation Q2 Strategy',
+    summary: 'Produce crave-worthy food photography and short-form video to feed social, ads, and the spring menu rollout.',
+    pillars: [
+      { id: 'ss-kp-cc-p1', name: 'Spring Menu Shoot', description: 'Full photography session for new spring menu items — 25+ edited hero shots.' },
+      { id: 'ss-kp-cc-p2', name: 'Cinco de Mayo Content', description: 'Video and photo package for the Cinco de Mayo campaign creative.' },
+    ],
+    kpis: [
+      { id: 'ss-kp-cc-k1', name: 'Content Pieces/mo', target: 16, current: 10, unit: 'pieces' },
+      { id: 'ss-kp-cc-k2', name: 'Reel Avg Views', target: 3000, current: 1800, unit: 'views' },
+    ],
+  },
+  {
+    id: 'ss-kp-email',
+    clientServiceId: 'cs-kp-email',
+    clientStrategyId: 'strat-kp-1',
+    name: 'K. Pacho — Email Marketing Q2 Strategy',
+    summary: 'Build and monetize an email list around events, specials, and loyalty. Cinco de Mayo email series will be the quarter\'s biggest send.',
+    pillars: [
+      { id: 'ss-kp-em-p1', name: 'List Growth', description: 'QR code opt-ins at tables and website pop-up to grow the list.' },
+      { id: 'ss-kp-em-p2', name: 'Event Sequences', description: 'Multi-email sequences for Happy Hour promotion and Cinco de Mayo.' },
+    ],
+    kpis: [
+      { id: 'ss-kp-em-k1', name: 'Email List Size', target: 800, current: 420, unit: 'subscribers' },
+      { id: 'ss-kp-em-k2', name: 'Open Rate', target: 35, current: 28, unit: '%' },
+      { id: 'ss-kp-em-k3', name: 'Click Rate', target: 8, current: 5.2, unit: '%' },
+    ],
+  },
+
+  // ── The Refuge ──────────────────────────────────────────────
+  {
+    id: 'ss-tr-web',
+    clientServiceId: 'cs-tr-web',
+    clientStrategyId: 'strat-tr-1',
+    name: 'The Refuge — Web Dev Strategy',
+    summary: 'Build and launch a polished restaurant website that drives reservations and establishes The Refuge as a premium Melville dining destination.',
+    pillars: [
+      { id: 'ss-tr-wd-p1', name: 'Launch Readiness', description: 'Full website live before grand opening with menu, reservations, and brand story.' },
+      { id: 'ss-tr-wd-p2', name: 'Post-Launch Optimization', description: 'Performance monitoring, SEO tuning, and content updates in first 30 days.' },
+    ],
+    kpis: [
+      { id: 'ss-tr-wd-k1', name: 'Launch Date', target: 1, current: 0, unit: 'milestone' },
+      { id: 'ss-tr-wd-k2', name: 'PageSpeed Score', target: 90, current: 72, unit: 'score' },
+      { id: 'ss-tr-wd-k3', name: 'Reservation Clicks/mo', target: 200, current: 45, unit: 'clicks' },
+    ],
+  },
+  {
+    id: 'ss-tr-seo',
+    clientServiceId: 'cs-tr-seo',
+    clientStrategyId: 'strat-tr-1',
+    name: 'The Refuge — SEO Strategy',
+    summary: 'Establish The Refuge in local search from day one. Google Business setup and early review generation set the foundation for long-term organic growth.',
+    pillars: [
+      { id: 'ss-tr-seo-p1', name: 'GBP Launch', description: 'Fully optimized Google Business Profile live before opening day.' },
+      { id: 'ss-tr-seo-p2', name: 'Review Velocity', description: 'Generate 50+ Google reviews in the first 60 days post-opening.' },
+    ],
+    kpis: [
+      { id: 'ss-tr-seo-k1', name: 'Google Rating', target: 4.5, current: 4.2, unit: '★' },
+      { id: 'ss-tr-seo-k2', name: 'Reviews (60 days)', target: 50, current: 24, unit: 'reviews' },
+      { id: 'ss-tr-seo-k3', name: 'GBP Actions/mo', target: 500, current: 180, unit: 'actions' },
+    ],
+  },
+  {
+    id: 'ss-tr-social',
+    clientServiceId: 'cs-tr-social',
+    clientStrategyId: 'strat-tr-1',
+    name: 'The Refuge — Social Media Strategy',
+    summary: 'Build the brand from zero through the grand opening buzz and sustain momentum into monthly operations. Instagram is the primary growth channel.',
+    pillars: [
+      { id: 'ss-tr-sm-p1', name: 'Launch Campaign', description: 'Pre-opening hype, opening day live coverage, and first-week recap content.' },
+      { id: 'ss-tr-sm-p2', name: 'Monthly Rhythm', description: 'Consistent posting cadence with food, ambiance, events, and community content.' },
+    ],
+    kpis: [
+      { id: 'ss-tr-sm-k1', name: 'Followers', target: 3000, current: 1200, unit: 'followers' },
+      { id: 'ss-tr-sm-k2', name: 'Engagement Rate', target: 5.0, current: 4.2, unit: '%' },
+      { id: 'ss-tr-sm-k3', name: 'Monthly Impressions', target: 60000, current: 28000, unit: 'impressions' },
+    ],
+  },
+  {
+    id: 'ss-tr-tech',
+    clientServiceId: 'cs-tr-tech',
+    clientStrategyId: 'strat-tr-1',
+    name: 'The Refuge — Tech Support Strategy',
+    summary: 'Stand up and maintain the full tech stack for The Refuge: POS, online reservations, Google integrations, and staff training.',
+    pillars: [
+      { id: 'ss-tr-tech-p1', name: 'Stack Setup', description: 'POS integration with Toast, OpenTable reservations, and Google Maps sync.' },
+      { id: 'ss-tr-tech-p2', name: 'Ongoing Support', description: 'Monthly check-in, platform updates, and staff troubleshooting.' },
+    ],
+    kpis: [
+      { id: 'ss-tr-tech-k1', name: 'Systems Online', target: 4, current: 3, unit: 'systems' },
+      { id: 'ss-tr-tech-k2', name: 'Uptime', target: 99.9, current: 99.2, unit: '%' },
+    ],
+  },
+];

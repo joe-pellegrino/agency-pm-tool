@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import {
   PROJECTS, CLIENTS, TASKS, STRATEGIES, WORKFLOW_TEMPLATES, TEAM_MEMBERS,
+  CLIENT_SERVICES, SERVICES,
   Project, Task, PRIORITY_COLORS,
 } from '@/lib/data';
 import TopBar from '@/components/layout/TopBar';
@@ -404,19 +405,32 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
 export default function ProjectsPage() {
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedService, setSelectedService] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  // Map projectId → serviceId via CLIENT_SERVICES
+  const projectServiceMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    CLIENT_SERVICES.forEach(cs => {
+      cs.linkedProjects.forEach(pid => {
+        map[pid] = cs.serviceId;
+      });
+    });
+    return map;
+  }, []);
 
   const filtered = useMemo(() => {
     return PROJECTS.filter(p => {
       const matchClient = selectedClient === 'all' || p.clientId === selectedClient;
       const matchStatus = selectedStatus === 'all' || p.status === selectedStatus;
+      const matchService = selectedService === 'all' || projectServiceMap[p.id] === selectedService;
       const matchSearch = !search ||
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.description.toLowerCase().includes(search.toLowerCase());
-      return matchClient && matchStatus && matchSearch;
+      return matchClient && matchStatus && matchService && matchSearch;
     });
-  }, [selectedClient, selectedStatus, search]);
+  }, [selectedClient, selectedStatus, selectedService, search, projectServiceMap]);
 
   const stats = useMemo(() => ({
     total: PROJECTS.length,
@@ -491,6 +505,29 @@ export default function ProjectsPage() {
                 style={selectedClient === c.id ? { backgroundColor: c.color } : {}}
               >
                 {c.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Service filter */}
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <button
+              onClick={() => setSelectedService('all')}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                selectedService === 'all' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              All Services
+            </button>
+            {SERVICES.map(svc => (
+              <button
+                key={svc.id}
+                onClick={() => setSelectedService(svc.id)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  selectedService === svc.id ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {svc.icon} {svc.name}
               </button>
             ))}
           </div>

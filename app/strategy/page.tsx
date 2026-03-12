@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
-  STRATEGIES, CLIENTS, PROJECTS, Strategy, StrategyPillar, KPI,
+  STRATEGIES, CLIENTS, PROJECTS, CLIENT_SERVICES, SERVICE_STRATEGIES, SERVICES,
+  Strategy, StrategyPillar, KPI, ServiceStrategy,
 } from '@/lib/data';
 import TopBar from '@/components/layout/TopBar';
 import {
-  TrendingUp, Target, CheckCircle, Clock, AlertTriangle, ChevronRight,
-  BarChart3, Layers, FolderOpen, Calendar,
+  TrendingUp, Target, CheckCircle, Clock, AlertTriangle, ChevronDown, ChevronUp,
+  BarChart3, Layers, FolderOpen, Calendar, Zap, ArrowRight,
 } from 'lucide-react';
 
 const STATUS_CONFIG = {
@@ -23,22 +25,57 @@ const PROJECT_STATUS_CONFIG = {
   'on-hold': { label: 'On Hold', color: 'bg-amber-100 text-amber-700' },
 } as const;
 
-function KPIGauge({ kpi }: { kpi: KPI }) {
-  // For "lower is better" metrics (like Bounce Rate), invert the progress
-  const lowerIsBetter = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('churn');
-  const pct = lowerIsBetter
-    ? Math.max(0, Math.min(100, ((kpi.target / kpi.current) * 100)))
+const HEALTH_CONFIG = {
+  'on-track': { label: 'On Track', color: 'bg-green-100 text-green-700 border-green-200', dot: 'bg-green-500' },
+  'at-risk': { label: 'At Risk', color: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+  'behind': { label: 'Behind', color: 'bg-red-100 text-red-700 border-red-200', dot: 'bg-red-500' },
+};
+
+function getKpiHealth(kpi: KPI): 'on-track' | 'at-risk' | 'behind' {
+  const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('churn');
+  const pct = lb
+    ? Math.max(0, Math.min(100, (kpi.target / kpi.current) * 100))
     : Math.max(0, Math.min(100, (kpi.current / kpi.target) * 100));
+  if (pct >= 70) return 'on-track';
+  if (pct >= 40) return 'at-risk';
+  return 'behind';
+}
 
-  const isOnTrack = lowerIsBetter ? kpi.current <= kpi.target * 1.1 : pct >= 70;
-  const isAtRisk = lowerIsBetter ? kpi.current > kpi.target * 1.1 && kpi.current <= kpi.target * 1.3 : pct >= 40 && pct < 70;
+function getPillarHealth(pillar: StrategyPillar): 'on-track' | 'at-risk' | 'behind' {
+  const healths = pillar.kpis.map(getKpiHealth);
+  if (healths.some(h => h === 'behind')) return 'behind';
+  if (healths.some(h => h === 'at-risk')) return 'at-risk';
+  return 'on-track';
+}
 
+function getServiceStrategyHealth(ss: ServiceStrategy): 'on-track' | 'at-risk' | 'behind' {
+  const scores = ss.kpis.map(kpi => {
+    const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('cpc') || kpi.name.toLowerCase().includes('pos');
+    const pct = lb
+      ? Math.min(100, (kpi.target / Math.max(kpi.current, 0.01)) * 100)
+      : Math.min(100, (kpi.current / kpi.target) * 100);
+    return pct;
+  });
+  const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  if (avg >= 70) return 'on-track';
+  if (avg >= 40) return 'at-risk';
+  return 'behind';
+}
+
+function KPIGauge({ kpi }: { kpi: KPI | { id: string; name: string; target: number; current: number; unit: string } }) {
+  const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('churn') || kpi.name.toLowerCase().includes('cpc') || kpi.name.toLowerCase().includes('pos');
+  const pct = lb
+    ? Math.max(0, Math.min(100, (kpi.target / Math.max(kpi.current, 0.01)) * 100))
+    : Math.max(0, Math.min(100, (kpi.current / kpi.target) * 100));
+  const isOnTrack = pct >= 70;
+  const isAtRisk = pct >= 40 && pct < 70;
   const barColor = isOnTrack ? 'bg-green-500' : isAtRisk ? 'bg-amber-500' : 'bg-red-400';
 
-  const formatValue = (val: number, unit: string) => {
-    if (unit === '%' || unit === 'x' || unit === '★') return `${val}${unit}`;
-    if (val >= 1000) return `${(val / 1000).toFixed(val >= 10000 ? 0 : 1)}k`;
-    return `${val}`;
+  const fmt = (v: number, unit: string) => {
+    if (unit === '$') return `$${v.toLocaleString()}`;
+    if (unit === '%' || unit === 'x' || unit === '★') return `${v}${unit}`;
+    if (v >= 1000) return `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k`;
+    return `${v}`;
   };
 
   return (
@@ -46,48 +83,112 @@ function KPIGauge({ kpi }: { kpi: KPI }) {
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">{kpi.name}</span>
         <div className="text-xs text-gray-500 flex items-center gap-1">
-          <span className="font-semibold text-gray-900 dark:text-white">{formatValue(kpi.current, kpi.unit)}</span>
+          <span className="font-semibold text-gray-900 dark:text-white">{fmt(kpi.current, kpi.unit)}</span>
           <span className="text-gray-400">/</span>
-          <span>{formatValue(kpi.target, kpi.unit)}</span>
-          {kpi.unit !== '%' && kpi.unit !== 'x' && kpi.unit !== '★' && <span className="text-gray-400">{kpi.unit}</span>}
+          <span>{fmt(kpi.target, kpi.unit)}</span>
+          {kpi.unit !== '%' && kpi.unit !== 'x' && kpi.unit !== '★' && kpi.unit !== '$' && <span className="text-gray-400">{kpi.unit}</span>}
         </div>
       </div>
       <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-        <div
-          className={`h-2 rounded-full transition-all ${barColor}`}
-          style={{ width: `${pct}%` }}
-        />
+        <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
       <div className="flex justify-between text-[10px] text-gray-400">
-        <span>
-          {isOnTrack ? '✅ On Track' : isAtRisk ? '⚠️ At Risk' : '🔴 Behind'}
-        </span>
+        <span>{isOnTrack ? '✅ On Track' : isAtRisk ? '⚠️ At Risk' : '🔴 Behind'}</span>
         <span>{Math.round(pct)}%</span>
       </div>
     </div>
   );
 }
 
-function getPillarHealth(pillar: StrategyPillar): 'on-track' | 'at-risk' | 'behind' {
-  const kpiHealths = pillar.kpis.map(kpi => {
-    const lowerIsBetter = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('churn');
-    const pct = lowerIsBetter
-      ? Math.max(0, Math.min(100, (kpi.target / kpi.current) * 100))
-      : Math.max(0, Math.min(100, (kpi.current / kpi.target) * 100));
-    if (pct >= 70) return 'on-track';
-    if (pct >= 40) return 'at-risk';
-    return 'behind';
-  });
-  if (kpiHealths.some(h => h === 'behind')) return 'behind';
-  if (kpiHealths.some(h => h === 'at-risk')) return 'at-risk';
-  return 'on-track';
-}
+function ServiceStrategyCard({ ss, clientColor }: { ss: ServiceStrategy; clientColor: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const cs = CLIENT_SERVICES.find(x => x.id === ss.clientServiceId);
+  const service = SERVICES.find(s => s.id === cs?.serviceId);
+  const projs = PROJECTS.filter(p => cs?.linkedProjects.includes(p.id));
+  const health = getServiceStrategyHealth(ss);
+  const healthCfg = HEALTH_CONFIG[health];
 
-const HEALTH_CONFIG = {
-  'on-track': { label: 'On Track', color: 'bg-green-100 text-green-700 border-green-200', dot: 'bg-green-500' },
-  'at-risk': { label: 'At Risk', color: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
-  'behind': { label: 'Behind', color: 'bg-red-100 text-red-700 border-red-200', dot: 'bg-red-500' },
-};
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div
+        className="px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+        onClick={() => setExpanded(e => !e)}
+        style={{ borderLeft: `3px solid ${clientColor}` }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-xl flex-shrink-0">{service?.icon || '📋'}</span>
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900 dark:text-white text-sm truncate">{service?.name || 'Service'}</div>
+            <div className="text-xs text-gray-500 truncate">{ss.name}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1 ${healthCfg.color}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${healthCfg.dot}`} />
+            {healthCfg.label}
+          </span>
+          {expanded ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="px-4 py-4 space-y-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
+          {/* Summary */}
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{ss.summary}</p>
+
+          {/* Pillars */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Pillars</div>
+            <div className="space-y-1.5">
+              {ss.pillars.map(pillar => (
+                <div key={pillar.id} className="flex gap-2 text-xs">
+                  <span className="w-1 bg-indigo-300 rounded-full flex-shrink-0" style={{ minHeight: '14px' }} />
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{pillar.name}: </span>
+                    <span className="text-gray-500">{pillar.description}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* KPIs */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <BarChart3 size={11} /> KPIs
+            </div>
+            <div className="space-y-2.5">
+              {ss.kpis.map(kpi => (
+                <KPIGauge key={kpi.id} kpi={kpi} />
+              ))}
+            </div>
+          </div>
+
+          {/* Projects */}
+          {projs.length > 0 && (
+            <div>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <FolderOpen size={11} /> Linked Projects
+              </div>
+              <div className="space-y-1.5">
+                {projs.map(proj => {
+                  const sc = PROJECT_STATUS_CONFIG[proj.status];
+                  return (
+                    <div key={proj.id} className="flex items-center gap-2 text-xs">
+                      <FolderOpen size={11} className="text-gray-400" />
+                      <span className="flex-1 text-gray-700 dark:text-gray-300 truncate">{proj.name}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${sc.color}`}>{proj.progress}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function PillarCard({ pillar, clientColor }: { pillar: StrategyPillar; clientColor: string }) {
   const projects = PROJECTS.filter(p => pillar.projectIds.includes(p.id));
@@ -96,11 +197,8 @@ function PillarCard({ pillar, clientColor }: { pillar: StrategyPillar; clientCol
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Pillar header */}
-      <div
-        className="px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-700"
-        style={{ backgroundColor: clientColor + '08' }}
-      >
+      <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-700"
+        style={{ backgroundColor: clientColor + '08' }}>
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{pillar.name}</h4>
           <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{pillar.description}</p>
@@ -110,29 +208,21 @@ function PillarCard({ pillar, clientColor }: { pillar: StrategyPillar; clientCol
           {healthCfg.label}
         </span>
       </div>
-
       <div className="px-4 py-4 space-y-4">
-        {/* KPIs */}
         <div className="space-y-3">
-          {pillar.kpis.map(kpi => (
-            <KPIGauge key={kpi.id} kpi={kpi} />
-          ))}
+          {pillar.kpis.map(kpi => <KPIGauge key={kpi.id} kpi={kpi} />)}
         </div>
-
-        {/* Projects */}
         {projects.length > 0 && (
           <div>
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Projects</div>
             <div className="space-y-1.5">
               {projects.map(proj => {
-                const statusCfg = PROJECT_STATUS_CONFIG[proj.status];
+                const sc = PROJECT_STATUS_CONFIG[proj.status];
                 return (
                   <div key={proj.id} className="flex items-center gap-2">
                     <FolderOpen size={11} className="text-gray-400 flex-shrink-0" />
                     <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{proj.name}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${statusCfg.color}`}>
-                      {proj.progress}%
-                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${sc.color}`}>{proj.progress}%</span>
                   </div>
                 );
               })}
@@ -150,20 +240,22 @@ function StrategyView({ strategy }: { strategy: Strategy }) {
   const allProjects = strategy.pillars.flatMap(p => PROJECTS.filter(proj => p.projectIds.includes(proj.id)));
   const uniqueProjects = [...new Map(allProjects.map(p => [p.id, p])).values()];
 
+  // Service strategies for this client strategy
+  const serviceStrategies = SERVICE_STRATEGIES.filter(ss => ss.clientStrategyId === strategy.id);
+
   const overallHealth = (() => {
     const healths = strategy.pillars.map(getPillarHealth);
     if (healths.some(h => h === 'behind')) return 'behind';
     if (healths.some(h => h === 'at-risk')) return 'at-risk';
     return 'on-track';
   })();
-
   const healthCfg = HEALTH_CONFIG[overallHealth];
 
   return (
     <div>
-      {/* Strategy header */}
+      {/* Client Strategy Header */}
       <div
-        className="rounded-xl p-4 sm:p-5 mb-5 border"
+        className="rounded-xl p-4 sm:p-5 mb-6 border"
         style={{ backgroundColor: client.color + '08', borderColor: client.color + '30' }}
       >
         <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -175,9 +267,7 @@ function StrategyView({ strategy }: { strategy: Strategy }) {
               >
                 {client.name}
               </span>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusCfg.color}`}>
-                {statusCfg.label}
-              </span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full border flex items-center gap-1 ${healthCfg.color}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${healthCfg.dot}`} />
                 Overall: {healthCfg.label}
@@ -199,16 +289,58 @@ function StrategyView({ strategy }: { strategy: Strategy }) {
                 <FolderOpen size={13} />
                 {uniqueProjects.length} projects
               </div>
+              {serviceStrategies.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <Zap size={13} />
+                  {serviceStrategies.length} service strategies
+                </div>
+              )}
             </div>
           </div>
+          <Link
+            href={`/clients/${client.id}`}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all hover:shadow-sm flex-shrink-0"
+            style={{ borderColor: client.color + '40', color: client.color, backgroundColor: client.color + '10' }}
+          >
+            Client View <ArrowRight size={12} />
+          </Link>
         </div>
       </div>
 
-      {/* Pillars grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {strategy.pillars.map(pillar => (
-          <PillarCard key={pillar.id} pillar={pillar} clientColor={client.color} />
-        ))}
+      {/* Service Strategies — Hierarchical */}
+      {serviceStrategies.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <Zap size={16} className="text-indigo-500" />
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Service Strategies</h3>
+            </div>
+            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+              {serviceStrategies.length} services
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {serviceStrategies.map(ss => (
+              <ServiceStrategyCard key={ss.id} ss={ss} clientColor={client.color} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Core Strategy Pillars */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Target size={16} className="text-indigo-500" />
+          <h3 className="text-base font-bold text-gray-900 dark:text-white">Core Strategy Pillars</h3>
+          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+            {strategy.pillars.length} pillars
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {strategy.pillars.map(pillar => (
+            <PillarCard key={pillar.id} pillar={pillar} clientColor={client.color} />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -217,16 +349,14 @@ function StrategyView({ strategy }: { strategy: Strategy }) {
 export default function StrategyPage() {
   const [selectedClientId, setSelectedClientId] = useState<string>(CLIENTS[0].id);
 
-  const strategy = useMemo(() => {
-    return STRATEGIES.find(s => s.clientId === selectedClientId) || null;
-  }, [selectedClientId]);
+  const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === selectedClientId) || null, [selectedClientId]);
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
-      <TopBar title="Strategy" subtitle="Quarterly strategies, pillars, KPIs, and project alignment" />
+      <TopBar title="Strategy" subtitle="Client strategies, service strategies, and KPI hierarchy" />
 
       <div className="p-4 sm:p-6 lg:p-8">
-        {/* Client selector tabs */}
+        {/* Client selector */}
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
           {CLIENTS.map(client => {
             const s = STRATEGIES.find(st => st.clientId === client.id);
@@ -246,18 +376,14 @@ export default function StrategyPage() {
                   className="w-6 h-6 rounded text-xs font-bold flex items-center justify-center flex-shrink-0"
                   style={{
                     backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : client.color + '20',
-                    color: isSelected ? 'white' : client.color
+                    color: isSelected ? 'white' : client.color,
                   }}
                 >
                   {client.logo}
                 </span>
                 {client.name}
                 {s && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                    isSelected
-                      ? 'bg-white/20 text-white'
-                      : STATUS_CONFIG[s.status].color
-                  }`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isSelected ? 'bg-white/20 text-white' : STATUS_CONFIG[s.status].color}`}>
                     {s.quarter}
                   </span>
                 )}
