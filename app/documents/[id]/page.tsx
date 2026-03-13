@@ -16,7 +16,6 @@ import { TableHeader } from '@tiptap/extension-table';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate, applyAwarenessUpdate } from 'y-protocols/awareness';
 import { supabase } from '@/lib/supabase/client';
-import { createServerClient } from '@/lib/supabase/client';
 import {
   updateDocument, createDocumentVersion, createDocumentComment,
   resolveDocumentComment, archiveDocument,
@@ -212,30 +211,20 @@ function CommentsSidebar({
   documentId,
   currentUser,
   teamMembers,
+  initialComments,
   onClose,
 }: {
   documentId: string;
   currentUser: { id: string; name: string; color: string };
   teamMembers: Array<{ id: string; name: string; color: string }>;
+  initialComments: CommentRow[];
   onClose: () => void;
 }) {
-  const [comments, setComments] = useState<CommentRow[]>([]);
+  const [comments, setComments] = useState<CommentRow[]>(initialComments);
   const [newText, setNewText] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase
-      .from('comments')
-      .select('*')
-      .eq('document_id', documentId)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        setComments((data as CommentRow[]) || []);
-        setLoading(false);
-      });
-  }, [documentId]);
+  const [loading, setLoading] = useState(false);
 
   const getAuthor = (id: string) => teamMembers.find(m => m.id === id) || { name: id, color: '#6366f1' };
 
@@ -393,29 +382,19 @@ type VersionRow = {
 function VersionHistoryPanel({
   documentId,
   teamMembers,
+  initialVersions,
   onRestore,
   onClose,
 }: {
   documentId: string;
   teamMembers: Array<{ id: string; name: string; color: string }>;
+  initialVersions: VersionRow[];
   onRestore: (content: string) => void;
   onClose: () => void;
 }) {
-  const [versions, setVersions] = useState<VersionRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [versions, setVersions] = useState<VersionRow[]>(initialVersions);
+  const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<VersionRow | null>(null);
-
-  useEffect(() => {
-    supabase
-      .from('document_versions')
-      .select('*')
-      .eq('document_id', documentId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setVersions((data as VersionRow[]) || []);
-        setLoading(false);
-      });
-  }, [documentId]);
 
   const getAuthor = (id: string) => teamMembers.find(m => m.id === id) || { name: id, color: '#6366f1' };
 
@@ -657,31 +636,32 @@ export default function DocumentEditorPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Load document data
+  // Loaded versions/comments for sub-panels
+  const [docVersions, setDocVersions] = useState<VersionRow[]>([]);
+  const [docComments, setDocComments] = useState<CommentRow[]>([]);
+
+  // Load document data via server API route (bypasses RLS — no auth yet)
   useEffect(() => {
-    const db = createServerClient();
-    Promise.all([
-      supabase.from('documents').select('*').eq('id', documentId).single(),
-      supabase.from('document_collaborators').select('team_member_id').eq('document_id', documentId),
-      supabase.from('team_members').select('*').is('archived_at', null),
-      supabase.from('clients').select('id,name,color').is('archived_at', null),
-    ]).then(([docRes, collabRes, teamRes, clientsRes]) => {
-      if (!docRes.data || docRes.error) { setNotFound(true); return; }
-      const collaborators = (collabRes.data || []).map((c: { team_member_id: string }) => c.team_member_id);
-      const members = (teamRes.data || []) as Array<{ id: string; name: string; color: string; initials: string }>;
-      setTeamMembers(members);
-      setClients((clientsRes.data || []) as Array<{ id: string; name: string; color: string }>);
-      setDocData({
-        id: docRes.data.id,
-        title: docRes.data.title,
-        clientId: docRes.data.client_id,
-        type: docRes.data.type || 'client',
-        yjsState: docRes.data.yjs_state,
-        collaborators,
-      });
-      // Init user
-      currentUserRef.current = getOrCreateUser(members);
-    });
+    fetch(`/api/document/${documentId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { setNotFound(true); return; }
+        const members = data.teamMembers as Array<{ id: string; name: string; color: string; initials: string }>;
+        setTeamMembers(members);
+        setClients(data.clients as Array<{ id: string; name: string; color: string }>);
+        setDocVersions(data.versions || []);
+        setDocComments(data.comments || []);
+        setDocData({
+          id: data.document.id,
+          title: data.document.title,
+          clientId: data.document.client_id,
+          type: data.document.type || 'client',
+          yjsState: data.document.yjs_state,
+          collaborators: data.collaborators,
+        });
+        currentUserRef.current = getOrCreateUser(members);
+      })
+      .catch(() => setNotFound(true));
   }, [documentId]);
 
   // Init Yjs when doc data is loaded
@@ -956,6 +936,7 @@ export default function DocumentEditorPage() {
             documentId={documentId}
             currentUser={currentUser}
             teamMembers={teamMembers}
+            initialComments={docComments}
             onClose={() => setShowComments(false)}
           />
         )}
@@ -963,6 +944,7 @@ export default function DocumentEditorPage() {
           <VersionHistoryPanel
             documentId={documentId}
             teamMembers={teamMembers}
+            initialVersions={docVersions}
             onRestore={(version) => {
               toast.success(`Previewing version ${version}`);
             }}
