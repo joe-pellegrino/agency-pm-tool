@@ -12,7 +12,7 @@ import {
   Building2, Lock, Globe, Clock, Users,
   LayoutGrid, List, Folder, FolderPlus, FolderOpen,
   ChevronRight, ChevronDown, MoreHorizontal, Pencil, Archive,
-  FolderInput,
+  FolderInput, Menu,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import type { DocumentFolder } from '@/lib/data';
@@ -60,7 +60,6 @@ function NewDocumentModal({ onClose, defaultFolderId }: { onClose: () => void; d
         clientId: type === 'client' ? clientId : undefined,
         collaboratorIds,
       });
-      // Move to folder if selected
       if (folderId) {
         await moveDocumentToFolder(id, folderId);
       }
@@ -276,12 +275,16 @@ function FolderSidebar({
   activeFolderId,
   onSelectFolder,
   onNewFolder,
+  isOpen,
+  onClose,
 }: {
   folders: DocumentFolder[];
   documents: Array<{ folderId?: string | null }>;
   activeFolderId: string | null;
   onSelectFolder: (id: string | null) => void;
   onNewFolder: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }) {
   const { CLIENTS = [] } = useAppData();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -316,6 +319,11 @@ function FolderSidebar({
     } catch (e) { toast.error((e as Error).message); }
   };
 
+  const handleSelectFolder = (id: string | null) => {
+    onSelectFolder(id);
+    onClose(); // close drawer on mobile after selection
+  };
+
   const renderFolder = (folder: DocumentFolder, depth = 0) => {
     const children = folders.filter(f => f.parentId === folder.id);
     const isExpanded = expanded.has(folder.id);
@@ -335,7 +343,7 @@ function FolderSidebar({
             </button>
           ) : <span className="w-3 flex-shrink-0" />}
 
-          <button onClick={() => onSelectFolder(folder.id)} className="flex items-center gap-1.5 flex-1 min-w-0">
+          <button onClick={() => handleSelectFolder(folder.id)} className="flex items-center gap-1.5 flex-1 min-w-0">
             {isActive ? <FolderOpen size={14} style={{ color: folder.color }} /> : <Folder size={14} style={{ color: folder.color }} />}
             {editingFolder === folder.id ? (
               <input
@@ -381,47 +389,100 @@ function FolderSidebar({
   };
 
   return (
-    <div className="w-56 flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-y-auto" onClick={() => setMenuFolder(null)}>
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Folders</h3>
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={onClose}
+        />
+      )}
 
-        {/* All Documents */}
-        <button
-          onClick={() => onSelectFolder(null)}
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-0.5 ${activeFolderId === null ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-        >
-          <FileText size={14} />
-          <span className="flex-1 text-left text-xs">All Documents</span>
-          <span className="text-[10px] text-gray-400 font-medium">{totalDocs}</span>
-        </button>
+      {/* Sidebar — fixed drawer on mobile, static on desktop */}
+      <div
+        className={`
+          fixed top-16 left-0 bottom-0 z-40 w-64
+          md:static md:top-auto md:bottom-auto md:z-auto md:w-56 md:flex-shrink-0
+          transform transition-transform duration-300 ease-in-out
+          md:transform-none
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
+          flex flex-col overflow-y-auto
+        `}
+        onClick={() => setMenuFolder(null)}
+      >
+        {/* Mobile-only header with close button */}
+        <div className="flex items-center justify-between px-3 py-3 border-b border-gray-200 dark:border-gray-700 md:hidden">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <Folder size={15} className="text-indigo-500" /> Folders
+          </h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            <X size={15} />
+          </button>
+        </div>
 
-        {/* Unfiled */}
-        <button
-          onClick={() => onSelectFolder('__unfiled__')}
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${activeFolderId === '__unfiled__' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-        >
-          <FileText size={14} className="text-gray-400" />
-          <span className="flex-1 text-left text-xs">Unfiled</span>
-          <span className="text-[10px] text-gray-400 font-medium">{docCount(null)}</span>
-        </button>
+        {/* Desktop header */}
+        <div className="hidden md:block p-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Folders</h3>
+
+          {/* All Documents */}
+          <button
+            onClick={() => handleSelectFolder(null)}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-0.5 ${activeFolderId === null ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          >
+            <FileText size={14} />
+            <span className="flex-1 text-left text-xs">All Documents</span>
+            <span className="text-[10px] text-gray-400 font-medium">{totalDocs}</span>
+          </button>
+
+          {/* Unfiled */}
+          <button
+            onClick={() => handleSelectFolder('__unfiled__')}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${activeFolderId === '__unfiled__' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          >
+            <FileText size={14} className="text-gray-400" />
+            <span className="flex-1 text-left text-xs">Unfiled</span>
+            <span className="text-[10px] text-gray-400 font-medium">{docCount(null)}</span>
+          </button>
+        </div>
+
+        {/* Mobile: All Documents + Unfiled */}
+        <div className="md:hidden p-3 border-b border-gray-200 dark:border-gray-700 space-y-0.5">
+          <button
+            onClick={() => handleSelectFolder(null)}
+            className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors ${activeFolderId === null ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          >
+            <FileText size={15} />
+            <span className="flex-1 text-left text-sm">All Documents</span>
+            <span className="text-xs text-gray-400 font-medium">{totalDocs}</span>
+          </button>
+          <button
+            onClick={() => handleSelectFolder('__unfiled__')}
+            className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors ${activeFolderId === '__unfiled__' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          >
+            <FileText size={15} className="text-gray-400" />
+            <span className="flex-1 text-left text-sm">Unfiled</span>
+            <span className="text-xs text-gray-400 font-medium">{docCount(null)}</span>
+          </button>
+        </div>
+
+        <div className="flex-1 p-2 space-y-0.5">
+          {topFolders.map(f => renderFolder(f))}
+          {topFolders.length === 0 && (
+            <p className="text-xs text-gray-400 text-center py-4 px-2">No folders yet</p>
+          )}
+        </div>
+
+        <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={onNewFolder}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+          >
+            <FolderPlus size={13} /> New Folder
+          </button>
+        </div>
       </div>
-
-      <div className="flex-1 p-2 space-y-0.5">
-        {topFolders.map(f => renderFolder(f))}
-        {topFolders.length === 0 && (
-          <p className="text-xs text-gray-400 text-center py-4 px-2">No folders yet</p>
-        )}
-      </div>
-
-      <div className="p-2 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={onNewFolder}
-          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-        >
-          <FolderPlus size={13} /> New Folder
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -436,6 +497,7 @@ export default function DocumentsPage() {
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [movingDoc, setMovingDoc] = useState<{ id: string; title: string } | null>(null);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('doc-view-mode') as 'grid' | 'list') || 'grid';
@@ -472,13 +534,25 @@ export default function DocumentsPage() {
           activeFolderId={activeFolderId}
           onSelectFolder={setActiveFolderId}
           onNewFolder={() => setShowFolderModal(true)}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
 
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6">
           {/* Toolbar */}
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <div className="relative flex-1 min-w-[200px]">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
+            {/* Mobile: folder toggle button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+              title="Browse folders"
+            >
+              <Menu size={16} />
+            </button>
+
+            {/* Search bar — full width on mobile */}
+            <div className="relative flex-1 min-w-0">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 value={search} onChange={e => setSearch(e.target.value)}
@@ -488,22 +562,26 @@ export default function DocumentsPage() {
             </div>
 
             {/* Type filter */}
-            <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 flex-shrink-0">
               {(['all', 'client', 'internal'] as const).map(t => (
-                <button key={t} onClick={() => setFilterType(t)} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${filterType === t ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                <button key={t} onClick={() => setFilterType(t)} className={`px-2 sm:px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${filterType === t ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                   {t === 'all' ? 'All' : t}
                 </button>
               ))}
             </div>
 
-            {/* Client filter */}
-            <select value={filterClient} onChange={e => setFilterClient(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            {/* Client filter — hidden on mobile */}
+            <select
+              value={filterClient}
+              onChange={e => setFilterClient(e.target.value)}
+              className="hidden md:block px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
               <option value="">All Clients</option>
               {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
 
             {/* View mode toggle */}
-            <div className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+            <div className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 flex-shrink-0">
               <button onClick={() => setView('grid')} className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`} title="Grid view">
                 <LayoutGrid size={14} />
               </button>
@@ -512,7 +590,11 @@ export default function DocumentsPage() {
               </button>
             </div>
 
-            <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            {/* New Document button — desktop only (mobile uses FAB) */}
+            <button
+              onClick={() => setShowModal(true)}
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
               <Plus size={14} /> New Document
             </button>
           </div>
@@ -544,6 +626,7 @@ export default function DocumentsPage() {
             </div>
           ) : viewMode === 'grid' ? (
             // ── Grid View ──────────────────────────────────────────────────────
+            // Mobile: single column. md: 2 columns. xl: 3 columns.
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map(doc => {
                 const client = CLIENTS.find(c => c.id === doc.clientId);
@@ -597,8 +680,8 @@ export default function DocumentsPage() {
           ) : (
             // ── List View ──────────────────────────────────────────────────────
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-              {/* Table header */}
-              <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              {/* Desktop table header */}
+              <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 <span>Title</span>
                 <span>Type</span>
                 <span>Client</span>
@@ -606,57 +689,93 @@ export default function DocumentsPage() {
                 <span>Updated</span>
                 <span></span>
               </div>
+              {/* Mobile table header */}
+              <div className="md:hidden grid grid-cols-[1fr_auto] gap-4 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <span>Title</span>
+                <span>Type</span>
+              </div>
               {filtered.map((doc, idx) => {
                 const client = CLIENTS.find(c => c.id === doc.clientId);
                 const docType = doc.type || 'client';
                 const folder = DOCUMENT_FOLDERS.find(f => f.id === doc.folderId);
+                const borderClass = idx < filtered.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : '';
                 return (
-                  <div key={doc.id} className={`group grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors ${idx < filtered.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}`}>
-                    <Link href={`/documents/${doc.id}`} className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText size={13} className="text-indigo-500" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{doc.title}</p>
-                        {folder && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <Folder size={9} style={{ color: folder.color }} />
-                            <span className="text-[10px] text-gray-400">{folder.name}</span>
-                          </div>
+                  <div key={doc.id} className={borderClass}>
+                    {/* Mobile row — Title + Type only */}
+                    <div className={`md:hidden flex items-center gap-3 px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors`}>
+                      <Link href={`/documents/${doc.id}`} className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <div className="w-8 h-8 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText size={14} className="text-indigo-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{doc.title}</p>
+                          {folder && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Folder size={9} style={{ color: folder.color }} />
+                              <span className="text-[10px] text-gray-400">{folder.name}</span>
+                            </div>
+                          )}
+                          {client && (
+                            <span className="text-[10px] font-medium" style={{ color: client.color }}>{client.name}</span>
+                          )}
+                        </div>
+                      </Link>
+                      <Link href={`/documents/${doc.id}`} className="flex-shrink-0">
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${docType === 'internal' ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'}`}>
+                          {docType === 'internal' ? <Lock size={9} /> : <Globe size={9} />}
+                          <span className="hidden xs:inline">{docType === 'internal' ? 'Internal' : 'Client'}</span>
+                        </span>
+                      </Link>
+                    </div>
+
+                    {/* Desktop row — all columns */}
+                    <div className={`hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors group`}>
+                      <Link href={`/documents/${doc.id}`} className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText size={13} className="text-indigo-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{doc.title}</p>
+                          {folder && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Folder size={9} style={{ color: folder.color }} />
+                              <span className="text-[10px] text-gray-400">{folder.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                      <Link href={`/documents/${doc.id}`}>
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${docType === 'internal' ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'}`}>
+                          {docType === 'internal' ? <><Lock size={9} /> Internal</> : <><Globe size={9} /> Client</>}
+                        </span>
+                      </Link>
+                      <Link href={`/documents/${doc.id}`}>
+                        {client ? (
+                          <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full truncate max-w-[100px]" style={{ backgroundColor: client.color + '18', color: client.color }}>{client.name}</span>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
                         )}
-                      </div>
-                    </Link>
-                    <Link href={`/documents/${doc.id}`}>
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${docType === 'internal' ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'}`}>
-                        {docType === 'internal' ? <><Lock size={9} /> Internal</> : <><Globe size={9} /> Client</>}
-                      </span>
-                    </Link>
-                    <Link href={`/documents/${doc.id}`}>
-                      {client ? (
-                        <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full truncate max-w-[100px]" style={{ backgroundColor: client.color + '18', color: client.color }}>{client.name}</span>
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
-                      )}
-                    </Link>
-                    <Link href={`/documents/${doc.id}`} className="flex items-center gap-1">
-                      <div className="flex -space-x-1.5">
-                        {doc.collaborators.slice(0, 4).map(id => <Avatar key={id} id={id} size={20} />)}
-                        {doc.collaborators.length > 4 && (
-                          <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-[9px] text-gray-500 border-2 border-white dark:border-gray-800 font-medium">+{doc.collaborators.length - 4}</div>
-                        )}
-                      </div>
-                      {doc.collaborators.length === 0 && <Users size={12} className="text-gray-300" />}
-                    </Link>
-                    <Link href={`/documents/${doc.id}`}>
-                      <span className="flex items-center gap-1 text-xs text-gray-400"><Clock size={10} />{format(parseISO(doc.updatedAt), 'MMM d')}</span>
-                    </Link>
-                    <button
-                      onClick={() => setMovingDoc({ id: doc.id, title: doc.title })}
-                      className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
-                      title="Move to folder"
-                    >
-                      <FolderInput size={13} className="text-gray-400" />
-                    </button>
+                      </Link>
+                      <Link href={`/documents/${doc.id}`} className="flex items-center gap-1">
+                        <div className="flex -space-x-1.5">
+                          {doc.collaborators.slice(0, 4).map(id => <Avatar key={id} id={id} size={20} />)}
+                          {doc.collaborators.length > 4 && (
+                            <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-[9px] text-gray-500 border-2 border-white dark:border-gray-800 font-medium">+{doc.collaborators.length - 4}</div>
+                          )}
+                        </div>
+                        {doc.collaborators.length === 0 && <Users size={12} className="text-gray-300" />}
+                      </Link>
+                      <Link href={`/documents/${doc.id}`}>
+                        <span className="flex items-center gap-1 text-xs text-gray-400"><Clock size={10} />{format(parseISO(doc.updatedAt), 'MMM d')}</span>
+                      </Link>
+                      <button
+                        onClick={() => setMovingDoc({ id: doc.id, title: doc.title })}
+                        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                        title="Move to folder"
+                      >
+                        <FolderInput size={13} className="text-gray-400" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -664,6 +783,15 @@ export default function DocumentsPage() {
           )}
         </div>
       </div>
+
+      {/* Mobile FAB — New Document */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="fixed bottom-6 right-6 z-20 md:hidden flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 active:scale-95 transition-all"
+        title="New Document"
+      >
+        <Plus size={22} />
+      </button>
 
       {showModal && <NewDocumentModal onClose={() => setShowModal(false)} defaultFolderId={activeFolderId && activeFolderId !== '__unfiled__' ? activeFolderId : undefined} />}
       {showFolderModal && <NewFolderModal onClose={() => setShowFolderModal(false)} />}

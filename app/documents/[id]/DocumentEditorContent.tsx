@@ -124,7 +124,7 @@ function ToolbarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`p-1.5 rounded transition-colors text-sm ${
+      className={`p-1.5 rounded transition-colors text-sm flex-shrink-0 ${
         active
           ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
@@ -159,45 +159,77 @@ function Toolbar({
     if (url) editor.chain().focus().setLink({ href: url }).run();
   };
 
+  const saveStatusEl = (
+    <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${
+      saveStatus === 'saved' ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' :
+      saveStatus === 'saving' ? 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400' :
+      'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+    }`}>
+      {saveStatus === 'saved' ? <span className="flex items-center gap-1"><Check size={10} /> Saved</span> :
+       saveStatus === 'saving' ? <span className="flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Saving...</span> :
+       'Unsaved'}
+    </span>
+  );
+
   return (
-    <div className="flex items-center gap-0.5 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-wrap bg-white dark:bg-gray-800 sticky top-0 z-10">
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Heading 1"><Heading1 size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2"><Heading2 size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3"><Heading3 size={14} /></ToolbarButton>
-      <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><Bold size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><Italic size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough"><Strikethrough size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive('highlight')} title="Highlight">
-        <span className="text-xs font-bold" style={{ background: 'linear-gradient(180deg, transparent 50%, #fef08a 50%)' }}>H</span>
-      </ToolbarButton>
-      <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet list"><List size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered list"><ListOrdered size={14} /></ToolbarButton>
-      <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote"><Quote size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} title="Code block"><Code size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal rule"><Minus size={14} /></ToolbarButton>
-      <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-      <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table"><Table2 size={14} /></ToolbarButton>
-      <ToolbarButton onClick={addLink} active={editor.isActive('link')} title="Link"><Link2 size={14} /></ToolbarButton>
-      <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo"><Undo size={14} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo"><Redo size={14} /></ToolbarButton>
-      <div className="flex-1" />
-      <span className={`text-xs font-medium px-2 py-1 rounded-full mr-2 ${
-        saveStatus === 'saved' ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' :
-        saveStatus === 'saving' ? 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400' :
-        'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-      }`}>
-        {saveStatus === 'saved' ? <span className="flex items-center gap-1"><Check size={10} /> Saved</span> :
-         saveStatus === 'saving' ? <span className="flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Saving...</span> :
-         'Unsaved'}
-      </span>
-      <ToolbarButton onClick={onToggleComments} active={showComments} title="Comments"><MessageSquare size={14} /></ToolbarButton>
-      <ToolbarButton onClick={onToggleHistory} active={showHistory} title="Version history"><Clock size={14} /></ToolbarButton>
-      <ToolbarButton onClick={onToggleSettings} title="Document settings"><Settings size={14} /></ToolbarButton>
+    <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
+      {/* Mobile: top sub-row with save status + panel toggles */}
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100 dark:border-gray-700/50 md:hidden">
+        {saveStatusEl}
+        <div className="flex items-center gap-0.5">
+          <ToolbarButton onClick={onToggleComments} active={showComments} title="Comments"><MessageSquare size={14} /></ToolbarButton>
+          <ToolbarButton onClick={onToggleHistory} active={showHistory} title="Version history"><Clock size={14} /></ToolbarButton>
+          <ToolbarButton onClick={onToggleSettings} title="Document settings"><Settings size={14} /></ToolbarButton>
+        </div>
+      </div>
+
+      {/* Formatting toolbar — scrollable on mobile, wrapped on desktop */}
+      <div className="flex items-center gap-0.5 px-3 py-2 overflow-x-auto toolbar-scroll">
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Heading 1"><Heading1 size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2"><Heading2 size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3"><Heading3 size={14} /></ToolbarButton>
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 flex-shrink-0" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><Bold size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><Italic size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough"><Strikethrough size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive('highlight')} title="Highlight">
+          <span className="text-xs font-bold flex-shrink-0" style={{ background: 'linear-gradient(180deg, transparent 50%, #fef08a 50%)' }}>H</span>
+        </ToolbarButton>
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 flex-shrink-0" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet list"><List size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered list"><ListOrdered size={14} /></ToolbarButton>
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 flex-shrink-0" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote"><Quote size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} title="Code block"><Code size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal rule"><Minus size={14} /></ToolbarButton>
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 flex-shrink-0" />
+        <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table"><Table2 size={14} /></ToolbarButton>
+        <ToolbarButton onClick={addLink} active={editor.isActive('link')} title="Link"><Link2 size={14} /></ToolbarButton>
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1 flex-shrink-0" />
+        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo"><Undo size={14} /></ToolbarButton>
+        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo"><Redo size={14} /></ToolbarButton>
+
+        {/* Desktop-only: spacer + save status + panel toggles */}
+        <div className="flex-1 hidden md:block" />
+        <div className="hidden md:flex items-center gap-0.5">
+          {saveStatusEl}
+          <ToolbarButton onClick={onToggleComments} active={showComments} title="Comments"><MessageSquare size={14} /></ToolbarButton>
+          <ToolbarButton onClick={onToggleHistory} active={showHistory} title="Version history"><Clock size={14} /></ToolbarButton>
+          <ToolbarButton onClick={onToggleSettings} title="Document settings"><Settings size={14} /></ToolbarButton>
+        </div>
+      </div>
     </div>
+  );
+}
+
+// ─── Mobile Bottom Sheet Wrapper ─────────────────────────────────────────────
+
+function MobileBottomSheet({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <>
+      {/* Backdrop — mobile only */}
+      <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={onClose} />
+    </>
   );
 }
 
@@ -245,82 +277,99 @@ function CommentsSidebar({
   const topComments = comments.filter(c => !c.parent_comment_id);
 
   return (
-    <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <MessageSquare size={14} className="text-indigo-500" /> Comments
-        </h3>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {topComments.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-6">No comments yet.</p>
-        ) : topComments.map(comment => {
-          const author = getAuthor(comment.author_id);
-          const replies = comments.filter(c => c.parent_comment_id === comment.id);
-          return (
-            <div key={comment.id} className={`rounded-lg border p-3 ${comment.resolved ? 'opacity-60 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30' : 'border-gray-200 dark:border-gray-600'}`}>
-              <div className="flex items-start gap-2 mb-2">
-                <Avatar id={comment.author_id} name={author.name} color={author.color} size={24} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">{author.name}</span>
-                    <span className="text-[10px] text-gray-400 whitespace-nowrap">{format(parseISO(comment.created_at), 'MMM d, h:mm a')}</span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 leading-relaxed">{comment.text}</p>
-                </div>
-              </div>
-              {replies.map(reply => {
-                const ra = getAuthor(reply.author_id);
-                return (
-                  <div key={reply.id} className="ml-6 mt-2 flex gap-2">
-                    <Avatar id={reply.author_id} name={ra.name} color={ra.color} size={18} />
-                    <div className="flex-1">
-                      <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">{ra.name}</span>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">{reply.text}</p>
+    <>
+      <MobileBottomSheet onClose={onClose}><></></MobileBottomSheet>
+      <div className="
+        fixed inset-x-0 bottom-0 z-50 max-h-[85vh]
+        md:static md:inset-auto md:z-auto md:max-h-full
+        rounded-t-2xl md:rounded-none
+        border-t md:border-t-0 md:border-l
+        border-gray-200 dark:border-gray-700
+        bg-white dark:bg-gray-800
+        flex flex-col
+        md:w-80 md:flex-shrink-0
+        shadow-2xl md:shadow-none
+      ">
+        {/* Mobile drag handle */}
+        <div className="flex justify-center pt-2 pb-1 md:hidden">
+          <div className="w-8 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+        </div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <MessageSquare size={14} className="text-indigo-500" /> Comments
+          </h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {topComments.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-6">No comments yet.</p>
+          ) : topComments.map(comment => {
+            const author = getAuthor(comment.author_id);
+            const replies = comments.filter(c => c.parent_comment_id === comment.id);
+            return (
+              <div key={comment.id} className={`rounded-lg border p-3 ${comment.resolved ? 'opacity-60 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30' : 'border-gray-200 dark:border-gray-600'}`}>
+                <div className="flex items-start gap-2 mb-2">
+                  <Avatar id={comment.author_id} name={author.name} color={author.color} size={24} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">{author.name}</span>
+                      <span className="text-[10px] text-gray-400 whitespace-nowrap">{format(parseISO(comment.created_at), 'MMM d, h:mm a')}</span>
                     </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 leading-relaxed">{comment.text}</p>
                   </div>
-                );
-              })}
-              {replyTo === comment.id && (
-                <div className="mt-2 flex gap-2 ml-6">
-                  <input
-                    value={replyText} onChange={e => setReplyText(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') submitComment(replyText, comment.id); }}
-                    placeholder="Write a reply..." autoFocus
-                    className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                  <button onClick={() => submitComment(replyText, comment.id)} className="p-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"><Send size={10} /></button>
                 </div>
-              )}
-              <div className="flex items-center gap-2 mt-2">
-                <button onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)} className="text-[10px] text-gray-400 hover:text-indigo-600 flex items-center gap-1 transition-colors">
-                  <CornerDownRight size={9} /> Reply
-                </button>
-                <button onClick={() => toggleResolve(comment)} className={`text-[10px] flex items-center gap-1 transition-colors ${comment.resolved ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}`}>
-                  <Check size={9} /> {comment.resolved ? 'Resolved' : 'Resolve'}
-                </button>
+                {replies.map(reply => {
+                  const ra = getAuthor(reply.author_id);
+                  return (
+                    <div key={reply.id} className="ml-6 mt-2 flex gap-2">
+                      <Avatar id={reply.author_id} name={ra.name} color={ra.color} size={18} />
+                      <div className="flex-1">
+                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">{ra.name}</span>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">{reply.text}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+                {replyTo === comment.id && (
+                  <div className="mt-2 flex gap-2 ml-6">
+                    <input
+                      value={replyText} onChange={e => setReplyText(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') submitComment(replyText, comment.id); }}
+                      placeholder="Write a reply..." autoFocus
+                      className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <button onClick={() => submitComment(replyText, comment.id)} className="p-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"><Send size={10} /></button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  <button onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)} className="text-[10px] text-gray-400 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+                    <CornerDownRight size={9} /> Reply
+                  </button>
+                  <button onClick={() => toggleResolve(comment)} className={`text-[10px] flex items-center gap-1 transition-colors ${comment.resolved ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}`}>
+                    <Check size={9} /> {comment.resolved ? 'Resolved' : 'Resolve'}
+                  </button>
+                </div>
               </div>
+            );
+          })}
+        </div>
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex gap-2">
+            <Avatar id={currentUser.id} name={currentUser.name} color={currentUser.color} size={24} />
+            <div className="flex-1">
+              <textarea
+                value={newText} onChange={e => setNewText(e.target.value)}
+                placeholder="Add a comment..." rows={2}
+                className="w-full text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+              />
+              <button onClick={() => submitComment(newText)} className="mt-1 flex items-center gap-1 text-xs font-medium bg-indigo-600 text-white px-2.5 py-1 rounded hover:bg-indigo-700 transition-colors">
+                <Send size={10} /> Post
+              </button>
             </div>
-          );
-        })}
-      </div>
-      <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex gap-2">
-          <Avatar id={currentUser.id} name={currentUser.name} color={currentUser.color} size={24} />
-          <div className="flex-1">
-            <textarea
-              value={newText} onChange={e => setNewText(e.target.value)}
-              placeholder="Add a comment..." rows={2}
-              className="w-full text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
-            />
-            <button onClick={() => submitComment(newText)} className="mt-1 flex items-center gap-1 text-xs font-medium bg-indigo-600 text-white px-2.5 py-1 rounded hover:bg-indigo-700 transition-colors">
-              <Send size={10} /> Post
-            </button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -341,39 +390,56 @@ function VersionHistoryPanel({
   const getAuthor = (id: string) => teamMembers.find(m => m.id === id) || { name: id, color: '#6366f1' };
 
   return (
-    <div className="w-72 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <History size={14} className="text-indigo-500" /> Version History
-        </h3>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {versions.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-6">No versions saved yet</p>
-        ) : versions.map(v => {
-          const author = getAuthor(v.author_id);
-          return (
-            <div key={v.id} onClick={() => setPreview(v)} className={`p-3 rounded-lg border cursor-pointer transition-colors ${preview?.id === v.id ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{v.version}</span>
-                <span className="text-[10px] text-gray-400">{format(parseISO(v.created_at), 'MMM d, h:mm a')}</span>
+    <>
+      <MobileBottomSheet onClose={onClose}><></></MobileBottomSheet>
+      <div className="
+        fixed inset-x-0 bottom-0 z-50 max-h-[85vh]
+        md:static md:inset-auto md:z-auto md:max-h-full
+        rounded-t-2xl md:rounded-none
+        border-t md:border-t-0 md:border-l
+        border-gray-200 dark:border-gray-700
+        bg-white dark:bg-gray-800
+        flex flex-col
+        md:w-72 md:flex-shrink-0
+        shadow-2xl md:shadow-none
+      ">
+        {/* Mobile drag handle */}
+        <div className="flex justify-center pt-2 pb-1 md:hidden">
+          <div className="w-8 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+        </div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <History size={14} className="text-indigo-500" /> Version History
+          </h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {versions.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-6">No versions saved yet</p>
+          ) : versions.map(v => {
+            const author = getAuthor(v.author_id);
+            return (
+              <div key={v.id} onClick={() => setPreview(v)} className={`p-3 rounded-lg border cursor-pointer transition-colors ${preview?.id === v.id ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{v.version}</span>
+                  <span className="text-[10px] text-gray-400">{format(parseISO(v.created_at), 'MMM d, h:mm a')}</span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1.5 line-clamp-2">{v.summary || 'Auto-saved'}</p>
+                <div className="flex items-center gap-1.5">
+                  <Avatar id={v.author_id} name={author.name} color={author.color} size={16} />
+                  <span className="text-[10px] text-gray-400">{author.name.split(' ')[0]}</span>
+                </div>
+                {preview?.id === v.id && (
+                  <button onClick={e => { e.stopPropagation(); onRestore(v.version); }} className="mt-2 w-full flex items-center justify-center gap-1 text-[11px] font-medium bg-indigo-600 text-white py-1 rounded hover:bg-indigo-700 transition-colors">
+                    <RotateCcw size={10} /> Restore this version
+                  </button>
+                )}
               </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1.5 line-clamp-2">{v.summary || 'Auto-saved'}</p>
-              <div className="flex items-center gap-1.5">
-                <Avatar id={v.author_id} name={author.name} color={author.color} size={16} />
-                <span className="text-[10px] text-gray-400">{author.name.split(' ')[0]}</span>
-              </div>
-              {preview?.id === v.id && (
-                <button onClick={e => { e.stopPropagation(); onRestore(v.version); }} className="mt-2 w-full flex items-center justify-center gap-1 text-[11px] font-medium bg-indigo-600 text-white py-1 rounded hover:bg-indigo-700 transition-colors">
-                  <RotateCcw size={10} /> Restore this version
-                </button>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -416,63 +482,80 @@ function DocumentSettingsPanel({
   };
 
   return (
-    <div className="w-72 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2"><Settings size={14} className="text-indigo-500" /> Settings</h3>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+    <>
+      <MobileBottomSheet onClose={onClose}><></></MobileBottomSheet>
+      <div className="
+        fixed inset-x-0 bottom-0 z-50 max-h-[85vh]
+        md:static md:inset-auto md:z-auto md:max-h-full
+        rounded-t-2xl md:rounded-none
+        border-t md:border-t-0 md:border-l
+        border-gray-200 dark:border-gray-700
+        bg-white dark:bg-gray-800
+        flex flex-col
+        md:w-72 md:flex-shrink-0
+        shadow-2xl md:shadow-none
+      ">
+        {/* Mobile drag handle */}
+        <div className="flex justify-center pt-2 pb-1 md:hidden">
+          <div className="w-8 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {(['client', 'internal'] as const).map(t => (
-              <button key={t} onClick={() => setType(t)} className={`py-1.5 px-2 rounded text-xs font-medium transition-colors capitalize ${type === t ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}>{t}</button>
-            ))}
-          </div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2"><Settings size={14} className="text-indigo-500" /> Settings</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
         </div>
-        {type === 'client' && (
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Client</label>
-            <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
-              <option value="">Select...</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500" />
           </div>
-        )}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Collaborators</label>
-          <div className="flex flex-wrap gap-1.5">
-            {teamMembers.map(m => (
-              <button key={m.id} onClick={() => setCollaboratorIds(prev => prev.includes(m.id) ? prev.filter(id => id !== m.id) : [...prev, m.id])}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${collaboratorIds.includes(m.id) ? 'ring-1 ring-indigo-500' : 'opacity-50 hover:opacity-100'}`}
-                style={{ backgroundColor: m.color + '20', color: m.color }}>
-                <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: m.color }}>{m.initials}</span>
-                {m.name.split(' ')[0]}
-              </button>
-            ))}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {(['client', 'internal'] as const).map(t => (
+                <button key={t} onClick={() => setType(t)} className={`py-1.5 px-2 rounded text-xs font-medium transition-colors capitalize ${type === t ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}>{t}</button>
+              ))}
+            </div>
+          </div>
+          {type === 'client' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Client</label>
+              <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <option value="">Select...</option>
+                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Collaborators</label>
+            <div className="flex flex-wrap gap-1.5">
+              {teamMembers.map(m => (
+                <button key={m.id} onClick={() => setCollaboratorIds(prev => prev.includes(m.id) ? prev.filter(id => id !== m.id) : [...prev, m.id])}
+                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${collaboratorIds.includes(m.id) ? 'ring-1 ring-indigo-500' : 'opacity-50 hover:opacity-100'}`}
+                  style={{ backgroundColor: m.color + '20', color: m.color }}>
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: m.color }}>{m.initials}</span>
+                  {m.name.split(' ')[0]}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-        <button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
-          {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Save Changes
-        </button>
-        {!archiveConfirm ? (
-          <button onClick={() => setArchiveConfirm(true)} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-            <Archive size={12} /> Archive Document
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+          <button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+            {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Save Changes
           </button>
-        ) : (
-          <div className="flex gap-2">
-            <button onClick={() => setArchiveConfirm(false)} className="flex-1 py-2 text-xs border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-            <button onClick={handleArchive} className="flex-1 py-2 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Confirm Archive</button>
-          </div>
-        )}
+          {!archiveConfirm ? (
+            <button onClick={() => setArchiveConfirm(true)} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+              <Archive size={12} /> Archive Document
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button onClick={() => setArchiveConfirm(false)} className="flex-1 py-2 text-xs border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+              <button onClick={handleArchive} className="flex-1 py-2 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Confirm Archive</button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -538,7 +621,6 @@ export default function DocumentEditorPage() {
     const doc = new Y.Doc();
     if (docData.yjsState) {
       try {
-        // Use browser-safe base64 decode instead of Buffer
         const state = base64ToUint8Array(docData.yjsState);
         Y.applyUpdate(doc, state);
       } catch (e) {
@@ -586,7 +668,6 @@ export default function DocumentEditorPage() {
         channel.send({
           type: 'broadcast',
           event: 'yjs-update',
-          // Use browser-safe base64 encode instead of Buffer
           payload: { update: uint8ArrayToBase64(update) },
         });
       }
@@ -594,7 +675,6 @@ export default function DocumentEditorPage() {
     ydoc.on('update', handleUpdate);
 
     channel.on('broadcast', { event: 'yjs-update' }, ({ payload }) => {
-      // Use browser-safe base64 decode instead of Buffer
       const update = base64ToUint8Array(payload.update as string);
       Y.applyUpdate(ydoc, update, 'remote');
     });
@@ -629,7 +709,6 @@ export default function DocumentEditorPage() {
     try {
       const content = JSON.stringify(editorInstance.getJSON());
       const yjsState = ydocRef.current
-        // Use browser-safe base64 encode instead of Buffer
         ? uint8ArrayToBase64(Y.encodeStateAsUpdate(ydocRef.current))
         : undefined;
       await updateDocument(docData.id, { content, yjsState });
@@ -720,16 +799,25 @@ export default function DocumentEditorPage() {
   const client = clients.find(c => c.id === docData.clientId);
   const currentUser = currentUserRef.current || { id: 'anon', name: 'Anonymous', color: '#6366f1' };
 
+  // Presence: show max 3 avatars + overflow count
+  const maxPresenceVisible = 3;
+
   return (
     <div className="pt-16 h-screen flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
-        <button onClick={() => router.push('/documents')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex-shrink-0">
-          <ArrowLeft size={14} />
-          <span className="hidden sm:inline">Documents</span>
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+        {/* Back button — always visible */}
+        <button
+          onClick={() => router.push('/documents')}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex-shrink-0 p-1 -ml-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <ArrowLeft size={16} />
+          <span className="hidden sm:inline text-sm">Documents</span>
         </button>
+
+        {/* Title — larger tap target on mobile */}
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-bold text-gray-900 dark:text-white truncate">{docData.title}</h1>
+          <h1 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white truncate leading-tight">{docData.title}</h1>
           <div className="flex items-center gap-2 mt-0.5">
             {client ? (
               <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: client.color + '20', color: client.color }}>{client.name}</span>
@@ -738,16 +826,28 @@ export default function DocumentEditorPage() {
             ) : null}
           </div>
         </div>
+
+        {/* Presence: max 3 avatars + overflow */}
         {presenceUsers.length > 0 && (
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-xs text-gray-400 hidden sm:block">{presenceUsers.length} viewing</span>
             <div className="flex -space-x-2">
-              {presenceUsers.slice(0, 5).map(u => (
+              {presenceUsers.slice(0, maxPresenceVisible).map(u => (
                 <Avatar key={u.clientId} id={String(u.clientId)} name={u.name} color={u.color} size={26} />
               ))}
+              {presenceUsers.length > maxPresenceVisible && (
+                <div
+                  className="rounded-full flex items-center justify-center text-white font-bold text-[10px] border-2 border-white dark:border-gray-800 bg-gray-400 dark:bg-gray-600 flex-shrink-0"
+                  style={{ width: 26, height: 26 }}
+                >
+                  +{presenceUsers.length - maxPresenceVisible}
+                </div>
+              )}
             </div>
           </div>
         )}
+
+        {/* Current user */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <Avatar id={currentUser.id} name={currentUser.name} color={currentUser.color} size={26} />
           <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{currentUser.name}</span>
@@ -756,7 +856,7 @@ export default function DocumentEditorPage() {
 
       {/* Editor area */}
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <Toolbar
             editor={editor} saveStatus={saveStatus}
             onToggleComments={() => { setShowComments(s => !s); setShowHistory(false); setShowSettings(false); }}
@@ -764,8 +864,9 @@ export default function DocumentEditorPage() {
             showComments={showComments} showHistory={showHistory}
             onToggleSettings={() => { setShowSettings(s => !s); setShowComments(false); setShowHistory(false); }}
           />
+          {/* Editor content — full width on mobile, max-w-4xl centered on desktop */}
           <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
-            <div className="max-w-4xl mx-auto tiptap-editor">
+            <div className="w-full md:max-w-4xl md:mx-auto tiptap-editor">
               {!yjsReady && (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 size={20} className="animate-spin text-indigo-400" />

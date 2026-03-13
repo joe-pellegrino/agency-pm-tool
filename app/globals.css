@@ -92,10 +92,24 @@ body {
 .tiptap-editor .ProseMirror {
   outline: none;
   min-height: 400px;
-  padding: 1.5rem 2rem;
+  padding: 1rem;
   font-size: 0.9375rem;
   line-height: 1.75;
   color: #1e293b;
+}
+@media (min-width: 768px) {
+  .tiptap-editor .ProseMirror {
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* Scrollbar hide utility for toolbar */
+.toolbar-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.toolbar-scroll::-webkit-scrollbar {
+  display: none;
 }
 .dark .tiptap-editor .ProseMirror { color: #e2e8f0; }
 .tiptap-editor .ProseMirror p { margin-bottom: 0.75rem; }
