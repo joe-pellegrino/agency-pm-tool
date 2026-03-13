@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import CustomCollaborationCursor from './CustomCollaborationCursor';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
@@ -664,7 +664,7 @@ export default function DocumentEditorPage() {
       extensions: yjsReady && ydocRef.current && awarenessRef.current && currentUserRef.current ? [
         StarterKit.configure({ undoRedo: false }),
         Collaboration.configure({ document: ydocRef.current }),
-        CollaborationCursor.configure({
+        CustomCollaborationCursor.configure({
           provider: { awareness: awarenessRef.current },
           user: currentUserRef.current,
         }),
