@@ -7,12 +7,13 @@ import TopBar from '@/components/layout/TopBar';
 import {
   FolderOpen, Filter, Search, ChevronRight, X, Calendar, CheckCircle,
   Clock, AlertCircle, PauseCircle, ArrowRight, Tag, Lock, Unlock,
-  BarChart3, Users, Layers, Plus, Pencil, Archive,
+  BarChart3, Users, Layers, Plus, Pencil, Archive, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ProjectModal from '@/components/projects/ProjectModal';
+import TaskModal from '@/components/tasks/TaskModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { archiveProject } from '@/lib/actions';
+import { archiveProject, updateTaskStatus } from '@/lib/actions';
 
 const STATUS_CONFIG = {
   planning: { label: 'Planning', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', icon: Clock },
@@ -32,7 +33,7 @@ function ProgressBar({ value, color = 'bg-indigo-500' }: { value: number; color?
   );
 }
 
-function ProjectDetailModal({ project, onClose }: { project: Project; onClose: () => void }) {
+function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: Project; onClose: () => void; onEdit?: () => void; onAddTask?: () => void }) {
   const { CLIENTS = [], TASKS = [], WORKFLOW_TEMPLATES = [], STRATEGIES = [], TEAM_MEMBERS = [], CLIENT_SERVICES = [], SERVICES = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === project.clientId)!;
   const tasks = TASKS.filter(t => project.taskIds.includes(t.id));
@@ -136,9 +137,29 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
               <h2 className="font-bold text-gray-900 dark:text-white text-lg leading-snug">{project.name}</h2>
               <p className="text-sm text-gray-500 mt-1">{project.description}</p>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center">
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {onAddTask && (
+                <button
+                  onClick={onAddTask}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                >
+                  <Plus size={12} />
+                  Add Task
+                </button>
+              )}
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                >
+                  <Pencil size={12} />
+                  Edit
+                </button>
+              )}
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Meta row */}
@@ -210,7 +231,18 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
 
           {/* Task list with dependencies */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Tasks ({tasks.length})</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tasks ({tasks.length})</h3>
+              {onAddTask && (
+                <button
+                  onClick={onAddTask}
+                  className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors"
+                >
+                  <Plus size={11} />
+                  Add Task
+                </button>
+              )}
+            </div>
             <div className="space-y-2">
               {tasks.map(task => {
                 const blocked = isBlocked(task.id);
@@ -435,6 +467,7 @@ export default function ProjectsPage() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [addTaskForProject, setAddTaskForProject] = useState<Project | null>(null);
   const [, startTransition] = useTransition();
   const { refresh } = useAppData();
 
@@ -488,7 +521,15 @@ export default function ProjectsPage() {
       <TopBar title="Projects" subtitle="Manage client projects and track progress" />
 
       {(showNewProject || editProject) && (
-        <ProjectModal project={editProject || undefined} onClose={() => { setShowNewProject(false); setEditProject(null); }} />
+        <ProjectModal project={editProject || undefined} onClose={() => { setShowNewProject(false); setEditProject(null); refresh?.(); }} />
+      )}
+      {addTaskForProject && (
+        <TaskModal
+          defaultProjectId={addTaskForProject.id}
+          defaultStatus="todo"
+          onClose={() => setAddTaskForProject(null)}
+          onSuccess={() => { setAddTaskForProject(null); refresh?.(); }}
+        />
       )}
       {archiveId && (
         <ConfirmDialog
@@ -502,8 +543,13 @@ export default function ProjectsPage() {
       )}
 
       <div className="p-4 sm:p-6 lg:p-8">
-        {selectedProject && !editProject && !archiveId && (
-          <ProjectDetailModal project={selectedProject} onClose={() => setSelectedProject(null)} />
+        {selectedProject && !editProject && !archiveId && !addTaskForProject && (
+          <ProjectDetailModal
+            project={selectedProject}
+            onClose={() => setSelectedProject(null)}
+            onEdit={() => { setEditProject(selectedProject); }}
+            onAddTask={() => { setAddTaskForProject(selectedProject); }}
+          />
         )}
 
         {/* Header with New button */}

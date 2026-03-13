@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition, useCallback } from 'react';
 import Link from 'next/link';
 import { Service, ClientService, ServiceCategory } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
@@ -10,7 +10,7 @@ import {
   CheckCircle, Zap, FolderOpen, ChevronRight, Users, Plus, Pencil, X, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createClientService, updateClientService, archiveClientService } from '@/lib/actions';
+import { upsertClientService, updateClientService, archiveClientService } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string; cell: string }> = {
@@ -53,13 +53,126 @@ function computeHealthScore(cs: ClientService, serviceStrategies: import('@/lib/
   return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
 }
 
-function MatrixCell({ cs }: { cs: ClientService | null; clientId: string; serviceId: string }) {
-  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], TASKS = [], PROJECTS = [] } = useAppData();
+// Quick-assign popup for matrix cell (services page)
+function MatrixQuickAssign({
+  service,
+  client,
+  onClose,
+}: {
+  service: import('@/lib/data').Service;
+  client: import('@/lib/data').Client;
+  onClose: () => void;
+}) {
+  const { STRATEGIES = [], refresh } = useAppData();
+  const [status, setStatus] = useState('active');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [cadence, setCadence] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const clientStrategies = STRATEGIES.filter(s => s.clientId === client.id);
+  const [stratId, setStratId] = useState('');
+
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+  const handleConfirm = () => {
+    startTransition(async () => {
+      try {
+        await upsertClientService({
+          clientId: client.id,
+          serviceId: service.id,
+          status,
+          startDate,
+          monthlyCadence: cadence || undefined,
+          linkedStrategyId: stratId || undefined,
+        });
+        toast.success(`${service.name} assigned to ${client.name}`);
+        refresh?.();
+        onClose();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xl">{service.icon}</span>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Assign Service</h2>
+            </div>
+            <p className="text-sm text-gray-500">
+              <span className="font-medium text-gray-700 dark:text-gray-300">{service.name}</span>
+              {' → '}
+              <span className="font-medium text-gray-700 dark:text-gray-300">{client.name}</span>
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Status</label>
+              <select value={status} onChange={e => setStatus(e.target.value)} className={inputClass}>
+                <option value="active">Active</option>
+                <option value="planning">Planning</option>
+                <option value="paused">Paused</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Cadence (optional)</label>
+            <input type="text" value={cadence} onChange={e => setCadence(e.target.value)} placeholder="e.g. 4 posts/month..." className={inputClass} />
+          </div>
+          {clientStrategies.length > 0 && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Linked Strategy (optional)</label>
+              <select value={stratId} onChange={e => setStratId(e.target.value)} className={inputClass}>
+                <option value="">None</option>
+                {clientStrategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+        <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
+          <button onClick={handleConfirm} disabled={isPending} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+            {isPending ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={14} />}
+            Assign
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MatrixCell({ cs, clientId, serviceId }: { cs: ClientService | null; clientId: string; serviceId: string }) {
+  const { SERVICE_STRATEGIES = [], TASKS = [], PROJECTS = [], CLIENTS = [], SERVICES = [] } = useAppData();
+  const [showAssign, setShowAssign] = useState(false);
+  const client = CLIENTS.find(c => c.id === clientId);
+  const service = SERVICES.find(s => s.id === serviceId);
+
   if (!cs) {
     return (
-      <div className="h-20 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/20 flex items-center justify-center">
-        <span className="text-[11px] text-gray-300 dark:text-gray-600">—</span>
-      </div>
+      <>
+        {showAssign && client && service && (
+          <MatrixQuickAssign service={service} client={client} onClose={() => setShowAssign(false)} />
+        )}
+        <button
+          onClick={() => setShowAssign(true)}
+          className="h-20 w-full rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/20 flex items-center justify-center hover:border-indigo-300 hover:bg-indigo-50/40 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/10 transition-all group"
+        >
+          <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Plus size={14} className="text-indigo-500" />
+            <span className="text-[10px] text-indigo-500 font-medium">Assign</span>
+          </div>
+        </button>
+      </>
     );
   }
 
@@ -226,7 +339,7 @@ function ClientServiceModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     startTransition(async () => {
       try {
-        await createClientService({
+        await upsertClientService({
           clientId: form.clientId,
           serviceId: form.serviceId,
           status: form.status,
@@ -234,7 +347,7 @@ function ClientServiceModal({ onClose }: { onClose: () => void }) {
           monthlyCadence: form.monthlyCadence || undefined,
           linkedStrategyId: form.linkedStrategyId || undefined,
         });
-        toast.success('Service assignment created');
+        toast.success('Service assigned successfully');
         refresh?.();
         onClose();
       } catch (err) {
@@ -476,7 +589,7 @@ export default function ServicesPage() {
                   <span className="text-xs text-gray-500">{label}</span>
                 </div>
               ))}
-              <span className="text-xs text-gray-400 ml-auto">Click any cell to view client detail</span>
+              <span className="text-xs text-gray-400 ml-auto">Click filled cell → client detail · Click empty cell → assign service</span>
             </div>
 
             <div className="overflow-x-auto">

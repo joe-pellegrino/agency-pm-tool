@@ -5,11 +5,12 @@ import { X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Task } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { createTask, updateTask } from '@/lib/actions';
+import { createTask, updateTask, linkTaskToProject } from '@/lib/actions';
 
 interface TaskModalProps {
   task?: Task;
   defaultStatus?: string;
+  defaultProjectId?: string;
   onClose: () => void;
   onSuccess?: (task: Task | null) => void;
 }
@@ -21,7 +22,7 @@ const STATUSES = [
   { value: 'review', label: 'Review' },
   { value: 'done', label: 'Done' },
 ];
-const TYPES = ['content', 'design', 'dev', 'strategy', 'meeting', 'review', 'seo', 'ads'];
+const TYPES = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'];
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
@@ -33,8 +34,8 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   );
 }
 
-export default function TaskModal({ task, defaultStatus = 'todo', onClose, onSuccess }: TaskModalProps) {
-  const { CLIENTS = [], TEAM_MEMBERS = [], refresh } = useAppData();
+export default function TaskModal({ task, defaultStatus = 'todo', defaultProjectId, onClose, onSuccess }: TaskModalProps) {
+  const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], refresh } = useAppData();
   const [isPending, startTransition] = useTransition();
 
   const [form, setForm] = useState({
@@ -46,8 +47,9 @@ export default function TaskModal({ task, defaultStatus = 'todo', onClose, onSuc
     dueDate: task?.dueDate || new Date().toISOString().split('T')[0],
     startDate: task?.startDate || new Date().toISOString().split('T')[0],
     endDate: task?.endDate || new Date().toISOString().split('T')[0],
-    type: task?.type || 'content',
+    type: task?.type || 'other',
     description: task?.description || '',
+    projectId: defaultProjectId || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -60,6 +62,11 @@ export default function TaskModal({ task, defaultStatus = 'todo', onClose, onSuc
     if (!form.dueDate) e.dueDate = 'Due date is required';
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const validType = (t: string): string => {
+    const valid = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'];
+    return valid.includes(t) ? t : 'other';
   };
 
   const set = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
@@ -80,14 +87,14 @@ export default function TaskModal({ task, defaultStatus = 'todo', onClose, onSuc
             dueDate: form.dueDate,
             startDate: form.startDate,
             endDate: form.endDate,
-            type: form.type as Task['type'],
+            type: validType(form.type) as Task['type'],
             description: form.description,
           });
           toast.success('Task updated');
           refresh();
           onSuccess?.(null);
         } else {
-          await createTask({
+          const created = await createTask({
             title: form.title,
             clientId: form.clientId,
             assigneeId: form.assigneeId,
@@ -96,9 +103,13 @@ export default function TaskModal({ task, defaultStatus = 'todo', onClose, onSuc
             dueDate: form.dueDate,
             startDate: form.startDate,
             endDate: form.endDate,
-            type: form.type,
+            type: validType(form.type),
             description: form.description,
           });
+          // If a project was selected, link the task to it
+          if (form.projectId && created?.id) {
+            await linkTaskToProject(form.projectId, created.id);
+          }
           toast.success('Task created');
           refresh();
           onSuccess?.(null);
@@ -183,6 +194,15 @@ export default function TaskModal({ task, defaultStatus = 'todo', onClose, onSuc
                 {TYPES.map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
               </select>
             </Field>
+
+            {!task && (
+              <Field label="Project (optional)">
+                <select value={form.projectId} onChange={e => set('projectId', e.target.value)} className={inputClass}>
+                  <option value="">No project</option>
+                  {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </Field>
+            )}
 
             <Field label="Description">
               <textarea

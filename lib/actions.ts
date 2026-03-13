@@ -32,7 +32,7 @@ export async function createTask(data: {
       due_date: data.dueDate,
       start_date: data.startDate,
       end_date: data.endDate,
-      type: data.type || 'content',
+      type: data.type || 'other',
       description: data.description || '',
       is_milestone: data.isMilestone || false,
     })
@@ -567,6 +567,42 @@ export async function archiveAutomation(id: string) {
 }
 
 // ─── CLIENT SERVICES ──────────────────────────────────────────────────────────
+
+// Check-then-insert/update: prevents duplicates when re-assigning a service
+export async function upsertClientService(data: {
+  clientId: string;
+  serviceId: string;
+  status: string;
+  startDate: string;
+  monthlyCadence?: string;
+  linkedStrategyId?: string;
+}) {
+  // Check for existing (including cancelled)
+  const { data: existing } = await db()
+    .from('client_services')
+    .select('id')
+    .eq('client_id', data.clientId)
+    .eq('service_id', data.serviceId)
+    .is('archived_at', null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.id) {
+    const update: Record<string, unknown> = {
+      status: data.status,
+      start_date: data.startDate,
+    };
+    if (data.monthlyCadence !== undefined) update.monthly_cadence = data.monthlyCadence || null;
+    if (data.linkedStrategyId !== undefined) update.linked_strategy_id = data.linkedStrategyId || null;
+    const { error } = await db().from('client_services').update(update).eq('id', existing.id);
+    if (error) throw new Error(error.message);
+    revalidatePath('/services');
+    revalidatePath('/clients');
+    return existing.id;
+  }
+
+  return createClientService(data);
+}
 
 export async function createClientService(data: {
   clientId: string;

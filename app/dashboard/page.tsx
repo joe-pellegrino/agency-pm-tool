@@ -154,8 +154,9 @@ export default async function DashboardPage() {
           {/* Mobile: card list */}
           <div className="sm:hidden space-y-3">
             {recentTasks.map(task => {
-              const client = CLIENTS.find(c => c.id === task.clientId)!;
-              const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
+              const client = CLIENTS.find(c => c.id === task.clientId);
+              const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId);
+              if (!client || !assignee) return null;
               const statusColors: Record<string, string> = {
                 todo: 'bg-gray-100 text-gray-600',
                 inprogress: 'bg-blue-100 text-blue-700',
@@ -217,8 +218,9 @@ export default async function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {recentTasks.map(task => {
-                  const client = CLIENTS.find(c => c.id === task.clientId)!;
-                  const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
+                  const client = CLIENTS.find(c => c.id === task.clientId);
+                  const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId);
+                  if (!client || !assignee) return null;
                   const statusColors: Record<string, string> = {
                     todo: 'bg-gray-100 text-gray-600',
                     inprogress: 'bg-blue-100 text-blue-700',

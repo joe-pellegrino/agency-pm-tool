@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ClientService, ServiceStrategy, Project, Task } from '@/lib/data';
+import { ClientService, ServiceStrategy, Project, Task, Service } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, Zap, ArrowLeft,
+  X, Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { upsertClientService } from '@/lib/actions';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -74,6 +77,233 @@ function TaskRow({ task }: { task: Task }) {
       </span>
       <span className="text-[10px] text-gray-400 flex-shrink-0">{task.dueDate}</span>
     </div>
+  );
+}
+
+// ── Quick Assign Popup ────────────────────────────────────────────────────────
+function QuickAssignModal({
+  service,
+  clientName,
+  clientId,
+  existingCs,
+  onClose,
+}: {
+  service: Service;
+  clientName: string;
+  clientId: string;
+  existingCs?: ClientService;
+  onClose: () => void;
+}) {
+  const { STRATEGIES = [], refresh } = useAppData();
+  const clientStrategies = STRATEGIES.filter(s => s.clientId === clientId);
+  const [status, setStatus] = useState<ClientService['status']>(existingCs?.status || 'active');
+  const [startDate, setStartDate] = useState(existingCs?.startDate || new Date().toISOString().split('T')[0]);
+  const [cadence, setCadence] = useState(existingCs?.monthlyCadence || '');
+  const [strategyId, setStrategyId] = useState(existingCs?.linkedStrategyId || '');
+  const [isPending, startTransition] = useTransition();
+
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+  const handleConfirm = () => {
+    startTransition(async () => {
+      try {
+        await upsertClientService({
+          clientId,
+          serviceId: service.id,
+          status,
+          startDate,
+          monthlyCadence: cadence || undefined,
+          linkedStrategyId: strategyId || undefined,
+        });
+        toast.success(`${service.name} assigned to ${clientName}`);
+        refresh?.();
+        onClose();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl">{service.icon}</span>
+              <h2 className="font-semibold text-gray-900 dark:text-white text-base">Assign Service</h2>
+            </div>
+            <p className="text-sm text-gray-500">
+              Assign <span className="font-medium text-gray-700 dark:text-gray-300">{service.name}</span> to <span className="font-medium text-gray-700 dark:text-gray-300">{clientName}</span>?
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Status</label>
+              <select value={status} onChange={e => setStatus(e.target.value as ClientService['status'])} className={inputClass}>
+                <option value="active">Active</option>
+                <option value="planning">Planning</option>
+                <option value="paused">Paused</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Cadence (optional)</label>
+            <input
+              type="text"
+              value={cadence}
+              onChange={e => setCadence(e.target.value)}
+              placeholder="e.g. 4 posts/month, weekly calls..."
+              className={inputClass}
+            />
+          </div>
+          {clientStrategies.length > 0 && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Linked Strategy (optional)</label>
+              <select value={strategyId} onChange={e => setStrategyId(e.target.value)} className={inputClass}>
+                <option value="">None</option>
+                {clientStrategies.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+          <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={isPending}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            {isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+            {existingCs ? 'Update Assignment' : 'Confirm Assignment'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Service Tile (in the client grid) ────────────────────────────────────────
+function ServiceTile({
+  service,
+  clientService,
+  clientName,
+  clientId,
+}: {
+  service: Service;
+  clientService?: ClientService;
+  clientName: string;
+  clientId: string;
+}) {
+  const { SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [] } = useAppData();
+  const [showAssign, setShowAssign] = useState(false);
+
+  const isActive = clientService && (clientService.status === 'active' || clientService.status === 'planning');
+  const isPaused = clientService?.status === 'paused';
+
+  const projs = clientService ? PROJECTS.filter(p => clientService.linkedProjects.includes(p.id)) : [];
+  const tasks = projs.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
+  const openTasks = tasks.filter(t => t.status !== 'done').length;
+
+  const STATUS_CONF = {
+    active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
+    planning: { label: 'Planning', color: 'bg-blue-100 text-blue-600', dot: 'bg-blue-400' },
+    paused: { label: 'Paused', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+    cancelled: { label: 'Inactive', color: 'bg-gray-100 text-gray-400', dot: 'bg-gray-300' },
+  };
+
+  const statusCfg = clientService ? STATUS_CONF[clientService.status] : null;
+
+  if (!isActive && !isPaused) {
+    // Unassigned / cancelled — show empty slot
+    return (
+      <>
+        {showAssign && (
+          <QuickAssignModal
+            service={service}
+            clientName={clientName}
+            clientId={clientId}
+            existingCs={clientService}
+            onClose={() => setShowAssign(false)}
+          />
+        )}
+        <button
+          onClick={() => setShowAssign(true)}
+          className="w-full text-left bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl opacity-50 group-hover:opacity-100 transition-opacity">{service.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400 truncate">{service.name}</div>
+              <div className="text-[10px] text-gray-300 dark:text-gray-600">{service.category}</div>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Plus size={13} />
+              Assign
+            </div>
+          </div>
+        </button>
+      </>
+    );
+  }
+
+  // Active or paused service
+  return (
+    <>
+      {showAssign && (
+        <QuickAssignModal
+          service={service}
+          clientName={clientName}
+          clientId={clientId}
+          existingCs={clientService}
+          onClose={() => setShowAssign(false)}
+        />
+      )}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl flex-shrink-0">{service.icon}</span>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{service.name}</div>
+              <div className="text-[10px] text-gray-400">{service.category}</div>
+            </div>
+          </div>
+          {statusCfg && (
+            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0 ${statusCfg.color}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+              {statusCfg.label}
+            </span>
+          )}
+        </div>
+        {clientService?.monthlyCadence && (
+          <p className="text-xs text-gray-500 mb-2 truncate">{clientService.monthlyCadence}</p>
+        )}
+        <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+          <span>{projs.length} project{projs.length !== 1 ? 's' : ''} · {openTasks} open tasks</span>
+          <button
+            onClick={() => setShowAssign(true)}
+            className="text-indigo-500 hover:text-indigo-700 text-[10px] font-medium hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors"
+          >
+            Edit
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -277,6 +507,20 @@ export default function ClientPage() {
     [clientId],
   );
 
+  // For the new grid: get the best (most active) client_service entry per service
+  const serviceMap = useMemo(() => {
+    const map: Record<string, ClientService | undefined> = {};
+    // Priority: active > planning > paused > cancelled
+    const priority: Record<string, number> = { active: 4, planning: 3, paused: 2, cancelled: 1 };
+    clientServices.forEach(cs => {
+      const existing = map[cs.serviceId];
+      if (!existing || (priority[cs.status] || 0) > (priority[existing.status] || 0)) {
+        map[cs.serviceId] = cs;
+      }
+    });
+    return map;
+  }, [clientServices]);
+
   const activeServices = clientServices.filter(cs => cs.status === 'active' || cs.status === 'planning');
   const inactiveServices = clientServices.filter(cs => cs.status === 'cancelled' || cs.status === 'paused');
 
@@ -393,47 +637,48 @@ export default function ClientPage() {
           </div>
         </div>
 
-        {/* Active Services */}
+        {/* All Services Grid — active + unassigned */}
         <div className="mb-8">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
             <Activity size={18} className="text-indigo-500" />
-            Active Services
-            <span className="text-sm font-normal text-gray-400">({activeServices.length})</span>
+            Services
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {activeServices.map(cs => {
-              const ss = SERVICE_STRATEGIES.find(s => s.clientServiceId === cs.id);
-              const projs = PROJECTS.filter(p => cs.linkedProjects.includes(p.id));
-              const tasks = projs.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
-              return (
-                <ServiceCard
-                  key={cs.id}
-                  clientService={cs}
-                  serviceStrategy={ss}
-                  linkedProjects={projs}
-                  recentTasks={tasks}
-                />
-              );
-            })}
+          <p className="text-sm text-gray-400 mb-4">Active services are filled. Click any empty slot to assign a service.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+            {SERVICES.map(svc => (
+              <ServiceTile
+                key={svc.id}
+                service={svc}
+                clientService={serviceMap[svc.id]}
+                clientName={client.name}
+                clientId={clientId}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Inactive / Available */}
-        {inactiveServices.length > 0 && (
-          <div>
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Not Currently Active
+        {/* Expanded service details for active services */}
+        {activeServices.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <BarChart3 size={18} className="text-indigo-500" />
+              Service Details
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {inactiveServices.map(cs => (
-                <ServiceCard
-                  key={cs.id}
-                  clientService={cs}
-                  serviceStrategy={undefined}
-                  linkedProjects={[]}
-                  recentTasks={[]}
-                />
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {activeServices.map(cs => {
+                const ss = SERVICE_STRATEGIES.find(s => s.clientServiceId === cs.id);
+                const projs = PROJECTS.filter(p => cs.linkedProjects.includes(p.id));
+                const tasks = projs.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
+                return (
+                  <ServiceCard
+                    key={cs.id}
+                    clientService={cs}
+                    serviceStrategy={ss}
+                    linkedProjects={projs}
+                    recentTasks={tasks}
+                  />
+                );
+              })}
             </div>
           </div>
         )}

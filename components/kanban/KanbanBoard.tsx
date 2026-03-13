@@ -21,10 +21,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight, Archive, Pencil } from 'lucide-react';
+import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight, Archive, Pencil, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { updateTaskStatus, archiveTask, createTimeEntry } from '@/lib/actions';
+import { updateTaskStatus, updateTask, archiveTask, createTimeEntry } from '@/lib/actions';
 import TaskModal from '@/components/tasks/TaskModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
@@ -197,16 +197,54 @@ function TaskDetailModal({
   onOpenApproval,
   onEdit,
   onArchive,
+  onStatusChange,
 }: {
   task: Task;
   onClose: () => void;
   onOpenApproval: (task: Task) => void;
   onEdit?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
+  onStatusChange?: (taskId: string, status: string) => void;
 }) {
-  const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [], TIME_ENTRIES = [] } = useAppData();
-  const client = CLIENTS.find(c => c.id === task.clientId)!;
-  const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
+  const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [], TIME_ENTRIES = [], refresh } = useAppData();
+  // Use fallbacks for unknown client/assignee so modal always renders
+  const client = CLIENTS.find(c => c.id === task.clientId) ?? { id: task.clientId, name: 'Unknown Client', color: '#9ca3af', logo: '?' };
+  const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId) ?? { id: task.assigneeId, name: task.assigneeId || 'Unassigned', initials: '?', color: '#9ca3af', isOwner: false, role: '' };
+  const [localAssigneeId, setLocalAssigneeId] = useState(task.assigneeId);
+  const [savingAssignee, setSavingAssignee] = useState(false);
+  const [markingComplete, setMarkingComplete] = useState(false);
+
+  const handleAssigneeChange = async (newId: string) => {
+    setLocalAssigneeId(newId);
+    setSavingAssignee(true);
+    try {
+      await updateTask(task.id, { assigneeId: newId });
+      toast.success('Assignee updated');
+      refresh?.();
+    } catch (err) {
+      toast.error('Failed to update assignee: ' + (err as Error).message);
+      setLocalAssigneeId(task.assigneeId);
+    } finally {
+      setSavingAssignee(false);
+    }
+  };
+
+  const handleMarkComplete = async () => {
+    setMarkingComplete(true);
+    try {
+      await updateTaskStatus(task.id, 'done');
+      toast.success('Task marked complete!');
+      onStatusChange?.(task.id, 'done');
+      refresh?.();
+      onClose();
+    } catch (err) {
+      toast.error('Failed: ' + (err as Error).message);
+    } finally {
+      setMarkingComplete(false);
+    }
+  };
+
+  const currentAssignee = TEAM_MEMBERS.find(m => m.id === localAssigneeId) || assignee;
 
   // Time tracking state
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>(
@@ -317,10 +355,10 @@ function TaskDetailModal({
         {/* Header */}
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
           <div className="flex-1 pr-4">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
                 className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: client.color + '18', color: client.color }}
+                style={{ backgroundColor: (client.color || '#6366f1') + '18', color: client.color || '#6366f1' }}
               >
                 {client.name}
               </span>
@@ -364,15 +402,24 @@ function TaskDetailModal({
 
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
           {/* Meta row */}
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+            {/* Editable assignee */}
             <div className="flex items-center gap-1.5">
               <div
-                className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
-                style={{ backgroundColor: assignee.color }}
+                className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+                style={{ backgroundColor: currentAssignee.color }}
               >
-                {assignee.initials}
+                {currentAssignee.initials}
               </div>
-              <span>{assignee.name}</span>
+              <select
+                value={localAssigneeId}
+                onChange={e => handleAssigneeChange(e.target.value)}
+                disabled={savingAssignee}
+                className="text-xs border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60"
+              >
+                {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+              {savingAssignee && <Loader2 size={11} className="animate-spin text-indigo-500" />}
             </div>
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
@@ -387,6 +434,18 @@ function TaskDetailModal({
               {task.status === 'inprogress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
             </div>
           </div>
+
+          {/* Mark Complete button */}
+          {task.status !== 'done' && (
+            <button
+              onClick={handleMarkComplete}
+              disabled={markingComplete}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-xl text-sm font-medium transition-colors"
+            >
+              {markingComplete ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+              Mark as Complete
+            </button>
+          )}
 
           {/* Description */}
           <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{task.description}</p>
@@ -569,9 +628,10 @@ function TaskDetailModal({
 
 function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { task: Task; isDragging?: boolean; onOpenApproval?: (task: Task) => void; onOpenDetail?: (task: Task) => void }) {
   const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [] } = useAppData();
-  const client = CLIENTS.find(c => c.id === task.clientId)!;
-  const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
-  const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
+  // Use fallbacks for unknown client/assignee — never show permanent skeleton
+  const client = CLIENTS.find(c => c.id === task.clientId) ?? { id: task.clientId, name: task.clientId || 'Unknown', color: '#9ca3af', logo: '?' };
+  const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId) ?? { id: task.assigneeId, name: task.assigneeId || 'Unassigned', initials: task.assigneeId?.slice(0, 2).toUpperCase() || '?', color: '#9ca3af', isOwner: false };
+  const overdue = task.dueDate ? new Date(task.dueDate) < new Date() && task.status !== 'done' : false;
   const isOwner = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.isOwner;
 
   // Check if this task is blocked (has unfinished dependencies)
@@ -661,10 +721,10 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
         </div>
         <div
           className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-          style={{ backgroundColor: assignee.color }}
-          title={assignee.name}
+          style={{ backgroundColor: assignee?.color || '#6366f1' }}
+          title={assignee?.name || 'Unknown'}
         >
-          {assignee.initials}
+          {assignee?.initials || '?'}
         </div>
       </div>
     </div>
@@ -753,11 +813,11 @@ export default function KanbanBoard() {
   const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [], TIME_ENTRIES = [], PROJECTS = [] } = useAppData();
 
   const [taskState, setTaskState] = useState<Task[]>([]);
-  // Update taskState when TASKS loads from Supabase
+  const [initialLoaded, setInitialLoaded] = useState(false);
+  // Update taskState when TASKS loads/changes from Supabase
   useEffect(() => {
-    if (TASKS.length > 0) {
-      setTaskState(TASKS.filter(t => !t.isMilestone));
-    }
+    setTaskState(TASKS.filter(t => !t.isMilestone));
+    if (TASKS.length > 0) setInitialLoaded(true);
   }, [TASKS]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [filterClient, setFilterClient] = useState(clientFilter);
@@ -955,6 +1015,9 @@ export default function KanbanBoard() {
           onOpenApproval={(task) => { setDetailTask(null); openApproval(task); }}
           onEdit={(task) => { setEditTask(task); }}
           onArchive={(taskId) => handleArchiveTask(taskId)}
+          onStatusChange={(taskId, status) => {
+            setTaskState(prev => prev.map(t => t.id === taskId ? { ...t, status: status as Task['status'] } : t));
+          }}
         />
       )}
 
@@ -1117,7 +1180,9 @@ export default function KanbanBoard() {
         </div>
 
         <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
-          {activeTask && <TaskCard task={activeTask} isDragging />}
+          {activeTask && CLIENTS.find(c => c.id === activeTask.clientId) && TEAM_MEMBERS.find(m => m.id === activeTask.assigneeId) && (
+            <TaskCard task={activeTask} isDragging />
+          )}
         </DragOverlay>
       </DndContext>
     </div>
