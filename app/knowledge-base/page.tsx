@@ -66,7 +66,7 @@ function CategoryModal({
               onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
               placeholder="Category name..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
             />
           </div>
           <div>
@@ -76,7 +76,7 @@ function CategoryModal({
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe what articles belong in this category..."
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] resize-none"
             />
           </div>
         </div>
@@ -85,7 +85,7 @@ function CategoryModal({
           <button
             onClick={handleSave}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
             {loading ? 'Saving...' : category ? 'Save Changes' : 'Create Category'}
@@ -177,7 +177,7 @@ export default function KnowledgeBasePage() {
   const getCategoryName = (id?: string) => allCategories.find(c => c.id === id)?.name;
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
       <TopBar title="Knowledge Base" subtitle="Internal articles, guides, and documentation" />
 
       <div className="flex h-[calc(100vh-7rem)]">
@@ -187,7 +187,7 @@ export default function KnowledgeBasePage() {
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categories</span>
             <button
               onClick={() => { setEditingCategory(undefined); setShowCategoryModal(true); }}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-indigo-600"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-[#4F6AE8]"
               title="New category"
             >
               <Plus size={14} />
@@ -200,7 +200,7 @@ export default function KnowledgeBasePage() {
               onClick={() => setSelectedCategory(null)}
               className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors ${
                 selectedCategory === null
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
+                  ? 'bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300 font-medium'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
@@ -216,7 +216,7 @@ export default function KnowledgeBasePage() {
                 <p className="text-xs text-gray-400">No categories yet</p>
                 <button
                   onClick={() => { setEditingCategory(undefined); setShowCategoryModal(true); }}
-                  className="mt-2 text-xs text-indigo-600 hover:underline"
+                  className="mt-2 text-xs text-[#4F6AE8] hover:underline"
                 >
                   Create one
                 </button>
@@ -229,7 +229,7 @@ export default function KnowledgeBasePage() {
                     key={cat.id}
                     className={`group flex items-center gap-2.5 px-4 py-2 text-sm cursor-pointer transition-colors ${
                       selectedCategory === cat.id
-                        ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
+                        ? 'bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300 font-medium'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                     onClick={() => setSelectedCategory(cat.id)}
@@ -240,7 +240,7 @@ export default function KnowledgeBasePage() {
                     <div className="hidden group-hover:flex items-center gap-0.5">
                       <button
                         onClick={e => { e.stopPropagation(); setEditingCategory(cat); setShowCategoryModal(true); }}
-                        className="p-0.5 hover:text-indigo-600 transition-colors"
+                        className="p-0.5 hover:text-[#4F6AE8] transition-colors"
                       ><Pencil size={10} /></button>
                       <button
                         onClick={e => { e.stopPropagation(); handleArchiveCategory(cat); }}
@@ -264,7 +264,7 @@ export default function KnowledgeBasePage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search articles..."
-                className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
               />
             </div>
 
@@ -276,7 +276,7 @@ export default function KnowledgeBasePage() {
                   onClick={() => setFilterVisibility(v)}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors capitalize ${
                     filterVisibility === v
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-[#4F6AE8] text-white'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >{v === 'all' ? 'All' : v === 'public' ? 'All Staff' : 'Internal'}</button>
@@ -288,7 +288,7 @@ export default function KnowledgeBasePage() {
               <select
                 value={filterTag}
                 onChange={e => setFilterTag(e.target.value)}
-                className="px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]"
               >
                 <option value="">All Tags</option>
                 {allTags.map(t => <option key={t} value={t}>{t}</option>)}
@@ -298,7 +298,7 @@ export default function KnowledgeBasePage() {
             <button
               onClick={handleNewArticle}
               disabled={creatingArticle}
-              className="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50"
             >
               {creatingArticle ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
               New Article
@@ -307,14 +307,14 @@ export default function KnowledgeBasePage() {
 
           {/* Category header */}
           {selectedCategory && (
-            <div className="px-6 py-2 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-900/40">
+            <div className="px-6 py-2 bg-[#EEF2FF] dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-900/40">
               {(() => {
                 const cat = allCategories.find(c => c.id === selectedCategory);
                 return cat ? (
                   <div className="flex items-center gap-2">
-                    <FolderOpen size={14} className="text-indigo-600" />
-                    <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{cat.name}</span>
-                    {cat.description && <span className="text-xs text-indigo-500 dark:text-indigo-400"> — {cat.description}</span>}
+                    <FolderOpen size={14} className="text-[#4F6AE8]" />
+                    <span className="text-sm font-semibold text-[#3B5BDB] dark:text-indigo-300">{cat.name}</span>
+                    {cat.description && <span className="text-xs text-[#4F6AE8] dark:text-indigo-400"> — {cat.description}</span>}
                   </div>
                 ) : null;
               })()}
@@ -333,7 +333,7 @@ export default function KnowledgeBasePage() {
                 <button
                   onClick={handleNewArticle}
                   disabled={creatingArticle}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors mx-auto disabled:opacity-50"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors mx-auto disabled:opacity-50"
                 >
                   {creatingArticle ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
                   New Article
@@ -348,15 +348,15 @@ export default function KnowledgeBasePage() {
                     <button
                       key={article.id}
                       onClick={() => router.push(`/knowledge-base/${article.id}`)}
-                      className="w-full text-left flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all group"
+                      className="w-full text-left flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-[#C7D2FE] dark:hover:border-indigo-700 transition-all group"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                        <FileText size={16} className="text-indigo-500" />
+                      <div className="w-9 h-9 rounded-lg bg-[#EEF2FF] dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                        <FileText size={16} className="text-[#4F6AE8]" />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400 transition-colors truncate">
                             {article.title}
                           </h3>
                           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${

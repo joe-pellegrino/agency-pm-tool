@@ -139,7 +139,7 @@ export default function CalendarPage() {
   const monthTasks = Object.values(tasksByDate).flat();
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
       <TopBar title="Calendar" subtitle="Monthly view of tasks and deadlines" />
 
       <div className="p-4 sm:p-6 lg:p-8">
@@ -184,7 +184,7 @@ export default function CalendarPage() {
                   </button>
                   <button
                     onClick={() => { setYear(2026); setMonth(2); }}
-                    className="px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors font-medium"
+                    className="px-3 py-1.5 text-sm text-[#4F6AE8] hover:bg-[#EEF2FF] rounded-lg transition-colors font-medium"
                   >
                     Today
                   </button>
@@ -244,13 +244,13 @@ export default function CalendarPage() {
                       onClick={() => setSelectedDay(isSelected ? null : dateKey)}
                       className={`h-16 sm:h-28 border-b border-gray-50 dark:border-gray-700/50 p-1 sm:p-1.5 transition-colors overflow-hidden relative
                         ${!isLastCol ? 'border-r' : ''}
-                        ${dayTasks.length > 0 ? 'cursor-pointer hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10' : ''}
-                        ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}
+                        ${dayTasks.length > 0 ? 'cursor-pointer hover:bg-[#EEF2FF]/30 dark:hover:bg-indigo-900/10' : ''}
+                        ${isSelected ? 'bg-[#EEF2FF] dark:bg-indigo-900/20' : ''}
                       `}
                     >
                       {/* Day number */}
                       <div className={`w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs font-medium rounded-full mb-0.5 sm:mb-1 ${
-                        isT ? 'bg-indigo-600 text-white' : 'text-gray-700 dark:text-gray-300'
+                        isT ? 'bg-[#4F6AE8] text-white' : 'text-gray-700 dark:text-gray-300'
                       }`}>
                         {day}
                       </div>

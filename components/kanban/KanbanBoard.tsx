@@ -27,13 +27,21 @@ import { toast } from 'sonner';
 import { updateTaskStatus, updateTask, archiveTask, createTimeEntry } from '@/lib/actions';
 import TaskModal from '@/components/tasks/TaskModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import TaskComments from '@/components/tasks/TaskComments';
 
-const COLUMNS: { id: Status; label: string; color: string }[] = [
-  { id: 'todo', label: 'To Do', color: 'border-t-gray-400' },
-  { id: 'inprogress', label: 'In Progress', color: 'border-t-blue-500' },
-  { id: 'review', label: 'Review', color: 'border-t-amber-500' },
-  { id: 'done', label: 'Done', color: 'border-t-green-500' },
+const COLUMNS: { id: Status; label: string; accentColor: string }[] = [
+  { id: 'todo', label: 'To Do', accentColor: '#4F6AE8' },
+  { id: 'inprogress', label: 'In Progress', accentColor: '#F59F00' },
+  { id: 'review', label: 'Review', accentColor: '#8B5CF6' },
+  { id: 'done', label: 'Done', accentColor: '#22C55E' },
 ];
+
+const STATUS_BADGE: Record<string, { backgroundColor: string; color: string }> = {
+  todo:       { backgroundColor: '#E0E7FF', color: '#4338CA' },
+  inprogress: { backgroundColor: '#FEF3C7', color: '#D97706' },
+  review:     { backgroundColor: '#F3E8FF', color: '#7C3AED' },
+  done:       { backgroundColor: '#D1FAE5', color: '#059669' },
+};
 
 // Simulated current user — in a real app this comes from auth
 const CURRENT_USER_ID = 'joe'; // Owner
@@ -57,23 +65,24 @@ function ApprovalModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
+        className="w-full max-w-lg mx-4 overflow-hidden"
+        style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', boxShadow: '0 24px 48px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between">
+        <div className="px-6 py-5 flex items-start justify-between" style={{ borderBottom: '1px solid #E8ECF1' }}>
           <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white text-lg">Task Review</h2>
-            <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{task.title}</p>
+            <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>Task Review</h2>
+            <p className="text-sm mt-0.5 line-clamp-1" style={{ color: '#8B95A5' }}>{task.title}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors mt-0.5">
+          <button onClick={onClose} className="transition-colors mt-0.5" style={{ color: '#8B95A5' }}>
             <X size={18} />
           </button>
         </div>
 
         <div className="px-6 py-5">
           {/* Description */}
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">{task.description}</p>
+          <p className="text-sm mb-5" style={{ color: '#4A5568' }}>{task.description}</p>
 
           {/* Approval history */}
           {task.approvalHistory && task.approvalHistory.length > 0 && (
@@ -128,7 +137,7 @@ function ApprovalModal({
                   onChange={e => setNote(e.target.value)}
                   placeholder="Add a note (optional)..."
                   rows={2}
-                  className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] resize-none"
                 />
                 <div className="flex gap-3">
                   <button
@@ -346,38 +355,47 @@ function TaskDetailModal({
   const isOwner = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.isOwner;
   const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
 
+  const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
+        className="w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
+        style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', boxShadow: '0 24px 48px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
+        <div className="px-6 py-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: '1px solid #E8ECF1' }}>
           <div className="flex-1 pr-4">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
-                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: (client.color || '#6366f1') + '18', color: client.color || '#6366f1' }}
+                className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                style={{ backgroundColor: (client.color || '#4F6AE8') + '18', color: client.color || '#4F6AE8' }}
               >
                 {client.name}
               </span>
-              <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[task.priority]}`}>
+              <span
+                className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
+                style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: '#E0E7FF', color: '#4338CA' }}
+              >
                 {task.priority}
               </span>
               {overdue && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-700">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}>
                   Overdue
                 </span>
               )}
             </div>
-            <h2 className="font-semibold text-gray-900 dark:text-white text-lg leading-snug">{task.title}</h2>
+            <h2 className="font-semibold text-lg leading-snug" style={{ color: '#1E2A3A' }}>{task.title}</h2>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {onEdit && (
               <button
                 onClick={() => onEdit(task)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                style={{ color: '#4F6AE8' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#E0E7FF'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                 title="Edit task"
               >
                 <Pencil size={13} />
@@ -387,22 +405,47 @@ function TaskDetailModal({
             {onArchive && (
               <button
                 onClick={() => onArchive(task.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                style={{ color: '#DC2626' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FEE2E2'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                 title="Archive task"
               >
                 <Archive size={13} />
                 Archive
               </button>
             )}
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors ml-1">
+            <button onClick={onClose} className="transition-colors ml-1" style={{ color: '#8B95A5' }}>
               <X size={18} />
             </button>
           </div>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+        {/* Tabs */}
+        <div className="flex px-6 gap-1" style={{ borderBottom: '1px solid #E8ECF1' }}>
+          {(['details', 'comments'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="px-4 py-3 text-sm font-medium capitalize transition-colors"
+              style={{
+                color: activeTab === tab ? '#4F6AE8' : '#8B95A5',
+                borderBottom: activeTab === tab ? '2px solid #4F6AE8' : '2px solid transparent',
+                marginBottom: '-1px',
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-6 py-5">
+          {activeTab === 'comments' ? (
+            <TaskComments taskId={task.id} />
+          ) : (
+          <div className="space-y-5">
           {/* Meta row */}
-          <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+          <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: '#8B95A5' }}>
             {/* Editable assignee */}
             <div className="flex items-center gap-1.5">
               <div
@@ -415,24 +458,23 @@ function TaskDetailModal({
                 value={localAssigneeId}
                 onChange={e => handleAssigneeChange(e.target.value)}
                 disabled={savingAssignee}
-                className="text-xs border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60"
+                className="text-xs rounded px-1.5 py-0.5 disabled:opacity-60"
+                style={{ border: '1px solid #D0D5DD', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
               >
                 {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
-              {savingAssignee && <Loader2 size={11} className="animate-spin text-indigo-500" />}
+              {savingAssignee && <Loader2 size={11} className="animate-spin" style={{ color: '#4F6AE8' }} />}
             </div>
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
               <span>Due {new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
-            <div className={`capitalize px-2 py-0.5 rounded-full font-medium ${
-              task.status === 'done' ? 'bg-green-100 text-green-700' :
-              task.status === 'review' ? 'bg-amber-100 text-amber-700' :
-              task.status === 'inprogress' ? 'bg-blue-100 text-blue-700' :
-              'bg-gray-100 text-gray-600'
-            }`}>
+            <span
+              className="capitalize px-2.5 py-0.5 rounded-full font-medium text-[11px]"
+              style={STATUS_BADGE[task.status] || { backgroundColor: '#E0E7FF', color: '#4338CA' }}
+            >
               {task.status === 'inprogress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-            </div>
+            </span>
           </div>
 
           {/* Mark Complete button */}
@@ -440,7 +482,8 @@ function TaskDetailModal({
             <button
               onClick={handleMarkComplete}
               disabled={markingComplete}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-xl text-sm font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-lg text-sm font-medium transition-colors"
+              style={{ backgroundColor: markingComplete ? '#86efac' : '#22C55E' }}
             >
               {markingComplete ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
               Mark as Complete
@@ -448,14 +491,14 @@ function TaskDetailModal({
           )}
 
           {/* Description */}
-          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{task.description}</p>
+          <p className="text-sm leading-relaxed" style={{ color: '#4A5568' }}>{task.description}</p>
 
           {/* Dependencies */}
           {((task.dependencies && task.dependencies.length > 0) || TASKS.some(t => t.dependencies?.includes(task.id))) && (
-            <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-                <Lock size={13} className="text-gray-500" />
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dependencies</span>
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E8ECF1' }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: '#F0F3F8', borderBottom: '1px solid #E8ECF1' }}>
+                <Lock size={13} style={{ color: '#8B95A5' }} />
+                <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>Dependencies</span>
               </div>
               <div className="px-4 py-3 space-y-2">
                 {task.dependencies && task.dependencies.length > 0 && (
@@ -507,14 +550,14 @@ function TaskDetailModal({
           )}
 
           {/* Time Tracking */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E8ECF1' }}>
+            <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#F0F3F8', borderBottom: '1px solid #E8ECF1' }}>
               <div className="flex items-center gap-2">
-                <Timer size={14} className="text-indigo-600" />
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Time Tracking</span>
+                <Timer size={14} style={{ color: '#4F6AE8' }} />
+                <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>Time Tracking</span>
               </div>
-              <div className="text-sm text-gray-500">
-                Total: <span className="font-semibold text-gray-900 dark:text-white">{totalHours}h</span>
+              <div className="text-sm" style={{ color: '#8B95A5' }}>
+                Total: <span className="font-semibold" style={{ color: '#1E2A3A' }}>{totalHours}h</span>
                 <span className="text-xs ml-1">({totalMinutes} min)</span>
               </div>
             </div>
@@ -525,7 +568,7 @@ function TaskDetailModal({
                 {!isRunning ? (
                   <button
                     onClick={() => setIsRunning(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     <Play size={14} />
                     Start Timer
@@ -540,7 +583,7 @@ function TaskDetailModal({
                   </button>
                 )}
                 {isRunning && (
-                  <div className="flex items-center gap-2 text-sm text-indigo-600 font-mono font-medium">
+                  <div className="flex items-center gap-2 text-sm text-[#4F6AE8] font-mono font-medium">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     {formatElapsed(elapsed)}
                   </div>
@@ -565,7 +608,7 @@ function TaskDetailModal({
                       onChange={e => setManualMinutes(e.target.value)}
                       placeholder="60"
                       min="1"
-                      className="w-20 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-20 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
                     />
                   </div>
                   <div className="flex-1">
@@ -575,13 +618,13 @@ function TaskDetailModal({
                       value={manualNote}
                       onChange={e => setManualNote(e.target.value)}
                       placeholder="What did you work on?"
-                      className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
                     />
                   </div>
                   <button
                     onClick={addManualEntry}
                     disabled={!manualMinutes || parseInt(manualMinutes) <= 0}
-                    className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                    className="px-4 py-1.5 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     Add
                   </button>
@@ -616,10 +659,12 @@ function TaskDetailModal({
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 text-center py-4">No time entries yet. Start the timer or add a manual entry.</p>
+                <p className="text-xs text-center py-4" style={{ color: '#8B95A5' }}>No time entries yet. Start the timer or add a manual entry.</p>
               )}
             </div>
           </div>
+          </div>
+          )}
         </div>
       </div>
     </div>
@@ -640,15 +685,30 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
     return dep && dep.status !== 'done';
   });
 
+  const statusAccent: Record<string, string> = {
+    todo: '#4F6AE8', inprogress: '#F59F00', review: '#8B5CF6', done: '#22C55E',
+  };
+  const accentColor = statusAccent[task.status] || '#4F6AE8';
+
   return (
     <div
       onClick={() => !isDragging && onOpenDetail?.(task)}
-      className={`task-card bg-white dark:bg-gray-800 rounded-lg border p-3.5 ${
-        isBlocked ? 'border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-900/10' : 'border-gray-200 dark:border-gray-700'
-      } ${
-        isDragging ? 'shadow-2xl rotate-2 opacity-95 ring-2 ring-indigo-400' : 'shadow-sm hover:shadow-md'
-      } cursor-grab active:cursor-grabbing`}
+      className="task-card overflow-hidden cursor-grab active:cursor-grabbing"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: '10px',
+        border: isBlocked ? '1px solid #fca5a5' : '1px solid #E8ECF1',
+        boxShadow: isDragging
+          ? '0 20px 40px rgba(0,0,0,0.15)'
+          : '0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+        transform: isDragging ? 'rotate(2deg)' : undefined,
+        opacity: isDragging ? 0.95 : 1,
+      }}
     >
+      {/* Top accent bar */}
+      <div style={{ height: '4px', backgroundColor: accentColor, borderRadius: '10px 10px 0 0' }} />
+
+      <div className="p-3.5">
       {/* Client tag + priority */}
       <div className="flex items-center justify-between mb-2">
         <span
@@ -657,7 +717,10 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
         >
           {client.name}
         </span>
-        <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded flex items-center gap-1 ${PRIORITY_COLORS[task.priority]}`}>
+        <span
+          className="text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1"
+          style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: '#E0E7FF', color: '#4338CA' }}
+        >
           <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
           {task.priority}
         </span>
@@ -665,14 +728,14 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
 
       {/* Blocked indicator */}
       {isBlocked && (
-        <div className="flex items-center gap-1.5 mb-2 text-xs text-red-600 dark:text-red-400">
+        <div className="flex items-center gap-1.5 mb-2 text-xs" style={{ color: '#DC2626' }}>
           <Lock size={11} />
           <span>Blocked</span>
         </div>
       )}
 
       {/* Title */}
-      <p className={`text-sm font-medium leading-snug mb-3 ${isBlocked ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+      <p className="text-sm font-medium leading-snug mb-3" style={{ color: isBlocked ? '#8B95A5' : '#1E2A3A' }}>
         {task.title}
       </p>
 
@@ -682,13 +745,14 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
           {isOwner ? (
             <button
               onClick={(e) => { e.stopPropagation(); onOpenApproval?.(task); }}
-              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A' }}
             >
               <CheckCircle size={12} />
               Review &amp; Approve
             </button>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-600 border border-amber-100">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: '#FEF3C7', color: '#D97706', border: '1px solid #FDE68A' }}>
               <Clock size={12} />
               Awaiting Review
             </div>
@@ -703,7 +767,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
             const lastApproval = task.approvalHistory[task.approvalHistory.length - 1];
             const approver = TEAM_MEMBERS.find(m => m.id === lastApproval.approverId);
             return (
-              <div className="flex items-center gap-1.5 text-[11px] text-green-600">
+              <div className="flex items-center gap-1.5 text-[11px]" style={{ color: '#059669' }}>
                 <CheckCircle size={11} />
                 <span>Approved by {approver?.name.split(' ')[0]}</span>
               </div>
@@ -714,18 +778,19 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+        <div className="flex items-center gap-1 text-xs" style={{ color: overdue ? '#DC2626' : '#8B95A5', fontWeight: overdue ? 500 : 400 }}>
           <CalendarDays size={11} />
           {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           {overdue && ' ⚠'}
         </div>
         <div
           className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-          style={{ backgroundColor: assignee?.color || '#6366f1' }}
+          style={{ backgroundColor: assignee?.color || '#4F6AE8' }}
           title={assignee?.name || 'Unknown'}
         >
           {assignee?.initials || '?'}
         </div>
+      </div>
       </div>
     </div>
   );
@@ -747,10 +812,17 @@ function SortableTaskCard({ task, onOpenApproval, onOpenDetail }: { task: Task; 
   );
 }
 
+const COLUMN_BG: Record<Status, string> = {
+  todo: 'rgba(79,106,232,0.04)',
+  inprogress: 'rgba(245,159,0,0.04)',
+  review: 'rgba(139,92,246,0.04)',
+  done: 'rgba(34,197,94,0.04)',
+};
+
 function Column({
   id,
   label,
-  color,
+  accentColor,
   tasks,
   onOpenApproval,
   onOpenDetail,
@@ -758,32 +830,38 @@ function Column({
 }: {
   id: Status;
   label: string;
-  color: string;
+  accentColor: string;
   tasks: Task[];
   onOpenApproval?: (task: Task) => void;
   onOpenDetail?: (task: Task) => void;
   onNewTask?: () => void;
 }) {
-  const colBg: Record<Status, string> = {
-    todo: 'bg-gray-50 dark:bg-gray-800/40',
-    inprogress: 'bg-blue-50/50 dark:bg-blue-900/10',
-    review: 'bg-amber-50/50 dark:bg-amber-900/10',
-    done: 'bg-green-50/50 dark:bg-green-900/10',
-  };
-
   return (
-    <div className={`flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 border-t-4 ${color} ${colBg[id]} min-h-[200px]`}>
+    <div
+      className="flex flex-col min-h-[200px] rounded-xl overflow-hidden"
+      style={{
+        border: '1px solid #E8ECF1',
+        backgroundColor: COLUMN_BG[id],
+        borderTop: `3px solid ${accentColor}`,
+      }}
+    >
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #E8ECF1' }}>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm text-gray-900 dark:text-white">{label}</span>
-          <span className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 flex items-center justify-center">
+          <span className="font-semibold text-sm" style={{ color: '#1E2A3A' }}>{label}</span>
+          <span
+            className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
+            style={{ backgroundColor: accentColor + '20', color: accentColor }}
+          >
             {tasks.length}
           </span>
         </div>
         <button
           onClick={onNewTask}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:text-indigo-600 transition-colors"
+          className="transition-colors"
+          style={{ color: '#8B95A5' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = accentColor; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8B95A5'; }}
           title={`New ${label} task`}
         >
           <Plus size={15} />
@@ -798,7 +876,7 @@ function Column({
           ))}
         </SortableContext>
         {tasks.length === 0 && (
-          <div className="text-center py-8 text-sm text-gray-400">
+          <div className="text-center py-8 text-sm" style={{ color: '#B0B8C9' }}>
             Drop tasks here
           </div>
         )}
@@ -1035,16 +1113,20 @@ export default function KanbanBoard() {
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors ${
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors"
+          style={
             showFilters || activeFilters > 0
-              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
-          }`}
+              ? { backgroundColor: '#E0E7FF', borderColor: '#4F6AE8', color: '#4338CA' }
+              : { backgroundColor: '#FFFFFF', borderColor: '#E8ECF1', color: '#4A5568' }
+          }
         >
           <Filter size={14} />
           Filters
           {activeFilters > 0 && (
-            <span className="w-4 h-4 bg-indigo-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+            <span
+              className="w-4 h-4 text-white text-[10px] rounded-full flex items-center justify-center font-bold"
+              style={{ backgroundColor: '#4F6AE8' }}
+            >
               {activeFilters}
             </span>
           )}
@@ -1054,26 +1136,27 @@ export default function KanbanBoard() {
         {activeFilters > 0 && (
           <button
             onClick={() => { setFilterClient('all'); setFilterAssignee('all'); setFilterPriority('all'); setFilterProject('all'); }}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1 text-xs transition-colors"
+            style={{ color: '#8B95A5' }}
           >
             <X size={12} /> Clear filters
           </button>
         )}
 
         {filterClient !== 'all' && (
-          <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-green-100 text-green-700 rounded-full">
+          <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full" style={{ backgroundColor: '#D1FAE5', color: '#059669' }}>
             {CLIENTS.find(c => c.id === filterClient)?.name}
             <X size={10} className="cursor-pointer" onClick={() => setFilterClient('all')} />
           </span>
         )}
         {filterAssignee !== 'all' && (
-          <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">
+          <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full" style={{ backgroundColor: '#F3E8FF', color: '#7C3AED' }}>
             {TEAM_MEMBERS.find(m => m.id === filterAssignee)?.name.split(' ')[0]}
             <X size={10} className="cursor-pointer" onClick={() => setFilterAssignee('all')} />
           </span>
         )}
         {filterPriority !== 'all' && (
-          <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full">
+          <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
             {filterPriority}
             <X size={10} className="cursor-pointer" onClick={() => setFilterPriority('all')} />
           </span>
@@ -1083,12 +1166,15 @@ export default function KanbanBoard() {
         <div className="ml-auto flex items-center gap-3">
           <button
             onClick={() => { setNewTaskDefaultStatus('todo'); setShowNewTaskModal(true); }}
-            className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-white rounded-md text-sm font-medium transition-colors"
+            style={{ backgroundColor: '#4F6AE8' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4F6AE8'; }}
           >
             <Plus size={14} />
             New Task
           </button>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+          <div className="hidden sm:flex items-center gap-2 text-xs" style={{ color: '#8B95A5' }}>
             <div
               className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
               style={{ backgroundColor: TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.color }}
@@ -1101,54 +1187,28 @@ export default function KanbanBoard() {
       </div>
 
       {showFilters && (
-        <div className="flex flex-wrap gap-3 mb-5 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Client</label>
-            <select
-              value={filterClient}
-              onChange={e => setFilterClient(e.target.value)}
-              className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Clients</option>
-              {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Assignee</label>
-            <select
-              value={filterAssignee}
-              onChange={e => setFilterAssignee(e.target.value)}
-              className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Assignees</option>
-              {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Priority</label>
-            <select
-              value={filterPriority}
-              onChange={e => setFilterPriority(e.target.value)}
-              className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Priorities</option>
-              <option value="Urgent">Urgent</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Project</label>
-            <select
-              value={filterProject}
-              onChange={e => setFilterProject(e.target.value)}
-              className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Projects</option>
-              {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
+        <div
+          className="flex flex-wrap gap-3 mb-5 p-4 rounded-lg"
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8ECF1' }}
+        >
+          {[
+            { label: 'Client', value: filterClient, onChange: setFilterClient, options: [{ value: 'all', label: 'All Clients' }, ...CLIENTS.map(c => ({ value: c.id, label: c.name }))] },
+            { label: 'Assignee', value: filterAssignee, onChange: setFilterAssignee, options: [{ value: 'all', label: 'All Assignees' }, ...TEAM_MEMBERS.map(m => ({ value: m.id, label: m.name }))] },
+            { label: 'Priority', value: filterPriority, onChange: setFilterPriority, options: [{ value: 'all', label: 'All Priorities' }, ...['Urgent','High','Medium','Low'].map(p => ({ value: p, label: p }))] },
+            { label: 'Project', value: filterProject, onChange: setFilterProject, options: [{ value: 'all', label: 'All Projects' }, ...PROJECTS.map(p => ({ value: p.id, label: p.name }))] },
+          ].map(({ label, value, onChange, options }) => (
+            <div key={label}>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: '#4A5568' }}>{label}</label>
+              <select
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                className="text-sm px-3 py-1.5 rounded-md"
+                style={{ border: '1px solid #D0D5DD', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
+              >
+                {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1168,7 +1228,7 @@ export default function KanbanBoard() {
                 <Column
                   id={col.id}
                   label={col.label}
-                  color={col.color}
+                  accentColor={col.accentColor}
                   tasks={getColumnTasks(col.id)}
                   onOpenApproval={openApproval}
                   onOpenDetail={openDetail}

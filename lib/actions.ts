@@ -1039,6 +1039,37 @@ export async function resolveDocumentComment(id: string, resolved: boolean) {
   if (error) throw new Error(error.message);
 }
 
+export async function createTaskComment(data: {
+  taskId: string;
+  authorId: string;
+  text: string;
+}) {
+  const id = `tc-${Date.now()}`;
+  const { error } = await db()
+    .from('comments')
+    .insert({
+      id,
+      task_id: data.taskId,
+      author_id: data.authorId,
+      text: data.text,
+      created_at: new Date().toISOString(),
+      resolved: false,
+    });
+  if (error) throw new Error(error.message);
+  revalidatePath('/kanban');
+  return id;
+}
+
+export async function getTaskComments(taskId: string) {
+  const { data, error } = await db()
+    .from('comments')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 // ─── KNOWLEDGE BASE ───────────────────────────────────────────────────────────
 
 export async function createKBCategory(data: { name: string; description?: string }) {

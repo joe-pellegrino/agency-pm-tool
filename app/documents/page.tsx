@@ -86,16 +86,16 @@ function NewDocumentModal({ onClose, defaultFolderId }: { onClose: () => void; d
               value={title} onChange={e => setTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreate()}
               placeholder="Document title..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Type</label>
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => setType('client')} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${type === 'client' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+              <button onClick={() => setType('client')} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${type === 'client' ? 'border-indigo-500 bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                 <Building2 size={14} /> Client Document
               </button>
-              <button onClick={() => setType('internal')} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${type === 'internal' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+              <button onClick={() => setType('internal')} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${type === 'internal' ? 'border-indigo-500 bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                 <Lock size={14} /> Internal
               </button>
             </div>
@@ -103,7 +103,7 @@ function NewDocumentModal({ onClose, defaultFolderId }: { onClose: () => void; d
           {type === 'client' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Client</label>
-              <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]">
                 <option value="">Select a client...</option>
                 {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -111,7 +111,7 @@ function NewDocumentModal({ onClose, defaultFolderId }: { onClose: () => void; d
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Folder (optional)</label>
-            <select value={folderId} onChange={e => setFolderId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select value={folderId} onChange={e => setFolderId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]">
               <option value="">No folder</option>
               {DOCUMENT_FOLDERS.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
@@ -132,7 +132,7 @@ function NewDocumentModal({ onClose, defaultFolderId }: { onClose: () => void; d
         </div>
         <div className="flex gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-          <button onClick={handleCreate} disabled={loading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+          <button onClick={handleCreate} disabled={loading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50">
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
             {loading ? 'Creating...' : 'Create Document'}
           </button>
@@ -172,7 +172,7 @@ function NewFolderModal({ onClose, parentId }: { onClose: () => void; parentId?:
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><FolderPlus size={18} className="text-indigo-500" /> New Folder</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><FolderPlus size={18} className="text-[#4F6AE8]" /> New Folder</h2>
           <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"><X size={16} /></button>
         </div>
         <div className="p-6 space-y-4">
@@ -183,7 +183,7 @@ function NewFolderModal({ onClose, parentId }: { onClose: () => void; parentId?:
               onKeyDown={e => e.key === 'Enter' && handleCreate()}
               placeholder="Folder name..."
               autoFocus
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
             />
           </div>
           <div>
@@ -196,14 +196,14 @@ function NewFolderModal({ onClose, parentId }: { onClose: () => void; parentId?:
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Parent Folder (optional)</label>
-            <select value={parent} onChange={e => setParent(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select value={parent} onChange={e => setParent(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]">
               <option value="">None (top-level)</option>
               {DOCUMENT_FOLDERS.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Client (optional)</label>
-            <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]">
               <option value="">Any client</option>
               {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -211,7 +211,7 @@ function NewFolderModal({ onClose, parentId }: { onClose: () => void; parentId?:
         </div>
         <div className="flex gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-          <button onClick={handleCreate} disabled={loading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+          <button onClick={handleCreate} disabled={loading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50">
             {loading ? <Loader2 size={14} className="animate-spin" /> : <FolderPlus size={14} />}
             Create Folder
           </button>
@@ -250,14 +250,14 @@ function MoveToFolderModal({ docId, docTitle, onClose }: { docId: string; docTit
         </div>
         <div className="p-6 space-y-3">
           <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{docTitle}</p>
-          <select value={folderId} onChange={e => setFolderId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select value={folderId} onChange={e => setFolderId(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]">
             <option value="">No folder (root)</option>
             {DOCUMENT_FOLDERS.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </div>
         <div className="flex gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-          <button onClick={handleMove} disabled={loading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+          <button onClick={handleMove} disabled={loading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50">
             {loading ? <Loader2 size={14} className="animate-spin" /> : <FolderInput size={14} />}
             Move
           </button>
@@ -334,7 +334,7 @@ function FolderSidebar({
     return (
       <div key={folder.id}>
         <div
-          className={`group flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm ${isActive ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          className={`group flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm ${isActive ? 'bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           style={{ paddingLeft: `${8 + depth * 16}px` }}
         >
           {children.length > 0 ? (
@@ -414,7 +414,7 @@ function FolderSidebar({
         {/* Mobile-only header with close button */}
         <div className="flex items-center justify-between px-3 py-3 border-b border-gray-200 dark:border-gray-700 md:hidden">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-            <Folder size={15} className="text-indigo-500" /> Folders
+            <Folder size={15} className="text-[#4F6AE8]" /> Folders
           </h3>
           <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             <X size={15} />
@@ -428,7 +428,7 @@ function FolderSidebar({
           {/* All Documents */}
           <button
             onClick={() => handleSelectFolder(null)}
-            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-0.5 ${activeFolderId === null ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors mb-0.5 ${activeFolderId === null ? 'bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
             <FileText size={14} />
             <span className="flex-1 text-left text-xs">All Documents</span>
@@ -438,7 +438,7 @@ function FolderSidebar({
           {/* Unfiled */}
           <button
             onClick={() => handleSelectFolder('__unfiled__')}
-            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${activeFolderId === '__unfiled__' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${activeFolderId === '__unfiled__' ? 'bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
             <FileText size={14} className="text-gray-400" />
             <span className="flex-1 text-left text-xs">Unfiled</span>
@@ -450,7 +450,7 @@ function FolderSidebar({
         <div className="md:hidden p-3 border-b border-gray-200 dark:border-gray-700 space-y-0.5">
           <button
             onClick={() => handleSelectFolder(null)}
-            className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors ${activeFolderId === null ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors ${activeFolderId === null ? 'bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
             <FileText size={15} />
             <span className="flex-1 text-left text-sm">All Documents</span>
@@ -458,7 +458,7 @@ function FolderSidebar({
           </button>
           <button
             onClick={() => handleSelectFolder('__unfiled__')}
-            className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors ${activeFolderId === '__unfiled__' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm transition-colors ${activeFolderId === '__unfiled__' ? 'bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
             <FileText size={15} className="text-gray-400" />
             <span className="flex-1 text-left text-sm">Unfiled</span>
@@ -476,7 +476,7 @@ function FolderSidebar({
         <div className="p-2 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onNewFolder}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#4F6AE8] dark:text-indigo-400 hover:bg-[#EEF2FF] dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
           >
             <FolderPlus size={13} /> New Folder
           </button>
@@ -523,7 +523,7 @@ export default function DocumentsPage() {
   }, [DOCUMENTS, search, filterType, filterClient, activeFolderId]);
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="pt-16 min-h-screen flex flex-col" style={{ backgroundColor: '#F0F3F8' }}>
       <TopBar title="Documents" subtitle="Real-time collaborative document editor" />
 
       <div className="flex flex-1 overflow-hidden">
@@ -557,14 +557,14 @@ export default function DocumentsPage() {
               <input
                 value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search documents..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
               />
             </div>
 
             {/* Type filter */}
             <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 flex-shrink-0">
               {(['all', 'client', 'internal'] as const).map(t => (
-                <button key={t} onClick={() => setFilterType(t)} className={`px-2 sm:px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${filterType === t ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                <button key={t} onClick={() => setFilterType(t)} className={`px-2 sm:px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${filterType === t ? 'bg-[#4F6AE8] text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                   {t === 'all' ? 'All' : t}
                 </button>
               ))}
@@ -574,7 +574,7 @@ export default function DocumentsPage() {
             <select
               value={filterClient}
               onChange={e => setFilterClient(e.target.value)}
-              className="hidden md:block px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="hidden md:block px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
             >
               <option value="">All Clients</option>
               {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -582,10 +582,10 @@ export default function DocumentsPage() {
 
             {/* View mode toggle */}
             <div className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 flex-shrink-0">
-              <button onClick={() => setView('grid')} className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`} title="Grid view">
+              <button onClick={() => setView('grid')} className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-[#E0E7FF] dark:bg-indigo-900/40 text-[#3B5BDB] dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`} title="Grid view">
                 <LayoutGrid size={14} />
               </button>
-              <button onClick={() => setView('list')} className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`} title="List view">
+              <button onClick={() => setView('list')} className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-[#E0E7FF] dark:bg-indigo-900/40 text-[#3B5BDB] dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`} title="List view">
                 <List size={14} />
               </button>
             </div>
@@ -593,7 +593,7 @@ export default function DocumentsPage() {
             {/* New Document button — desktop only (mobile uses FAB) */}
             <button
               onClick={() => setShowModal(true)}
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors"
             >
               <Plus size={14} /> New Document
             </button>
@@ -633,17 +633,17 @@ export default function DocumentsPage() {
                 const docType = doc.type || 'client';
                 const folder = DOCUMENT_FOLDERS.find(f => f.id === doc.folderId);
                 return (
-                  <div key={doc.id} className="relative group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-700 transition-all">
+                  <div key={doc.id} className="relative group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg hover:border-[#C7D2FE] dark:hover:border-indigo-700 transition-all">
                     <Link href={`/documents/${doc.id}`} className="block">
                       <div className="flex items-start justify-between mb-3">
-                        <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
-                          <FileText size={18} className="text-indigo-600 dark:text-indigo-400" />
+                        <div className="w-10 h-10 bg-[#E0E7FF] dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
+                          <FileText size={18} className="text-[#4F6AE8] dark:text-indigo-400" />
                         </div>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${docType === 'internal' ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'}`}>
                           {docType === 'internal' ? <span className="flex items-center gap-1"><Lock size={9} /> Internal</span> : <span className="flex items-center gap-1"><Globe size={9} /> Client</span>}
                         </span>
                       </div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">{doc.title}</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1.5 group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400 transition-colors line-clamp-2">{doc.title}</h3>
                       {client ? (
                         <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-3" style={{ backgroundColor: client.color + '18', color: client.color }}>{client.name}</span>
                       ) : (
@@ -702,10 +702,10 @@ export default function DocumentsPage() {
                 return (
                   <div key={doc.id} className={borderClass}>
                     {/* Mobile row — Title + Type only */}
-                    <div className={`md:hidden flex items-center gap-3 px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors`}>
+                    <div className={`md:hidden flex items-center gap-3 px-4 py-3 hover:bg-[#EEF2FF]/50 dark:hover:bg-indigo-900/10 transition-colors`}>
                       <Link href={`/documents/${doc.id}`} className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <div className="w-8 h-8 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FileText size={14} className="text-indigo-500" />
+                        <div className="w-8 h-8 bg-[#EEF2FF] dark:bg-indigo-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText size={14} className="text-[#4F6AE8]" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{doc.title}</p>
@@ -729,13 +729,13 @@ export default function DocumentsPage() {
                     </div>
 
                     {/* Desktop row — all columns */}
-                    <div className={`hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center px-4 py-3 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors group`}>
+                    <div className={`hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center px-4 py-3 hover:bg-[#EEF2FF]/50 dark:hover:bg-indigo-900/10 transition-colors group`}>
                       <Link href={`/documents/${doc.id}`} className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FileText size={13} className="text-indigo-500" />
+                        <div className="w-7 h-7 bg-[#EEF2FF] dark:bg-indigo-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText size={13} className="text-[#4F6AE8]" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{doc.title}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400 transition-colors">{doc.title}</p>
                           {folder && (
                             <div className="flex items-center gap-1 mt-0.5">
                               <Folder size={9} style={{ color: folder.color }} />
@@ -787,7 +787,7 @@ export default function DocumentsPage() {
       {/* Mobile FAB — New Document */}
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 z-20 md:hidden flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 active:scale-95 transition-all"
+        className="fixed bottom-6 right-6 z-20 md:hidden flex items-center justify-center w-14 h-14 bg-[#4F6AE8] text-white rounded-full shadow-lg hover:bg-[#3B5BDB] active:scale-95 transition-all"
         title="New Document"
       >
         <Plus size={22} />

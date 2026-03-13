@@ -166,7 +166,7 @@ function ClientHealthCard({ client }: { client: Client }) {
         <div className="flex items-center justify-end pt-3 border-t border-gray-100 dark:border-gray-700">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 transition-colors font-medium"
+            className="flex items-center gap-1 text-xs text-[#4F6AE8] hover:text-[#3B5BDB] transition-colors font-medium"
           >
             Details
             {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -230,7 +230,7 @@ export default function HealthPage() {
   const utilization = Math.min(100, Math.round((activeTasks / maxCapacity) * 100));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
       <TopBar title="Client Health" subtitle="Relationship scores and task performance per client" />
 
       <div className="pt-16 p-4 sm:p-8">
@@ -238,12 +238,12 @@ export default function HealthPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             {
-              icon: <Activity size={20} className="text-indigo-600" />,
+              icon: <Activity size={20} className="text-[#4F6AE8]" />,
               label: 'Avg Health Score',
               value: `${avgHealth}`,
               sub: avgHealth >= 80 ? 'All clients healthy' : avgHealth >= 60 ? 'Some at risk' : 'Needs attention',
-              color: 'bg-indigo-50 dark:bg-indigo-900/20',
-              iconBg: 'bg-indigo-100 dark:bg-indigo-900/40',
+              color: 'bg-[#EEF2FF] dark:bg-indigo-900/20',
+              iconBg: 'bg-[#E0E7FF] dark:bg-indigo-900/40',
             },
             {
               icon: <AlertTriangle size={20} className="text-red-500" />,

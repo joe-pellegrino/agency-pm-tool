@@ -150,7 +150,7 @@ export default function GanttChart() {
 
         <button
           onClick={() => setViewStart(addDays(today, -7))}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-700 px-2.5 py-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          className="text-xs font-medium text-[#4F6AE8] hover:text-[#3B5BDB] px-2.5 py-1.5 rounded-lg hover:bg-[#EEF2FF] dark:hover:bg-indigo-900/20 transition-colors"
         >
           Today
         </button>
@@ -159,7 +159,7 @@ export default function GanttChart() {
           <select
             value={filterProject}
             onChange={e => setFilterProject(e.target.value)}
-            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
           >
             <option value="all">All Projects</option>
             {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -167,7 +167,7 @@ export default function GanttChart() {
           <select
             value={filterClient}
             onChange={e => setFilterClient(e.target.value)}
-            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
           >
             <option value="all">All Clients</option>
             {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}

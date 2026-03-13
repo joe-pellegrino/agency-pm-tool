@@ -81,7 +81,7 @@ export default function AssetModal({ asset, onClose }: AssetModalProps) {
     });
   };
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
   const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
 
   return (
@@ -147,7 +147,7 @@ export default function AssetModal({ asset, onClose }: AssetModalProps) {
                   placeholder="Add tag..."
                   className={inputClass}
                 />
-                <button type="button" onClick={addTag} className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex-shrink-0">
+                <button type="button" onClick={addTag} className="px-3 py-2 bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors flex-shrink-0">
                   <Plus size={14} />
                 </button>
               </div>
@@ -156,7 +156,7 @@ export default function AssetModal({ asset, onClose }: AssetModalProps) {
                   {form.tags.map(tag => (
                     <span
                       key={tag}
-                      className="flex items-center gap-1 text-xs px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full"
+                      className="flex items-center gap-1 text-xs px-2 py-1 bg-[#EEF2FF] text-[#3B5BDB] rounded-full"
                     >
                       {tag}
                       <button type="button" onClick={() => removeTag(tag)} className="hover:text-indigo-900 ml-0.5">
@@ -176,7 +176,7 @@ export default function AssetModal({ asset, onClose }: AssetModalProps) {
             <button
               type="submit"
               disabled={isPending}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {asset ? 'Save Changes' : 'Add Asset'}

@@ -22,7 +22,7 @@ const STATUS_CONFIG = {
   'on-hold': { label: 'On Hold', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500', icon: PauseCircle },
 } as const;
 
-function ProgressBar({ value, color = 'bg-indigo-500' }: { value: number; color?: string }) {
+function ProgressBar({ value, color = 'bg-[#4F6AE8]' }: { value: number; color?: string }) {
   return (
     <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
       <div
@@ -129,7 +129,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
                   {statusCfg.label}
                 </span>
                 {template && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F6AE8] font-medium">
                     📋 {template.name}
                   </span>
                 )}
@@ -141,7 +141,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
               {onAddTask && (
                 <button
                   onClick={onAddTask}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#4F6AE8] hover:bg-[#3B5BDB] rounded-lg transition-colors"
                 >
                   <Plus size={12} />
                   Add Task
@@ -150,7 +150,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
               {onEdit && (
                 <button
                   onClick={onEdit}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#4F6AE8] hover:bg-[#EEF2FF] rounded-lg transition-colors"
                 >
                   <Pencil size={12} />
                   Edit
@@ -183,7 +183,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
           <div className="mt-3">
             <ProgressBar
               value={project.progress}
-              color={project.status === 'complete' ? 'bg-green-500' : project.status === 'on-hold' ? 'bg-amber-500' : 'bg-indigo-500'}
+              color={project.status === 'complete' ? 'bg-green-500' : project.status === 'on-hold' ? 'bg-amber-500' : 'bg-[#4F6AE8]'}
             />
           </div>
         </div>
@@ -236,7 +236,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
               {onAddTask && (
                 <button
                   onClick={onAddTask}
-                  className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-[#4F6AE8] hover:bg-[#EEF2FF] px-2 py-1 rounded-lg transition-colors"
                 >
                   <Plus size={11} />
                   Add Task
@@ -320,7 +320,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
               <div className="space-y-1.5">
                 {template.steps.map((step, idx) => (
                   <div key={step.id} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-[#E0E7FF] text-[#3B5BDB] flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                       {idx + 1}
                     </div>
                     <div className="flex-1">
@@ -368,7 +368,7 @@ function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project
   return (
     <div
       onClick={onClick}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all cursor-pointer group"
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md hover:border-[#C7D2FE] dark:hover:border-indigo-700 transition-all cursor-pointer group"
     >
       {/* Client + status */}
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -392,7 +392,7 @@ function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project
       </div>
 
       {/* Title */}
-      <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-snug">
+      <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400 transition-colors leading-snug">
         {project.name}
       </h3>
       <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">{project.description}</p>
@@ -405,7 +405,7 @@ function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project
         </div>
         <ProgressBar
           value={project.progress}
-          color={project.status === 'complete' ? 'bg-green-500' : project.status === 'on-hold' ? 'bg-amber-400' : 'bg-indigo-500'}
+          color={project.status === 'complete' ? 'bg-green-500' : project.status === 'on-hold' ? 'bg-amber-400' : 'bg-[#4F6AE8]'}
         />
       </div>
 
@@ -431,7 +431,7 @@ function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project
           {onEdit && (
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="p-1.5 text-gray-400 hover:text-[#4F6AE8] hover:bg-[#EEF2FF] rounded-lg transition-colors"
               title="Edit project"
             >
               <Pencil size={12} />
@@ -517,7 +517,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
       <TopBar title="Projects" subtitle="Manage client projects and track progress" />
 
       {(showNewProject || editProject) && (
@@ -556,7 +556,7 @@ export default function ProjectsPage() {
         <div className="flex justify-end mb-4">
           <button
             onClick={() => setShowNewProject(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={14} />
             New Project
@@ -566,7 +566,7 @@ export default function ProjectsPage() {
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {[
-            { label: 'Total Projects', value: stats.total, color: 'text-indigo-600', bg: 'bg-indigo-50', icon: FolderOpen },
+            { label: 'Total Projects', value: stats.total, color: 'text-[#4F6AE8]', bg: 'bg-[#EEF2FF]', icon: FolderOpen },
             { label: 'Active', value: stats.active, color: 'text-blue-600', bg: 'bg-blue-50', icon: CheckCircle },
             { label: 'Planning', value: stats.planning, color: 'text-gray-600', bg: 'bg-gray-100', icon: Clock },
             { label: 'Complete', value: stats.complete, color: 'text-green-600', bg: 'bg-green-50', icon: AlertCircle },
@@ -594,7 +594,7 @@ export default function ProjectsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search projects..."
-              className="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48"
+              className="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] w-48"
             />
           </div>
 
@@ -603,7 +603,7 @@ export default function ProjectsPage() {
             <button
               onClick={() => setSelectedClient('all')}
               className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                selectedClient === 'all' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                selectedClient === 'all' ? 'bg-[#4F6AE8] text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
               }`}
             >
               All Clients
@@ -629,7 +629,7 @@ export default function ProjectsPage() {
             <button
               onClick={() => setSelectedService('all')}
               className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                selectedService === 'all' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                selectedService === 'all' ? 'bg-[#4F6AE8] text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
               }`}
             >
               All Services
@@ -639,7 +639,7 @@ export default function ProjectsPage() {
                 key={svc.id}
                 onClick={() => setSelectedService(svc.id)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  selectedService === svc.id ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                  selectedService === svc.id ? 'bg-[#4F6AE8] text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {svc.icon} {svc.name}
@@ -655,7 +655,7 @@ export default function ProjectsPage() {
                 onClick={() => setSelectedStatus(s)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   selectedStatus === s
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-[#4F6AE8] text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
                 }`}
               >

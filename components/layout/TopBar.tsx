@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search, Sun, Moon, Menu } from 'lucide-react';
+import { Bell, Search, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { useSidebar } from './SidebarContext';
 
@@ -18,16 +18,19 @@ const NOTIFICATIONS = [
 
 export default function TopBar({ title, subtitle }: TopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
-  const [dark, setDark] = useState(false);
   const { toggleMobile } = useSidebar();
   const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
 
   return (
-    <header className="fixed top-0 left-0 right-0 lg:left-64 h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-3 z-20">
+    <header
+      className="fixed top-0 left-0 right-0 lg:left-64 h-16 flex items-center px-4 gap-3 z-20"
+      style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8ECF1' }}
+    >
       {/* Hamburger — mobile only */}
       <button
         onClick={toggleMobile}
-        className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="lg:hidden p-2 rounded-lg transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+        style={{ color: '#4A5568' }}
         aria-label="Open menu"
       >
         <Menu size={20} />
@@ -35,37 +38,27 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
 
       {/* Title */}
       <div className="flex-1 min-w-0">
-        <h1 className="text-base font-semibold text-gray-900 truncate">{title}</h1>
-        {subtitle && <p className="text-xs text-gray-500 hidden sm:block">{subtitle}</p>}
+        <h1 className="text-base font-semibold truncate" style={{ color: '#1E2A3A' }}>{title}</h1>
+        {subtitle && <p className="text-xs hidden sm:block" style={{ color: '#8B95A5' }}>{subtitle}</p>}
       </div>
 
       {/* Search */}
       <div className="relative hidden md:block">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#B0B8C9' }} />
         <input
           type="text"
           placeholder="Search tasks, docs, clients..."
-          className="pl-8 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className="ds-input pl-8 pr-4 py-2 w-64"
+          style={{ height: '36px' }}
         />
       </div>
-
-      {/* Dark mode toggle */}
-      <button
-        onClick={() => {
-          setDark(!dark);
-          document.documentElement.classList.toggle('dark');
-        }}
-        className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-        title="Toggle dark mode"
-      >
-        {dark ? <Sun size={16} /> : <Moon size={16} />}
-      </button>
 
       {/* Notifications */}
       <div className="relative">
         <button
           onClick={() => setNotifOpen(!notifOpen)}
-          className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="relative p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          style={{ color: '#8B95A5' }}
         >
           <Bell size={16} />
           {unreadCount > 0 && (
@@ -78,29 +71,33 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
         {notifOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
-            <div className="absolute right-0 top-10 w-72 sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-20 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                <span className="font-semibold text-sm text-gray-900">Notifications</span>
-                <span className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline">
+            <div
+              className="absolute right-0 top-10 w-72 sm:w-80 rounded-xl shadow-xl z-20 overflow-hidden"
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8ECF1' }}
+            >
+              <div
+                className="px-4 py-3 flex items-center justify-between"
+                style={{ borderBottom: '1px solid #E8ECF1' }}
+              >
+                <span className="font-semibold text-sm" style={{ color: '#1E2A3A' }}>Notifications</span>
+                <span className="text-xs font-medium cursor-pointer hover:underline" style={{ color: '#4F6AE8' }}>
                   Mark all read
                 </span>
               </div>
-              <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+              <div className="max-h-72 overflow-y-auto">
                 {NOTIFICATIONS.map((n) => (
                   <div
                     key={n.id}
-                    className={`px-4 py-3 flex gap-3 items-start hover:bg-gray-50 cursor-pointer transition-colors ${
-                      n.unread ? 'bg-indigo-50/40' : ''
-                    }`}
+                    className="px-4 py-3 flex gap-3 items-start cursor-pointer transition-colors hover:bg-gray-50"
+                    style={n.unread ? { backgroundColor: 'rgba(79,106,232,0.04)' } : {}}
                   >
                     <div
-                      className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                        n.unread ? 'bg-indigo-500' : 'bg-gray-300'
-                      }`}
+                      className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                      style={{ backgroundColor: n.unread ? '#4F6AE8' : '#D0D5DD' }}
                     />
                     <div className="flex-1">
-                      <p className="text-sm text-gray-800 leading-snug">{n.text}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
+                      <p className="text-sm leading-snug" style={{ color: '#1E2A3A' }}>{n.text}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#8B95A5' }}>{n.time}</p>
                     </div>
                   </div>
                 ))}
@@ -112,7 +109,10 @@ export default function TopBar({ title, subtitle }: TopBarProps) {
 
       {/* User avatar */}
       <div className="flex items-center gap-2 cursor-pointer flex-shrink-0">
-        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+          style={{ backgroundColor: '#4F6AE8' }}
+        >
           JP
         </div>
       </div>

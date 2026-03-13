@@ -102,7 +102,7 @@ function PressingItems({ tasks, clients, teamMembers }: Props) {
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${PRIORITY_COLORS[task.priority]}`}>
                   {task.priority}
                 </span>
-                <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400">
                   {task.title}
                 </span>
                 {client && (
@@ -309,8 +309,8 @@ function PipelineItems({ tasks, clients, teamMembers }: Props) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-          <Inbox size={14} className="text-indigo-600 dark:text-indigo-400" />
+        <div className="w-7 h-7 rounded-lg bg-[#E0E7FF] dark:bg-indigo-900/30 flex items-center justify-center">
+          <Inbox size={14} className="text-[#4F6AE8] dark:text-indigo-400" />
         </div>
         <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Pipeline</h2>
       </div>
@@ -330,7 +330,7 @@ function PipelineItems({ tasks, clients, teamMembers }: Props) {
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${PRIORITY_COLORS[task.priority]}`}>
                   {task.priority}
                 </span>
-                <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400">
                   {task.title}
                 </span>
                 {client && (

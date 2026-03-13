@@ -58,7 +58,7 @@ function CommentThread({ comment, depth = 0 }: { comment: Comment; depth?: numbe
           {depth === 0 && (
             <button
               onClick={() => setShowReply(!showReply)}
-              className="mt-1.5 flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600 transition-colors"
+              className="mt-1.5 flex items-center gap-1 text-xs text-gray-400 hover:text-[#4F6AE8] transition-colors"
             >
               <CornerDownRight size={10} />
               Reply
@@ -82,9 +82,9 @@ function CommentThread({ comment, depth = 0 }: { comment: Comment; depth?: numbe
               onChange={e => setReplyText(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && submitReply()}
               placeholder="Write a reply..."
-              className="flex-1 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
             />
-            <button onClick={submitReply} className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <button onClick={submitReply} className="p-1.5 bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors">
               <Send size={13} />
             </button>
           </div>
@@ -158,7 +158,7 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
               </span>
             )}
             {doc.clientId === 'all' && (
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F6AE8]">
                 All Clients
               </span>
             )}
@@ -184,7 +184,7 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
         <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 min-w-0">
-              <FileText size={14} className="text-indigo-500 flex-shrink-0" />
+              <FileText size={14} className="text-[#4F6AE8] flex-shrink-0" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{doc.title}</span>
             </div>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full whitespace-nowrap ml-2">
@@ -206,7 +206,7 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
                 onClick={() => setActiveTab('comments')}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors ${
                   activeTab === 'comments'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600'
+                    ? 'text-[#4F6AE8] border-b-2 border-indigo-600'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                 }`}
               >
@@ -217,7 +217,7 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
                 onClick={() => setActiveTab('history')}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors ${
                   activeTab === 'history'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600'
+                    ? 'text-[#4F6AE8] border-b-2 border-indigo-600'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                 }`}
               >
@@ -247,15 +247,15 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
                         onClick={() => setActiveVersion(v)}
                         className={`w-full text-left p-3 rounded-lg border transition-colors ${
                           isActive
-                            ? 'border-indigo-200 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-700'
+                            ? 'border-[#C7D2FE] bg-[#EEF2FF] dark:bg-indigo-900/20 dark:border-indigo-700'
                             : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className={`text-xs font-bold ${isActive ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-200'}`}>
+                          <span className={`text-xs font-bold ${isActive ? 'text-[#3B5BDB] dark:text-indigo-300' : 'text-gray-700 dark:text-gray-200'}`}>
                             {v.version}
                           </span>
-                          {isActive && <span className="text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">Current</span>}
+                          {isActive && <span className="text-[10px] bg-[#4F6AE8] text-white px-1.5 py-0.5 rounded-full">Current</span>}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{v.summary}</p>
                         <div className="flex items-center gap-1.5">
@@ -281,11 +281,11 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
                       onChange={e => setNewComment(e.target.value)}
                       placeholder="Add a comment..."
                       rows={2}
-                      className="w-full text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                      className="w-full text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] resize-none"
                     />
                     <button
                       onClick={submitComment}
-                      className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors"
+                      className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold bg-[#4F6AE8] text-white px-3 py-1.5 rounded-lg hover:bg-[#3B5BDB] transition-colors"
                     >
                       <Send size={11} /> Post comment
                     </button>
@@ -320,12 +320,12 @@ export default function DocumentViewer() {
             <button
               key={doc.id}
               onClick={() => setSelectedDoc(doc)}
-              className="text-left bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-700 transition-all group"
+              className="text-left bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg hover:border-[#C7D2FE] dark:hover:border-indigo-700 transition-all group"
             >
               {/* Icon + version */}
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
-                  <FileText size={18} className="text-indigo-600 dark:text-indigo-400" />
+                <div className="w-10 h-10 bg-[#E0E7FF] dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
+                  <FileText size={18} className="text-[#4F6AE8] dark:text-indigo-400" />
                 </div>
                 <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                   {latestVersion.version}
@@ -333,7 +333,7 @@ export default function DocumentViewer() {
               </div>
 
               {/* Title */}
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1.5 group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400 transition-colors">
                 {doc.title}
               </h3>
 
@@ -346,7 +346,7 @@ export default function DocumentViewer() {
                   {client.name}
                 </span>
               ) : (
-                <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-3 bg-indigo-50 text-indigo-600">
+                <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-3 bg-[#EEF2FF] text-[#4F6AE8]">
                   All Clients
                 </span>
               )}

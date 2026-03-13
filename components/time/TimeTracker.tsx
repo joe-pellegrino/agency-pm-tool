@@ -100,7 +100,7 @@ export default function TimeTracker({ taskId, clientId }: TimeTrackerProps) {
           <Clock size={11} />
           Time Tracking
         </div>
-        <div className="text-xs font-medium text-indigo-600">
+        <div className="text-xs font-medium text-[#4F6AE8]">
           Total: {formatDuration(totalMinutes)}
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function TimeTracker({ taskId, clientId }: TimeTrackerProps) {
       <div className="flex items-center gap-2 mb-3">
         {running ? (
           <>
-            <div className="flex-1 font-mono text-base font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-lg text-center">
+            <div className="flex-1 font-mono text-base font-bold text-[#4F6AE8] bg-[#EEF2FF] dark:bg-indigo-900/20 px-3 py-2 rounded-lg text-center">
               {formatTimer(elapsed)}
             </div>
             <button
@@ -178,7 +178,7 @@ export default function TimeTracker({ taskId, clientId }: TimeTrackerProps) {
           />
           <button
             onClick={handleManualAdd}
-            className="w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium transition-colors"
+            className="w-full px-3 py-1.5 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded text-xs font-medium transition-colors"
           >
             Add Entry
           </button>

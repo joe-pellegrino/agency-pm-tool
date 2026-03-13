@@ -32,16 +32,28 @@ function getClientHealth(
   return scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 }
 
-function getHealthColor(score: number): string {
-  if (score >= 70) return 'text-green-600';
-  if (score >= 40) return 'text-amber-600';
-  return 'text-red-600';
+function getHealthStyle(score: number) {
+  if (score >= 70) return { color: '#059669' };
+  if (score >= 40) return { color: '#D97706' };
+  return { color: '#DC2626' };
 }
 
 function getHealthLabel(score: number): string {
   if (score >= 70) return 'On Track';
   if (score >= 40) return 'At Risk';
   return 'Behind';
+}
+
+function getHealthBarColor(score: number): string {
+  if (score >= 70) return '#22C55E';
+  if (score >= 40) return '#F59F00';
+  return '#E03131';
+}
+
+function getHealthBarTrack(score: number): string {
+  if (score >= 70) return '#D1FAE5';
+  if (score >= 40) return '#FEF3C7';
+  return '#FEE2E2';
 }
 
 export default function ClientsPage() {
@@ -78,17 +90,17 @@ export default function ClientsPage() {
 
   if (loading) {
     return (
-      <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
         <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#4F6AE8' }} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
       {(showNewClient || editClient) && (
         <ClientModal client={editClient || undefined} onClose={() => { setShowNewClient(false); setEditClient(null); }} />
       )}
@@ -108,7 +120,10 @@ export default function ClientsPage() {
         <div className="flex justify-end mb-5">
           <button
             onClick={() => setShowNewClient(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 text-white rounded-md text-sm font-medium transition-colors"
+            style={{ backgroundColor: '#4F6AE8' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4F6AE8'; }}
           >
             <Plus size={14} />
             New Client
@@ -122,13 +137,28 @@ export default function ClientsPage() {
             const activeProjects = PROJECTS.filter(p => p.clientId === client.id && p.status === 'active').length;
             const openTasks = TASKS.filter(t => t.clientId === client.id && t.status !== 'done').length;
             const strategy = STRATEGIES.find(s => s.clientId === client.id);
+            const healthStyle = getHealthStyle(health);
 
             return (
               <Link
                 key={client.id}
                 href={`/clients/${client.id}`}
-                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-600 transition-all group"
+                className="rounded-lg overflow-hidden transition-all group block"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E8ECF1',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)';
+                  (e.currentTarget as HTMLElement).style.borderColor = '#D0D5DD';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)';
+                  (e.currentTarget as HTMLElement).style.borderColor = '#E8ECF1';
+                }}
               >
+                {/* Client color accent bar */}
                 <div className="h-1.5" style={{ backgroundColor: client.color }} />
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3 mb-4">
@@ -140,14 +170,24 @@ export default function ClientsPage() {
                         {client.logo}
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900 dark:text-white">{client.name}</h3>
-                        <p className="text-xs text-gray-500">{client.industry}</p>
-                        <p className="text-xs text-gray-400">{client.location}</p>
+                        <h3 className="font-bold" style={{ color: '#1E2A3A' }}>{client.name}</h3>
+                        <p className="text-xs" style={{ color: '#8B95A5' }}>{client.industry}</p>
+                        <p className="text-xs" style={{ color: '#B0B8C9' }}>{client.location}</p>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <div className={`text-2xl font-bold ${getHealthColor(health)}`}>{health}%</div>
-                      <div className={`text-[10px] font-medium ${getHealthColor(health)}`}>{getHealthLabel(health)}</div>
+                      <div className="text-2xl font-bold" style={healthStyle}>{health}%</div>
+                      <div className="text-[10px] font-medium" style={healthStyle}>{getHealthLabel(health)}</div>
+                    </div>
+                  </div>
+
+                  {/* Health progress bar */}
+                  <div className="mb-4">
+                    <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: getHealthBarTrack(health) }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${health}%`, backgroundColor: getHealthBarColor(health) }}
+                      />
                     </div>
                   </div>
 
@@ -169,31 +209,40 @@ export default function ClientsPage() {
                       { label: 'Open Tasks', value: openTasks, icon: CheckCircle },
                       { label: 'Planning', value: planningServices, icon: Activity },
                     ].map(({ label, value, icon: Icon }) => (
-                      <div key={label} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg py-2 px-1">
-                        <div className="text-lg font-bold text-gray-900 dark:text-white">{value}</div>
-                        <div className="text-[10px] text-gray-500 leading-tight">{label}</div>
+                      <div key={label} className="rounded-lg py-2 px-1" style={{ backgroundColor: '#F0F3F8' }}>
+                        <div className="text-lg font-bold" style={{ color: '#1E2A3A' }}>{value}</div>
+                        <div className="text-[10px] leading-tight" style={{ color: '#8B95A5' }}>{label}</div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <span className="text-xs text-gray-400">View services & strategy</span>
+                  <div
+                    className="flex items-center justify-between mt-4 pt-4"
+                    style={{ borderTop: '1px solid #E8ECF1' }}
+                  >
+                    <span className="text-xs" style={{ color: '#8B95A5' }}>View services & strategy</span>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={(e) => { e.preventDefault(); setEditClient(client); }}
-                        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-1.5 rounded-lg transition-colors"
+                        style={{ color: '#8B95A5' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#4F6AE8'; (e.currentTarget as HTMLElement).style.backgroundColor = '#E0E7FF'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8B95A5'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                         title="Edit client"
                       >
                         <Pencil size={13} />
                       </button>
                       <button
                         onClick={(e) => { e.preventDefault(); setArchiveId(client.id); }}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 rounded-lg transition-colors"
+                        style={{ color: '#8B95A5' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#DC2626'; (e.currentTarget as HTMLElement).style.backgroundColor = '#FEE2E2'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8B95A5'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                         title="Archive client"
                       >
                         <Archive size={13} />
                       </button>
-                      <ChevronRight size={16} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                      <ChevronRight size={16} style={{ color: '#B0B8C9' }} className="group-hover:text-blue-500 transition-colors" />
                     </div>
                   </div>
                 </div>

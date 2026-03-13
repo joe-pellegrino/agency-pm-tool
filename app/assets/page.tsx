@@ -115,7 +115,7 @@ function AssetCard({
               target="_blank"
               rel="noreferrer"
               onClick={e => e.stopPropagation()}
-              className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow text-gray-600 hover:text-indigo-600 transition-colors"
+              className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow text-gray-600 hover:text-[#4F6AE8] transition-colors"
               title="Download"
             >
               <Download size={12} />
@@ -223,7 +223,7 @@ function UploadZone({
       onDrop={handleDrop}
       className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
         dragging
-          ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+          ? 'border-indigo-400 bg-[#EEF2FF] dark:bg-indigo-900/20'
           : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 hover:bg-gray-50 dark:hover:bg-gray-800/50'
       }`}
       onClick={() => !uploading && inputRef.current?.click()}
@@ -239,7 +239,7 @@ function UploadZone({
 
       {uploading ? (
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={24} className="text-indigo-500 animate-spin" />
+          <Loader2 size={24} className="text-[#4F6AE8] animate-spin" />
           <div className="space-y-1">
             {progress.map((p, i) => (
               <p key={i} className="text-xs text-gray-600 dark:text-gray-300">{p}</p>
@@ -307,7 +307,7 @@ export default function AssetsPage() {
   const videoCount = assetsWithStorage.filter(a => ['mp4','mov','avi','webm','mkv'].some(e => a.filename.endsWith('.' + e))).length;
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
       <TopBar title="Asset Library" subtitle="Brand assets, creatives, and media files" />
 
       {deleteTarget && (
@@ -352,7 +352,7 @@ export default function AssetsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search files..."
-              className="pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+              className="pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] w-full"
             />
           </div>
 
@@ -390,7 +390,7 @@ export default function AssetsPage() {
 
             <button
               onClick={() => setShowUpload(v => !v)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
             >
               <Plus size={14} />
               <span className="hidden sm:inline">Upload Files</span>
@@ -437,7 +437,7 @@ export default function AssetsPage() {
               <select
                 value={uploadClientId}
                 onChange={e => setSelectedClient(e.target.value)}
-                className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
+                className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] w-full sm:w-auto"
               >
                 {CLIENTS.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
@@ -483,7 +483,7 @@ export default function AssetsPage() {
             <p className="text-sm mt-1">Click &quot;Upload Files&quot; to add your first asset</p>
             <button
               onClick={() => setShowUpload(true)}
-              className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+              className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
             >
               <Upload size={14} />
               Upload Files

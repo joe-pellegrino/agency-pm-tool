@@ -8,8 +8,8 @@ const DocumentEditorContent = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-indigo-500" />
+      <div className="pt-16 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F0F3F8' }}>
+        <Loader2 size={24} className="animate-spin text-[#4F6AE8]" />
       </div>
     ),
   }
