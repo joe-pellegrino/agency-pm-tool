@@ -66,6 +66,8 @@ export interface Document {
   clientId: string;
   collaborators: string[];
   content: string;
+  type?: 'client' | 'internal';
+  yjsState?: string;
   comments: Comment[];
   versions: DocumentVersion[];
   createdAt: string;
@@ -2164,3 +2166,34 @@ export const SERVICE_STRATEGIES: ServiceStrategy[] = [
     ],
   },
 ];
+
+// ─── Knowledge Base Types ─────────────────────────────────────────────────────
+
+export interface KBCategory {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface KBArticle {
+  id: string;
+  title: string;
+  content: Record<string, unknown> | null;
+  yjsState?: string;
+  categoryId?: string;
+  tags: string[];
+  visibility: 'internal' | 'all';
+  authorId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KBArticleVersion {
+  id: string;
+  articleId: string;
+  content: Record<string, unknown> | null;
+  authorId?: string;
+  createdAt: string;
+  summary?: string;
+}

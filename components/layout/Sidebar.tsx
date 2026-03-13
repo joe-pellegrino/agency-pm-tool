@@ -22,6 +22,7 @@ import {
   Target,
   Briefcase,
   Users,
+  BookOpen,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -41,6 +42,7 @@ const NAV_GROUPS = [
     label: 'Content',
     items: [
       { href: '/documents', label: 'Documents', icon: FileText },
+      { href: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen },
       { href: '/assets', label: 'Assets', icon: FolderOpen },
     ],
   },

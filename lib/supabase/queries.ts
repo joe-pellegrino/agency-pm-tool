@@ -8,6 +8,7 @@ import type {
   TaskTemplate, Automation, TimeEntry, Asset, WorkflowTemplate,
   WorkflowStep, Strategy, StrategyPillar, KPI, Project, Service,
   ClientService, ServiceStrategy, ServiceStrategyPillar, ServiceStrategyKPI,
+  KBCategory, KBArticle, KBArticleVersion,
 } from '@/lib/data';
 
 type AssetVersion = { id: string; date: string; note: string };
@@ -69,12 +70,14 @@ function toApprovalEntry(r: Row): ApprovalEntry {
   };
 }
 
-function toDocument(r: Row, collaborators: string[], versions: DocumentVersion[], comments: Comment[]): Document {
+function toDocument(r: Row, collaborators: string[], versions: DocumentVersion[], comments: Comment[]): Document & { type?: string; yjsState?: string } {
   return {
     id: r.id as string,
     title: r.title as string,
     clientId: r.client_id as string,
     content: r.content as string,
+    type: ((r.type as string) || 'client') as 'client' | 'internal',
+    yjsState: r.yjs_state as string | undefined,
     createdAt: (r.created_at as string).split('T')[0],
     updatedAt: (r.updated_at as string).split('T')[0],
     collaborators,
@@ -294,6 +297,30 @@ function toServiceStrategyKPI(r: Row): ServiceStrategyKPI {
   };
 }
 
+function toKBCategory(r: Row): KBCategory {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    description: r.description as string | undefined,
+    createdAt: r.created_at as string,
+  };
+}
+
+function toKBArticle(r: Row): KBArticle {
+  return {
+    id: r.id as string,
+    title: r.title as string,
+    content: r.content as Record<string, unknown> | null,
+    yjsState: r.yjs_state as string | undefined,
+    categoryId: r.category_id as string | undefined,
+    tags: (r.tags as string[]) || [],
+    visibility: r.visibility as 'internal' | 'all',
+    authorId: r.author_id as string | undefined,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
 // ─── Main data fetcher ────────────────────────────────────────────────────────
 
 export interface AppData {
@@ -311,6 +338,8 @@ export interface AppData {
   SERVICES: Service[];
   CLIENT_SERVICES: ClientService[];
   SERVICE_STRATEGIES: ServiceStrategy[];
+  KB_CATEGORIES: KBCategory[];
+  KB_ARTICLES: KBArticle[];
   PRIORITY_DOT: Record<string, string>;
 }
 
@@ -335,6 +364,7 @@ export async function getAllData(): Promise<AppData> {
     projectsRes, projectTasksRes,
     servicesRes, clientServicesRes, csProjectsRes,
     ssRes, ssPillarsRes, ssKpisRes,
+    kbCategoriesRes, kbArticlesRes,
   ] = await Promise.all([
     db.from('clients').select('*').is('archived_at', null),
     db.from('team_members').select('*').is('archived_at', null),
@@ -366,6 +396,8 @@ export async function getAllData(): Promise<AppData> {
     db.from('service_strategies').select('*'),
     db.from('service_strategy_pillars').select('*'),
     db.from('service_strategy_kpis').select('*'),
+    db.from('kb_categories').select('*').is('archived_at', null),
+    db.from('kb_articles').select('*').is('archived_at', null),
   ]);
 
   const clients = clientsRes.data ?? [];
@@ -398,6 +430,8 @@ export async function getAllData(): Promise<AppData> {
   const ssRows = ssRes.data ?? [];
   const ssPillarRows = ssPillarsRes.data ?? [];
   const ssKpiRows = ssKpisRes.data ?? [];
+  const kbCategoryRows = kbCategoriesRes.data ?? [];
+  const kbArticleRows = kbArticlesRes.data ?? [];
 
   // ── Build TASKS ──
   const TASKS: Task[] = taskRows.map((r) => {
@@ -530,6 +564,8 @@ export async function getAllData(): Promise<AppData> {
     SERVICES: serviceRows.map(toService),
     CLIENT_SERVICES,
     SERVICE_STRATEGIES,
+    KB_CATEGORIES: kbCategoryRows.map(toKBCategory),
+    KB_ARTICLES: kbArticleRows.map(toKBArticle),
     PRIORITY_DOT,
   };
 }

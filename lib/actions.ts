@@ -677,3 +677,231 @@ export async function removeClientService(id: string) {
   revalidatePath('/services');
   revalidatePath('/clients');
 }
+
+// ─── DOCUMENTS ────────────────────────────────────────────────────────────────
+
+export async function createDocument(data: {
+  title: string;
+  type: 'client' | 'internal';
+  clientId?: string;
+  collaboratorIds?: string[];
+}) {
+  const id = `doc-${Date.now()}`;
+  const now = new Date().toISOString();
+  const { error } = await db()
+    .from('documents')
+    .insert({
+      id,
+      title: data.title,
+      type: data.type,
+      client_id: data.clientId || 'all',
+      content: '',
+      created_at: now,
+      updated_at: now,
+    });
+  if (error) throw new Error(error.message);
+
+  if (data.collaboratorIds && data.collaboratorIds.length > 0) {
+    await db()
+      .from('document_collaborators')
+      .insert(data.collaboratorIds.map(memberId => ({ document_id: id, team_member_id: memberId })));
+  }
+
+  revalidatePath('/documents');
+  return id;
+}
+
+export async function updateDocument(id: string, data: {
+  title?: string;
+  content?: string;
+  yjsState?: string;
+  type?: 'client' | 'internal';
+  clientId?: string;
+  collaboratorIds?: string[];
+}) {
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (data.title !== undefined) update.title = data.title;
+  if (data.content !== undefined) update.content = data.content;
+  if (data.yjsState !== undefined) update.yjs_state = data.yjsState;
+  if (data.type !== undefined) update.type = data.type;
+  if (data.clientId !== undefined) update.client_id = data.clientId;
+
+  const { error } = await db().from('documents').update(update).eq('id', id);
+  if (error) throw new Error(error.message);
+
+  if (data.collaboratorIds !== undefined) {
+    await db().from('document_collaborators').delete().eq('document_id', id);
+    if (data.collaboratorIds.length > 0) {
+      await db()
+        .from('document_collaborators')
+        .insert(data.collaboratorIds.map(memberId => ({ document_id: id, team_member_id: memberId })));
+    }
+  }
+
+  revalidatePath('/documents');
+}
+
+export async function archiveDocument(id: string) {
+  const { error } = await db()
+    .from('documents')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/documents');
+}
+
+export async function createDocumentVersion(data: {
+  documentId: string;
+  content: string;
+  authorId: string;
+  summary?: string;
+}) {
+  const id = `dv-${Date.now()}`;
+  const versionNum = Math.floor(Date.now() / 1000);
+  const { error } = await db()
+    .from('document_versions')
+    .insert({
+      id,
+      document_id: data.documentId,
+      version: `v${versionNum}`,
+      author_id: data.authorId,
+      summary: data.summary || 'Auto-saved',
+      created_at: new Date().toISOString(),
+    });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/documents/${data.documentId}`);
+  return id;
+}
+
+export async function createDocumentComment(data: {
+  documentId: string;
+  authorId: string;
+  text: string;
+  parentCommentId?: string;
+}) {
+  const id = `c-${Date.now()}`;
+  const { error } = await db()
+    .from('comments')
+    .insert({
+      id,
+      document_id: data.documentId,
+      author_id: data.authorId,
+      text: data.text,
+      parent_comment_id: data.parentCommentId || null,
+      created_at: new Date().toISOString(),
+      resolved: false,
+    });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/documents/${data.documentId}`);
+  return id;
+}
+
+export async function resolveDocumentComment(id: string, resolved: boolean) {
+  const { error } = await db()
+    .from('comments')
+    .update({ resolved })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── KNOWLEDGE BASE ───────────────────────────────────────────────────────────
+
+export async function createKBCategory(data: { name: string; description?: string }) {
+  const { error, data: row } = await db()
+    .from('kb_categories')
+    .insert({ name: data.name, description: data.description || null })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath('/knowledge-base');
+  return row;
+}
+
+export async function updateKBCategory(id: string, data: { name?: string; description?: string }) {
+  const { error } = await db().from('kb_categories').update(data).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/knowledge-base');
+}
+
+export async function archiveKBCategory(id: string) {
+  const { error } = await db()
+    .from('kb_categories')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/knowledge-base');
+}
+
+export async function createKBArticle(data: {
+  title: string;
+  categoryId?: string;
+  tags?: string[];
+  visibility?: 'internal' | 'all';
+  authorId?: string;
+}) {
+  const { error, data: row } = await db()
+    .from('kb_articles')
+    .insert({
+      title: data.title,
+      category_id: data.categoryId || null,
+      tags: data.tags || [],
+      visibility: data.visibility || 'internal',
+      author_id: data.authorId || null,
+      content: null,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath('/knowledge-base');
+  return row;
+}
+
+export async function updateKBArticle(id: string, data: {
+  title?: string;
+  content?: Record<string, unknown> | null;
+  yjsState?: string;
+  categoryId?: string | null;
+  tags?: string[];
+  visibility?: 'internal' | 'all';
+  authorId?: string | null;
+}) {
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (data.title !== undefined) update.title = data.title;
+  if (data.content !== undefined) update.content = data.content;
+  if (data.yjsState !== undefined) update.yjs_state = data.yjsState;
+  if (data.categoryId !== undefined) update.category_id = data.categoryId;
+  if (data.tags !== undefined) update.tags = data.tags;
+  if (data.visibility !== undefined) update.visibility = data.visibility;
+  if (data.authorId !== undefined) update.author_id = data.authorId;
+  const { error } = await db().from('kb_articles').update(update).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/knowledge-base');
+  revalidatePath(`/knowledge-base/${id}`);
+}
+
+export async function archiveKBArticle(id: string) {
+  const { error } = await db()
+    .from('kb_articles')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/knowledge-base');
+}
+
+export async function createKBArticleVersion(data: {
+  articleId: string;
+  content: Record<string, unknown> | null;
+  authorId?: string;
+  summary?: string;
+}) {
+  const { error } = await db()
+    .from('kb_article_versions')
+    .insert({
+      article_id: data.articleId,
+      content: data.content,
+      author_id: data.authorId || null,
+      summary: data.summary || 'Auto-saved',
+    });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/knowledge-base/${data.articleId}`);
+}
