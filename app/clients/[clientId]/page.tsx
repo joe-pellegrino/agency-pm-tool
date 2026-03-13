@@ -500,11 +500,11 @@ export default function ClientPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const client = CLIENTS.find(c => c.id === clientId);
 
-  const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === clientId), [clientId]);
+  const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === clientId), [clientId, STRATEGIES]);
 
   const clientServices = useMemo(
     () => CLIENT_SERVICES.filter(cs => cs.clientId === clientId),
-    [clientId],
+    [clientId, CLIENT_SERVICES],
   );
 
   // For the new grid: get the best (most active) client_service entry per service

@@ -480,7 +480,7 @@ export default function ProjectsPage() {
       });
     });
     return map;
-  }, []);
+  }, [CLIENT_SERVICES]);
 
   const filtered = useMemo(() => {
     return PROJECTS.filter(p => {
@@ -492,14 +492,14 @@ export default function ProjectsPage() {
         p.description.toLowerCase().includes(search.toLowerCase());
       return matchClient && matchStatus && matchService && matchSearch;
     });
-  }, [selectedClient, selectedStatus, selectedService, search, projectServiceMap]);
+  }, [selectedClient, selectedStatus, selectedService, search, projectServiceMap, PROJECTS]);
 
   const stats = useMemo(() => ({
     total: PROJECTS.length,
     active: PROJECTS.filter(p => p.status === 'active').length,
     complete: PROJECTS.filter(p => p.status === 'complete').length,
     planning: PROJECTS.filter(p => p.status === 'planning').length,
-  }), []);
+  }), [PROJECTS]);
 
   const handleArchive = () => {
     if (!archiveId) return;

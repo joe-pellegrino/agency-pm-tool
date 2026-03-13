@@ -423,7 +423,7 @@ export default function ServicesPage() {
   const categories = useMemo(() => {
     const cats = new Set(SERVICES.map(s => s.category));
     return ['all', ...Array.from(cats)];
-  }, []);
+  }, [SERVICES]);
 
   const filteredServices = useMemo(() => {
     return SERVICES.filter(s => {
@@ -431,7 +431,7 @@ export default function ServicesPage() {
       const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase());
       return matchCat && matchSearch;
     });
-  }, [categoryFilter, search]);
+  }, [categoryFilter, search, SERVICES]);
 
   // Stats
   const stats = useMemo(() => {
@@ -448,7 +448,7 @@ export default function ServicesPage() {
       openTasks,
       blockers,
     };
-  }, []);
+  }, [CLIENT_SERVICES, PROJECTS, TASKS]);
 
   // Matrix data: map[serviceId][clientId] = ClientService | null
   const matrixData = useMemo(() => {
@@ -465,7 +465,7 @@ export default function ServicesPage() {
       });
     });
     return map;
-  }, [filteredServices, statusFilter, clientFilter]);
+  }, [filteredServices, statusFilter, clientFilter, CLIENTS, CLIENT_SERVICES]);
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
