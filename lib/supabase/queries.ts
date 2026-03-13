@@ -5,6 +5,7 @@
 import { createServerClient } from './client';
 import type {
   Client, TeamMember, Task, ApprovalEntry, Document, Comment, DocumentVersion,
+  DocumentFolder,
   TaskTemplate, Automation, TimeEntry, Asset, WorkflowTemplate,
   WorkflowStep, Strategy, StrategyPillar, KPI, Project, Service,
   ClientService, ServiceStrategy, ServiceStrategyPillar, ServiceStrategyKPI,
@@ -78,11 +79,24 @@ function toDocument(r: Row, collaborators: string[], versions: DocumentVersion[]
     content: r.content as string,
     type: ((r.type as string) || 'client') as 'client' | 'internal',
     yjsState: r.yjs_state as string | undefined,
+    folderId: (r.folder_id as string | null) || null,
     createdAt: (r.created_at as string).split('T')[0],
     updatedAt: (r.updated_at as string).split('T')[0],
     collaborators,
     versions,
     comments,
+  };
+}
+
+function toDocumentFolder(r: Row): DocumentFolder {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    parentId: (r.parent_id as string | null) || null,
+    clientId: (r.client_id as string | null) || null,
+    color: (r.color as string) || '#6366f1',
+    createdAt: r.created_at as string,
+    archivedAt: (r.archived_at as string | null) || null,
   };
 }
 
@@ -328,6 +342,7 @@ export interface AppData {
   TEAM_MEMBERS: TeamMember[];
   TASKS: Task[];
   DOCUMENTS: Document[];
+  DOCUMENT_FOLDERS: DocumentFolder[];
   TASK_TEMPLATES: TaskTemplate[];
   AUTOMATIONS: Automation[];
   TIME_ENTRIES: TimeEntry[];
@@ -365,6 +380,7 @@ export async function getAllData(): Promise<AppData> {
     servicesRes, clientServicesRes, csProjectsRes,
     ssRes, ssPillarsRes, ssKpisRes,
     kbCategoriesRes, kbArticlesRes,
+    docFoldersRes,
   ] = await Promise.all([
     db.from('clients').select('*').is('archived_at', null),
     db.from('team_members').select('*').is('archived_at', null),
@@ -398,6 +414,7 @@ export async function getAllData(): Promise<AppData> {
     db.from('service_strategy_kpis').select('*'),
     db.from('kb_categories').select('*').is('archived_at', null),
     db.from('kb_articles').select('*').is('archived_at', null),
+    db.from('document_folders').select('*').is('archived_at', null),
   ]);
 
   const clients = clientsRes.data ?? [];
@@ -432,6 +449,7 @@ export async function getAllData(): Promise<AppData> {
   const ssKpiRows = ssKpisRes.data ?? [];
   const kbCategoryRows = kbCategoriesRes.data ?? [];
   const kbArticleRows = kbArticlesRes.data ?? [];
+  const docFolderRows = docFoldersRes.data ?? [];
 
   // ── Build TASKS ──
   const TASKS: Task[] = taskRows.map((r) => {
@@ -554,6 +572,7 @@ export async function getAllData(): Promise<AppData> {
     TEAM_MEMBERS: teamMembers.map(toTeamMember),
     TASKS,
     DOCUMENTS,
+    DOCUMENT_FOLDERS: docFolderRows.map(toDocumentFolder),
     TASK_TEMPLATES: templateRows.map(toTaskTemplate),
     AUTOMATIONS: automationRows.map(toAutomation),
     TIME_ENTRIES: timeRows.map(toTimeEntry),

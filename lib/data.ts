@@ -68,10 +68,21 @@ export interface Document {
   content: string;
   type?: 'client' | 'internal';
   yjsState?: string;
+  folderId?: string | null;
   comments: Comment[];
   versions: DocumentVersion[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DocumentFolder {
+  id: string;
+  name: string;
+  parentId: string | null;
+  clientId: string | null;
+  color: string;
+  createdAt: string;
+  archivedAt: string | null;
 }
 
 export interface TaskTemplate {

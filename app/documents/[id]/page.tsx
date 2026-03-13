@@ -27,9 +27,48 @@ import {
   Heading1, Heading2, Heading3, Quote, Code, Table2, Link2,
   Minus, Undo, Redo, MessageSquare, History, Check, Loader2,
   Send, CornerDownRight, Clock, RotateCcw, Settings, X,
-  Archive, Globe, Lock, Users, ChevronRight,
+  Archive, Lock,
 } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
+
+// ─── Browser-safe base64 utils (no Buffer) ───────────────────────────────────
+
+function uint8ArrayToBase64(arr: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < arr.byteLength; i++) {
+    binary += String.fromCharCode(arr[i]);
+  }
+  return btoa(binary);
+}
+
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    arr[i] = binary.charCodeAt(i);
+  }
+  return arr;
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type CommentRow = {
+  id: string;
+  author_id: string;
+  text: string;
+  created_at: string;
+  resolved: boolean;
+  parent_comment_id: string | null;
+};
+
+type VersionRow = {
+  id: string;
+  document_id: string;
+  version: string;
+  author_id: string;
+  summary: string;
+  created_at: string;
+};
 
 // ─── User Identity ────────────────────────────────────────────────────────────
 
@@ -41,7 +80,6 @@ function getOrCreateUser(teamMembers: Array<{ id: string; name: string; color: s
   if (stored) {
     try { return JSON.parse(stored); } catch {}
   }
-  // Pick a random team member
   if (teamMembers.length > 0) {
     const m = teamMembers[Math.floor(Math.random() * teamMembers.length)];
     const user = { id: m.id, name: m.name, color: m.color };
@@ -123,55 +161,30 @@ function Toolbar({
 
   return (
     <div className="flex items-center gap-0.5 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-wrap bg-white dark:bg-gray-800 sticky top-0 z-10">
-      {/* Headings */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Heading 1"><Heading1 size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2"><Heading2 size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3"><Heading3 size={14} /></ToolbarButton>
-
       <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-
-      {/* Text formatting */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><Bold size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><Italic size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough"><Strikethrough size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive('highlight')} title="Highlight">
         <span className="text-xs font-bold" style={{ background: 'linear-gradient(180deg, transparent 50%, #fef08a 50%)' }}>H</span>
       </ToolbarButton>
-
       <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-
-      {/* Lists */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet list"><List size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered list"><ListOrdered size={14} /></ToolbarButton>
-
       <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-
-      {/* Block elements */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote"><Quote size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} title="Code block"><Code size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal rule"><Minus size={14} /></ToolbarButton>
-
       <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-
-      {/* Table */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-        title="Insert table"
-      ><Table2 size={14} /></ToolbarButton>
-
-      {/* Link */}
+      <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table"><Table2 size={14} /></ToolbarButton>
       <ToolbarButton onClick={addLink} active={editor.isActive('link')} title="Link"><Link2 size={14} /></ToolbarButton>
-
       <div className="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-1" />
-
-      {/* History */}
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo"><Undo size={14} /></ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo"><Redo size={14} /></ToolbarButton>
-
-      {/* Spacer */}
       <div className="flex-1" />
-
-      {/* Save status */}
       <span className={`text-xs font-medium px-2 py-1 rounded-full mr-2 ${
         saveStatus === 'saved' ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' :
         saveStatus === 'saving' ? 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400' :
@@ -181,38 +194,17 @@ function Toolbar({
          saveStatus === 'saving' ? <span className="flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Saving...</span> :
          'Unsaved'}
       </span>
-
-      {/* Panel toggles */}
-      <ToolbarButton onClick={onToggleComments} active={showComments} title="Comments">
-        <MessageSquare size={14} />
-      </ToolbarButton>
-      <ToolbarButton onClick={onToggleHistory} active={showHistory} title="Version history">
-        <Clock size={14} />
-      </ToolbarButton>
-      <ToolbarButton onClick={onToggleSettings} title="Document settings">
-        <Settings size={14} />
-      </ToolbarButton>
+      <ToolbarButton onClick={onToggleComments} active={showComments} title="Comments"><MessageSquare size={14} /></ToolbarButton>
+      <ToolbarButton onClick={onToggleHistory} active={showHistory} title="Version history"><Clock size={14} /></ToolbarButton>
+      <ToolbarButton onClick={onToggleSettings} title="Document settings"><Settings size={14} /></ToolbarButton>
     </div>
   );
 }
 
 // ─── Comments Sidebar ─────────────────────────────────────────────────────────
 
-type CommentRow = {
-  id: string;
-  author_id: string;
-  text: string;
-  created_at: string;
-  resolved: boolean;
-  parent_comment_id: string | null;
-};
-
 function CommentsSidebar({
-  documentId,
-  currentUser,
-  teamMembers,
-  initialComments,
-  onClose,
+  documentId, currentUser, teamMembers, initialComments, onClose,
 }: {
   documentId: string;
   currentUser: { id: string; name: string; color: string };
@@ -224,7 +216,6 @@ function CommentsSidebar({
   const [newText, setNewText] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const getAuthor = (id: string) => teamMembers.find(m => m.id === id) || { name: id, color: '#6366f1' };
 
@@ -232,33 +223,23 @@ function CommentsSidebar({
     if (!text.trim()) return;
     try {
       const id = await createDocumentComment({
-        documentId,
-        authorId: currentUser.id,
-        text: text.trim(),
-        parentCommentId: parentId,
+        documentId, authorId: currentUser.id, text: text.trim(), parentCommentId: parentId,
       });
       const newComment: CommentRow = {
-        id,
-        author_id: currentUser.id,
-        text: text.trim(),
-        created_at: new Date().toISOString(),
-        resolved: false,
+        id, author_id: currentUser.id, text: text.trim(),
+        created_at: new Date().toISOString(), resolved: false,
         parent_comment_id: parentId || null,
       };
       setComments(prev => [...prev, newComment]);
       if (parentId) { setReplyTo(null); setReplyText(''); } else { setNewText(''); }
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
+    } catch (e) { toast.error((e as Error).message); }
   };
 
   const toggleResolve = async (comment: CommentRow) => {
     try {
       await resolveDocumentComment(comment.id, !comment.resolved);
       setComments(prev => prev.map(c => c.id === comment.id ? { ...c, resolved: !c.resolved } : c));
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
+    } catch (e) { toast.error((e as Error).message); }
   };
 
   const topComments = comments.filter(c => !c.parent_comment_id);
@@ -271,94 +252,69 @@ function CommentsSidebar({
         </h3>
         <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
       </div>
-
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {loading ? (
-          <div className="text-center py-4"><Loader2 size={20} className="animate-spin mx-auto text-gray-400" /></div>
-        ) : topComments.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-6">No comments yet. Start a discussion!</p>
-        ) : (
-          topComments.map(comment => {
-            const author = getAuthor(comment.author_id);
-            const replies = comments.filter(c => c.parent_comment_id === comment.id);
-            return (
-              <div key={comment.id} className={`rounded-lg border p-3 ${comment.resolved ? 'opacity-60 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30' : 'border-gray-200 dark:border-gray-600'}`}>
-                <div className="flex items-start gap-2 mb-2">
-                  <Avatar id={comment.author_id} name={author.name} color={author.color} size={24} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">{author.name}</span>
-                      <span className="text-[10px] text-gray-400 whitespace-nowrap">{format(parseISO(comment.created_at), 'MMM d, h:mm a')}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 leading-relaxed">{comment.text}</p>
+        {topComments.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-6">No comments yet.</p>
+        ) : topComments.map(comment => {
+          const author = getAuthor(comment.author_id);
+          const replies = comments.filter(c => c.parent_comment_id === comment.id);
+          return (
+            <div key={comment.id} className={`rounded-lg border p-3 ${comment.resolved ? 'opacity-60 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30' : 'border-gray-200 dark:border-gray-600'}`}>
+              <div className="flex items-start gap-2 mb-2">
+                <Avatar id={comment.author_id} name={author.name} color={author.color} size={24} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">{author.name}</span>
+                    <span className="text-[10px] text-gray-400 whitespace-nowrap">{format(parseISO(comment.created_at), 'MMM d, h:mm a')}</span>
                   </div>
-                </div>
-
-                {/* Replies */}
-                {replies.map(reply => {
-                  const replyAuthor = getAuthor(reply.author_id);
-                  return (
-                    <div key={reply.id} className="ml-6 mt-2 flex gap-2">
-                      <Avatar id={reply.author_id} name={replyAuthor.name} color={replyAuthor.color} size={18} />
-                      <div className="flex-1">
-                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">{replyAuthor.name}</span>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">{reply.text}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Reply input */}
-                {replyTo === comment.id && (
-                  <div className="mt-2 flex gap-2 ml-6">
-                    <input
-                      value={replyText}
-                      onChange={e => setReplyText(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') submitComment(replyText, comment.id); }}
-                      placeholder="Write a reply..."
-                      autoFocus
-                      className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                    <button onClick={() => submitComment(replyText, comment.id)} className="p-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"><Send size={10} /></button>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-                    className="text-[10px] text-gray-400 hover:text-indigo-600 flex items-center gap-1 transition-colors"
-                  >
-                    <CornerDownRight size={9} /> Reply
-                  </button>
-                  <button
-                    onClick={() => toggleResolve(comment)}
-                    className={`text-[10px] flex items-center gap-1 transition-colors ${comment.resolved ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}`}
-                  >
-                    <Check size={9} /> {comment.resolved ? 'Resolved' : 'Resolve'}
-                  </button>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 leading-relaxed">{comment.text}</p>
                 </div>
               </div>
-            );
-          })
-        )}
+              {replies.map(reply => {
+                const ra = getAuthor(reply.author_id);
+                return (
+                  <div key={reply.id} className="ml-6 mt-2 flex gap-2">
+                    <Avatar id={reply.author_id} name={ra.name} color={ra.color} size={18} />
+                    <div className="flex-1">
+                      <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-200">{ra.name}</span>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">{reply.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {replyTo === comment.id && (
+                <div className="mt-2 flex gap-2 ml-6">
+                  <input
+                    value={replyText} onChange={e => setReplyText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') submitComment(replyText, comment.id); }}
+                    placeholder="Write a reply..." autoFocus
+                    className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <button onClick={() => submitComment(replyText, comment.id)} className="p-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"><Send size={10} /></button>
+                </div>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                <button onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)} className="text-[10px] text-gray-400 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+                  <CornerDownRight size={9} /> Reply
+                </button>
+                <button onClick={() => toggleResolve(comment)} className={`text-[10px] flex items-center gap-1 transition-colors ${comment.resolved ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}`}>
+                  <Check size={9} /> {comment.resolved ? 'Resolved' : 'Resolve'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
-
-      {/* New comment */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700">
         <div className="flex gap-2">
           <Avatar id={currentUser.id} name={currentUser.name} color={currentUser.color} size={24} />
           <div className="flex-1">
             <textarea
-              value={newText}
-              onChange={e => setNewText(e.target.value)}
-              placeholder="Add a comment..."
-              rows={2}
+              value={newText} onChange={e => setNewText(e.target.value)}
+              placeholder="Add a comment..." rows={2}
               className="w-full text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
             />
-            <button
-              onClick={() => submitComment(newText)}
-              className="mt-1 flex items-center gap-1 text-xs font-medium bg-indigo-600 text-white px-2.5 py-1 rounded hover:bg-indigo-700 transition-colors"
-            >
+            <button onClick={() => submitComment(newText)} className="mt-1 flex items-center gap-1 text-xs font-medium bg-indigo-600 text-white px-2.5 py-1 rounded hover:bg-indigo-700 transition-colors">
               <Send size={10} /> Post
             </button>
           </div>
@@ -370,30 +326,16 @@ function CommentsSidebar({
 
 // ─── Version History Panel ────────────────────────────────────────────────────
 
-type VersionRow = {
-  id: string;
-  document_id: string;
-  version: string;
-  author_id: string;
-  summary: string;
-  created_at: string;
-};
-
 function VersionHistoryPanel({
-  documentId,
-  teamMembers,
-  initialVersions,
-  onRestore,
-  onClose,
+  teamMembers, initialVersions, onRestore, onClose,
 }: {
   documentId: string;
   teamMembers: Array<{ id: string; name: string; color: string }>;
   initialVersions: VersionRow[];
-  onRestore: (content: string) => void;
+  onRestore: (version: string) => void;
   onClose: () => void;
 }) {
-  const [versions, setVersions] = useState<VersionRow[]>(initialVersions);
-  const [loading, setLoading] = useState(false);
+  const [versions] = useState<VersionRow[]>(initialVersions);
   const [preview, setPreview] = useState<VersionRow | null>(null);
 
   const getAuthor = (id: string) => teamMembers.find(m => m.id === id) || { name: id, color: '#6366f1' };
@@ -406,46 +348,30 @@ function VersionHistoryPanel({
         </h3>
         <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
       </div>
-
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {loading ? (
-          <div className="text-center py-4"><Loader2 size={18} className="animate-spin mx-auto text-gray-400" /></div>
-        ) : versions.length === 0 ? (
+        {versions.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-6">No versions saved yet</p>
-        ) : (
-          versions.map(v => {
-            const author = getAuthor(v.author_id);
-            return (
-              <div
-                key={v.id}
-                onClick={() => setPreview(v)}
-                className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                  preview?.id === v.id
-                    ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{v.version}</span>
-                  <span className="text-[10px] text-gray-400">{format(parseISO(v.created_at), 'MMM d, h:mm a')}</span>
-                </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1.5 line-clamp-2">{v.summary || 'Auto-saved'}</p>
-                <div className="flex items-center gap-1.5">
-                  <Avatar id={v.author_id} name={author.name} color={author.color} size={16} />
-                  <span className="text-[10px] text-gray-400">{author.name.split(' ')[0]}</span>
-                </div>
-                {preview?.id === v.id && (
-                  <button
-                    onClick={e => { e.stopPropagation(); onRestore(v.version); }}
-                    className="mt-2 w-full flex items-center justify-center gap-1 text-[11px] font-medium bg-indigo-600 text-white py-1 rounded hover:bg-indigo-700 transition-colors"
-                  >
-                    <RotateCcw size={10} /> Restore this version
-                  </button>
-                )}
+        ) : versions.map(v => {
+          const author = getAuthor(v.author_id);
+          return (
+            <div key={v.id} onClick={() => setPreview(v)} className={`p-3 rounded-lg border cursor-pointer transition-colors ${preview?.id === v.id ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{v.version}</span>
+                <span className="text-[10px] text-gray-400">{format(parseISO(v.created_at), 'MMM d, h:mm a')}</span>
               </div>
-            );
-          })
-        )}
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1.5 line-clamp-2">{v.summary || 'Auto-saved'}</p>
+              <div className="flex items-center gap-1.5">
+                <Avatar id={v.author_id} name={author.name} color={author.color} size={16} />
+                <span className="text-[10px] text-gray-400">{author.name.split(' ')[0]}</span>
+              </div>
+              {preview?.id === v.id && (
+                <button onClick={e => { e.stopPropagation(); onRestore(v.version); }} className="mt-2 w-full flex items-center justify-center gap-1 text-[11px] font-medium bg-indigo-600 text-white py-1 rounded hover:bg-indigo-700 transition-colors">
+                  <RotateCcw size={10} /> Restore this version
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -454,11 +380,7 @@ function VersionHistoryPanel({
 // ─── Document Settings Panel ──────────────────────────────────────────────────
 
 function DocumentSettingsPanel({
-  document: doc,
-  clients,
-  teamMembers,
-  onClose,
-  onUpdate,
+  document: doc, clients, teamMembers, onClose, onUpdate,
 }: {
   document: { id: string; title: string; clientId: string; type: string; collaborators: string[] };
   clients: Array<{ id: string; name: string; color: string }>;
@@ -477,20 +399,12 @@ function DocumentSettingsPanel({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateDocument(doc.id, {
-        title,
-        type: type as 'client' | 'internal',
-        clientId: type === 'client' ? clientId : undefined,
-        collaboratorIds,
-      });
+      await updateDocument(doc.id, { title, type: type as 'client' | 'internal', clientId: type === 'client' ? clientId : undefined, collaboratorIds });
       onUpdate({ title, clientId, type, collaboratorIds });
       toast.success('Document updated');
       onClose();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSaving(false); }
   };
 
   const handleArchive = async () => {
@@ -498,73 +412,44 @@ function DocumentSettingsPanel({
       await archiveDocument(doc.id);
       toast.success('Document archived');
       router.push('/documents');
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
+    } catch (e) { toast.error((e as Error).message); }
   };
 
   return (
     <div className="w-72 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Settings size={14} className="text-indigo-500" /> Settings
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2"><Settings size={14} className="text-indigo-500" /> Settings</h3>
         <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
       </div>
-
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</label>
-          <input
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
+          <input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500" />
         </div>
-
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
           <div className="grid grid-cols-2 gap-1.5">
             {(['client', 'internal'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setType(t)}
-                className={`py-1.5 px-2 rounded text-xs font-medium transition-colors capitalize ${
-                  type === t ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
-                }`}
-              >{t}</button>
+              <button key={t} onClick={() => setType(t)} className={`py-1.5 px-2 rounded text-xs font-medium transition-colors capitalize ${type === t ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}>{t}</button>
             ))}
           </div>
         </div>
-
         {type === 'client' && (
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Client</label>
-            <select
-              value={clientId}
-              onChange={e => setClientId(e.target.value)}
-              className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
+            <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
               <option value="">Select...</option>
               {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
         )}
-
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Collaborators</label>
           <div className="flex flex-wrap gap-1.5">
             {teamMembers.map(m => (
-              <button
-                key={m.id}
-                onClick={() => setCollaboratorIds(prev =>
-                  prev.includes(m.id) ? prev.filter(id => id !== m.id) : [...prev, m.id]
-                )}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                  collaboratorIds.includes(m.id) ? 'ring-1 ring-indigo-500' : 'opacity-50 hover:opacity-100'
-                }`}
-                style={{ backgroundColor: m.color + '20', color: m.color }}
-              >
+              <button key={m.id} onClick={() => setCollaboratorIds(prev => prev.includes(m.id) ? prev.filter(id => id !== m.id) : [...prev, m.id])}
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${collaboratorIds.includes(m.id) ? 'ring-1 ring-indigo-500' : 'opacity-50 hover:opacity-100'}`}
+                style={{ backgroundColor: m.color + '20', color: m.color }}>
                 <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: m.color }}>{m.initials}</span>
                 {m.name.split(' ')[0]}
               </button>
@@ -572,21 +457,12 @@ function DocumentSettingsPanel({
           </div>
         </div>
       </div>
-
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-          Save Changes
+        <button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+          {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Save Changes
         </button>
         {!archiveConfirm ? (
-          <button
-            onClick={() => setArchiveConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          >
+          <button onClick={() => setArchiveConfirm(true)} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <Archive size={12} /> Archive Document
           </button>
         ) : (
@@ -607,7 +483,6 @@ export default function DocumentEditorPage() {
   const router = useRouter();
   const documentId = params.id as string;
 
-  // State
   const [docData, setDocData] = useState<{
     id: string; title: string; clientId: string; type: string;
     yjsState?: string; collaborators: string[];
@@ -616,31 +491,24 @@ export default function DocumentEditorPage() {
   const [clients, setClients] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [notFound, setNotFound] = useState(false);
 
-  // Yjs refs
   const ydocRef = useRef<Y.Doc | null>(null);
   const awarenessRef = useRef<Awareness | null>(null);
   const [yjsReady, setYjsReady] = useState(false);
   const currentUserRef = useRef<{ id: string; name: string; color: string } | null>(null);
 
-  // Presence
   const [presenceUsers, setPresenceUsers] = useState<Array<{ clientId: number; name: string; color: string }>>([]);
-
-  // Auto-save
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const versionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasChangesRef = useRef(false);
 
-  // Panels
   const [showComments, setShowComments] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-
-  // Loaded versions/comments for sub-panels
   const [docVersions, setDocVersions] = useState<VersionRow[]>([]);
   const [docComments, setDocComments] = useState<CommentRow[]>([]);
 
-  // Load document data via server API route (bypasses RLS — no auth yet)
+  // Load document data
   useEffect(() => {
     fetch(`/api/document/${documentId}`)
       .then(r => r.json())
@@ -670,7 +538,8 @@ export default function DocumentEditorPage() {
     const doc = new Y.Doc();
     if (docData.yjsState) {
       try {
-        const state = new Uint8Array(Buffer.from(docData.yjsState, 'base64'));
+        // Use browser-safe base64 decode instead of Buffer
+        const state = base64ToUint8Array(docData.yjsState);
         Y.applyUpdate(doc, state);
       } catch (e) {
         console.warn('Failed to load yjs state:', e);
@@ -680,12 +549,10 @@ export default function DocumentEditorPage() {
     ydocRef.current = doc;
     awarenessRef.current = awareness;
 
-    // Set local user
     if (currentUserRef.current) {
       awareness.setLocalStateField('user', currentUserRef.current);
     }
 
-    // Update presence list
     awareness.on('update', () => {
       const states = Array.from(awareness.getStates().entries()).map(([clientId, state]) => ({
         clientId,
@@ -714,38 +581,36 @@ export default function DocumentEditorPage() {
       config: { broadcast: { self: false } },
     });
 
-    // Send Yjs updates
     const handleUpdate = (update: Uint8Array, origin: unknown) => {
       if (origin !== 'remote') {
         channel.send({
           type: 'broadcast',
           event: 'yjs-update',
-          payload: { update: Buffer.from(update).toString('base64') },
+          // Use browser-safe base64 encode instead of Buffer
+          payload: { update: uint8ArrayToBase64(update) },
         });
       }
     };
     ydoc.on('update', handleUpdate);
 
-    // Receive Yjs updates
     channel.on('broadcast', { event: 'yjs-update' }, ({ payload }) => {
-      const update = new Uint8Array(Buffer.from(payload.update as string, 'base64'));
+      // Use browser-safe base64 decode instead of Buffer
+      const update = base64ToUint8Array(payload.update as string);
       Y.applyUpdate(ydoc, update, 'remote');
     });
 
-    // Send awareness updates
     const handleAwareness = ({ updated }: { updated: number[] }) => {
       const update = encodeAwarenessUpdate(awareness, updated);
       channel.send({
         type: 'broadcast',
         event: 'yjs-awareness',
-        payload: { update: Buffer.from(update).toString('base64') },
+        payload: { update: uint8ArrayToBase64(update) },
       });
     };
     awareness.on('update', handleAwareness);
 
-    // Receive awareness updates
     channel.on('broadcast', { event: 'yjs-awareness' }, ({ payload }) => {
-      applyAwarenessUpdate(awareness, Buffer.from(payload.update as string, 'base64'), 'remote');
+      applyAwarenessUpdate(awareness, base64ToUint8Array(payload.update as string), 'remote');
     });
 
     channel.subscribe();
@@ -764,7 +629,8 @@ export default function DocumentEditorPage() {
     try {
       const content = JSON.stringify(editorInstance.getJSON());
       const yjsState = ydocRef.current
-        ? Buffer.from(Y.encodeStateAsUpdate(ydocRef.current)).toString('base64')
+        // Use browser-safe base64 encode instead of Buffer
+        ? uint8ArrayToBase64(Y.encodeStateAsUpdate(ydocRef.current))
         : undefined;
       await updateDocument(docData.id, { content, yjsState });
       setSaveStatus('saved');
@@ -781,10 +647,8 @@ export default function DocumentEditorPage() {
       if (!hasChangesRef.current) return;
       try {
         await createDocumentVersion({
-          documentId: docData.id,
-          content: '',
-          authorId: currentUserRef.current!.id,
-          summary: 'Auto-saved',
+          documentId: docData.id, content: '',
+          authorId: currentUserRef.current!.id, summary: 'Auto-saved',
         });
         hasChangesRef.current = false;
       } catch {}
@@ -825,7 +689,6 @@ export default function DocumentEditorPage() {
     [yjsReady]
   );
 
-  // Cleanup timers
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -861,30 +724,20 @@ export default function DocumentEditorPage() {
     <div className="pt-16 h-screen flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
-        <button
-          onClick={() => router.push('/documents')}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex-shrink-0"
-        >
+        <button onClick={() => router.push('/documents')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex-shrink-0">
           <ArrowLeft size={14} />
           <span className="hidden sm:inline">Documents</span>
         </button>
-
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-bold text-gray-900 dark:text-white truncate">{docData.title}</h1>
           <div className="flex items-center gap-2 mt-0.5">
             {client ? (
-              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: client.color + '20', color: client.color }}>
-                {client.name}
-              </span>
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: client.color + '20', color: client.color }}>{client.name}</span>
             ) : docData.type === 'internal' ? (
-              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center gap-0.5">
-                <Lock size={9} /> Internal
-              </span>
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center gap-0.5"><Lock size={9} /> Internal</span>
             ) : null}
           </div>
         </div>
-
-        {/* Presence */}
         {presenceUsers.length > 0 && (
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-xs text-gray-400 hidden sm:block">{presenceUsers.length} viewing</span>
@@ -895,8 +748,6 @@ export default function DocumentEditorPage() {
             </div>
           </div>
         )}
-
-        {/* Current user indicator */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <Avatar id={currentUser.id} name={currentUser.name} color={currentUser.color} size={26} />
           <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{currentUser.name}</span>
@@ -905,18 +756,14 @@ export default function DocumentEditorPage() {
 
       {/* Editor area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Main editor */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <Toolbar
-            editor={editor}
-            saveStatus={saveStatus}
+            editor={editor} saveStatus={saveStatus}
             onToggleComments={() => { setShowComments(s => !s); setShowHistory(false); setShowSettings(false); }}
             onToggleHistory={() => { setShowHistory(s => !s); setShowComments(false); setShowSettings(false); }}
-            showComments={showComments}
-            showHistory={showHistory}
+            showComments={showComments} showHistory={showHistory}
             onToggleSettings={() => { setShowSettings(s => !s); setShowComments(false); setShowHistory(false); }}
           />
-
           <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
             <div className="max-w-4xl mx-auto tiptap-editor">
               {!yjsReady && (
@@ -930,32 +777,25 @@ export default function DocumentEditorPage() {
           </div>
         </div>
 
-        {/* Panels */}
-        {showComments && currentUser && (
+        {showComments && (
           <CommentsSidebar
-            documentId={documentId}
-            currentUser={currentUser}
-            teamMembers={teamMembers}
-            initialComments={docComments}
+            documentId={documentId} currentUser={currentUser}
+            teamMembers={teamMembers} initialComments={docComments}
             onClose={() => setShowComments(false)}
           />
         )}
         {showHistory && (
           <VersionHistoryPanel
-            documentId={documentId}
-            teamMembers={teamMembers}
+            documentId={documentId} teamMembers={teamMembers}
             initialVersions={docVersions}
-            onRestore={(version) => {
-              toast.success(`Previewing version ${version}`);
-            }}
+            onRestore={(version) => { toast.success(`Previewing version ${version}`); }}
             onClose={() => setShowHistory(false)}
           />
         )}
-        {showSettings && docData && (
+        {showSettings && (
           <DocumentSettingsPanel
             document={{ ...docData, collaborators: docData.collaborators }}
-            clients={clients}
-            teamMembers={teamMembers}
+            clients={clients} teamMembers={teamMembers}
             onClose={() => setShowSettings(false)}
             onUpdate={(data) => {
               setDocData(prev => prev ? { ...prev, ...data, clientId: data.clientId, type: data.type } : null);

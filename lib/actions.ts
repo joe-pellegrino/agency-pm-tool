@@ -905,3 +905,62 @@ export async function createKBArticleVersion(data: {
   if (error) throw new Error(error.message);
   revalidatePath(`/knowledge-base/${data.articleId}`);
 }
+
+// ─── DOCUMENT FOLDERS ─────────────────────────────────────────────────────────
+
+export async function createDocumentFolder(data: {
+  name: string;
+  parentId?: string;
+  clientId?: string;
+  color?: string;
+}) {
+  const { error, data: row } = await db()
+    .from('document_folders')
+    .insert({
+      name: data.name,
+      parent_id: data.parentId || null,
+      client_id: data.clientId || null,
+      color: data.color || '#6366f1',
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath('/documents');
+  return row;
+}
+
+export async function updateDocumentFolder(id: string, data: {
+  name?: string;
+  color?: string;
+  clientId?: string | null;
+  parentId?: string | null;
+}) {
+  const update: Record<string, unknown> = {};
+  if (data.name !== undefined) update.name = data.name;
+  if (data.color !== undefined) update.color = data.color;
+  if (data.clientId !== undefined) update.client_id = data.clientId;
+  if (data.parentId !== undefined) update.parent_id = data.parentId;
+  const { error } = await db().from('document_folders').update(update).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/documents');
+}
+
+export async function archiveDocumentFolder(id: string) {
+  // Move all docs in folder to root first
+  await db().from('documents').update({ folder_id: null }).eq('folder_id', id);
+  const { error } = await db()
+    .from('document_folders')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/documents');
+}
+
+export async function moveDocumentToFolder(documentId: string, folderId: string | null) {
+  const { error } = await db()
+    .from('documents')
+    .update({ folder_id: folderId })
+    .eq('id', documentId);
+  if (error) throw new Error(error.message);
+  revalidatePath('/documents');
+}
