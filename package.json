@@ -13,6 +13,8 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.6.2",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
