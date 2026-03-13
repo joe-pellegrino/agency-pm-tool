@@ -1,12 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useTransition } from 'react';
 import TopBar from '@/components/layout/TopBar';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import type { ClientService, ServiceStrategy } from '@/lib/data';
+import type { Client, ClientService, ServiceStrategy } from '@/lib/data';
 import {
-  ChevronRight, Activity, FolderOpen, CheckCircle, Target, Zap,
+  ChevronRight, Activity, FolderOpen, CheckCircle, Target, Zap, Plus, Pencil, Archive,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import ClientModal from '@/components/clients/ClientModal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { archiveClient } from '@/lib/actions';
 
 function getClientHealth(
   clientId: string,
@@ -48,7 +53,28 @@ export default function ClientsPage() {
     TASKS = [],
     STRATEGIES = [],
     loading,
+    refresh,
   } = useAppData();
+
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [editClient, setEditClient] = useState<Client | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  const handleArchive = () => {
+    if (!archiveId) return;
+    const id = archiveId;
+    setArchiveId(null);
+    startTransition(async () => {
+      try {
+        await archiveClient(id);
+        toast.success('Client archived');
+        refresh?.();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
 
   if (loading) {
     return (
@@ -63,9 +89,31 @@ export default function ClientsPage() {
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+      {(showNewClient || editClient) && (
+        <ClientModal client={editClient || undefined} onClose={() => { setShowNewClient(false); setEditClient(null); }} />
+      )}
+      {archiveId && (
+        <ConfirmDialog
+          title="Archive Client"
+          message={`Archive this client and all associated tasks, projects, and services?`}
+          confirmLabel="Archive Client"
+          destructive
+          onConfirm={handleArchive}
+          onCancel={() => setArchiveId(null)}
+        />
+      )}
       <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
 
       <div className="p-4 sm:p-6 lg:p-8">
+        <div className="flex justify-end mb-5">
+          <button
+            onClick={() => setShowNewClient(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={14} />
+            New Client
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {CLIENTS.map(client => {
             const health = getClientHealth(client.id, CLIENT_SERVICES, SERVICE_STRATEGIES);
@@ -130,7 +178,23 @@ export default function ClientsPage() {
 
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <span className="text-xs text-gray-400">View services & strategy</span>
-                    <ChevronRight size={16} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.preventDefault(); setEditClient(client); }}
+                        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Edit client"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.preventDefault(); setArchiveId(client.id); }}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Archive client"
+                      >
+                        <Archive size={13} />
+                      </button>
+                      <ChevronRight size={16} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                    </div>
                   </div>
                 </div>
               </Link>

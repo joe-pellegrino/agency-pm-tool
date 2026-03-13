@@ -1,17 +1,18 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { AppData } from '@/lib/supabase/queries';
 
-// Provide the same constants as lib/data.ts exports
 interface AppDataContextValue extends Partial<AppData> {
   loading: boolean;
   error: string | null;
+  refresh: () => void;
 }
 
 const AppDataContext = createContext<AppDataContextValue>({
   loading: true,
   error: null,
+  refresh: () => {},
 });
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
@@ -19,7 +20,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     fetch('/api/data')
       .then(res => {
         if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);
@@ -36,8 +38,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
+  useEffect(() => { load(); }, [load]);
+
   return (
-    <AppDataContext.Provider value={{ loading, error, ...data }}>
+    <AppDataContext.Provider value={{ loading, error, refresh: load, ...data }}>
       {children}
     </AppDataContext.Provider>
   );

@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import Link from 'next/link';
 import { Service, ClientService, ServiceCategory } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   LayoutGrid, List, Filter, Search, TrendingUp, Activity, AlertTriangle,
-  CheckCircle, Zap, FolderOpen, ChevronRight, Users,
+  CheckCircle, Zap, FolderOpen, ChevronRight, Users, Plus, Pencil, X, Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { createClientService, updateClientService, archiveClientService } from '@/lib/actions';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string; cell: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500', cell: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700/50' },
@@ -205,13 +208,104 @@ function ListView({ filteredServices, clientFilter }: { filteredServices: Servic
   );
 }
 
+function ClientServiceModal({ onClose }: { onClose: () => void }) {
+  const { CLIENTS = [], SERVICES = [], STRATEGIES = [], refresh } = useAppData();
+  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState({
+    clientId: CLIENTS[0]?.id || '',
+    serviceId: SERVICES[0]?.id || '',
+    status: 'active',
+    startDate: new Date().toISOString().split('T')[0],
+    monthlyCadence: '',
+    linkedStrategyId: '',
+  });
+
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      try {
+        await createClientService({
+          clientId: form.clientId,
+          serviceId: form.serviceId,
+          status: form.status,
+          startDate: form.startDate,
+          monthlyCadence: form.monthlyCadence || undefined,
+          linkedStrategyId: form.linkedStrategyId || undefined,
+        });
+        toast.success('Service assignment created');
+        refresh?.();
+        onClose();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900 dark:text-white text-lg">Assign Service</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Client</label>
+            <select value={form.clientId} onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))} className={inputClass}>
+              {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Service</label>
+            <select value={form.serviceId} onChange={e => setForm(p => ({ ...p, serviceId: e.target.value }))} className={inputClass}>
+              {SERVICES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Status</label>
+              <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className={inputClass}>
+                <option value="active">Active</option>
+                <option value="planning">Planning</option>
+                <option value="paused">Paused</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+              <input type="date" value={form.startDate} onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Linked Strategy (optional)</label>
+            <select value={form.linkedStrategyId} onChange={e => setForm(p => ({ ...p, linkedStrategyId: e.target.value }))} className={inputClass}>
+              <option value="">None</option>
+              {STRATEGIES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="submit" disabled={isPending} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+              {isPending && <Loader2 size={13} className="animate-spin" />}
+              Assign Service
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function ServicesPage() {
-  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [] } = useAppData();
+  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [], refresh } = useAppData();
   const [view, setView] = useState<'matrix' | 'list'>('matrix');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
+  const [showNewService, setShowNewService] = useState(false);
 
   const categories = useMemo(() => {
     const cats = new Set(SERVICES.map(s => s.category));
@@ -263,8 +357,20 @@ export default function ServicesPage() {
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Services" subtitle="Agency-wide service delivery across all clients" />
+      {showNewService && <ClientServiceModal onClose={() => setShowNewService(false)} />}
 
       <div className="p-4 sm:p-6 lg:p-8">
+        {/* Assign Service button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowNewService(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={14} />
+            Assign Service
+          </button>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[

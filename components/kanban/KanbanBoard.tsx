@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useTransition } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -21,8 +21,12 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight } from 'lucide-react';
+import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight, Archive, Pencil } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { updateTaskStatus, archiveTask, createTimeEntry } from '@/lib/actions';
+import TaskModal from '@/components/tasks/TaskModal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
   { id: 'todo', label: 'To Do', color: 'border-t-gray-400' },
@@ -191,10 +195,14 @@ function TaskDetailModal({
   task,
   onClose,
   onOpenApproval,
+  onEdit,
+  onArchive,
 }: {
   task: Task;
   onClose: () => void;
   onOpenApproval: (task: Task) => void;
+  onEdit?: (task: Task) => void;
+  onArchive?: (taskId: string) => void;
 }) {
   const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [], TIME_ENTRIES = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === task.clientId)!;
@@ -228,19 +236,36 @@ function TaskDetailModal({
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
+  const [, startTransition] = useTransition();
+
   const stopTimer = () => {
     setIsRunning(false);
     if (elapsed >= 60) {
+      const mins = Math.round(elapsed / 60);
       const entry: TimeEntry = {
         id: `te-live-${Date.now()}`,
         taskId: task.id,
         clientId: task.clientId,
         memberId: CURRENT_USER_ID,
         date: new Date().toISOString().split('T')[0],
-        durationMinutes: Math.round(elapsed / 60),
+        durationMinutes: mins,
         note: 'Timer session',
       };
       setTimeEntries(prev => [entry, ...prev]);
+      // Persist to Supabase
+      startTransition(async () => {
+        try {
+          await createTimeEntry({
+            taskId: task.id,
+            clientId: task.clientId,
+            memberId: CURRENT_USER_ID,
+            date: new Date().toISOString().split('T')[0],
+            durationMinutes: mins,
+            note: 'Timer session',
+          });
+          toast.success(`Logged ${mins} min`);
+        } catch { /* silent */ }
+      });
     }
     setElapsed(0);
   };
@@ -258,6 +283,20 @@ function TaskDetailModal({
       note: manualNote || undefined,
     };
     setTimeEntries(prev => [entry, ...prev]);
+    // Persist to Supabase
+    startTransition(async () => {
+      try {
+        await createTimeEntry({
+          taskId: task.id,
+          clientId: task.clientId,
+          memberId: CURRENT_USER_ID,
+          date: new Date().toISOString().split('T')[0],
+          durationMinutes: mins,
+          note: manualNote || undefined,
+        });
+        toast.success(`Logged ${mins} min`);
+      } catch { /* silent */ }
+    });
     setManualMinutes('');
     setManualNote('');
     setShowManual(false);
@@ -296,9 +335,31 @@ function TaskDetailModal({
             </div>
             <h2 className="font-semibold text-gray-900 dark:text-white text-lg leading-snug">{task.title}</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {onEdit && (
+              <button
+                onClick={() => onEdit(task)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                title="Edit task"
+              >
+                <Pencil size={13} />
+                Edit
+              </button>
+            )}
+            {onArchive && (
+              <button
+                onClick={() => onArchive(task.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Archive task"
+              >
+                <Archive size={13} />
+                Archive
+              </button>
+            )}
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors ml-1">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
@@ -633,6 +694,7 @@ function Column({
   tasks,
   onOpenApproval,
   onOpenDetail,
+  onNewTask,
 }: {
   id: Status;
   label: string;
@@ -640,6 +702,7 @@ function Column({
   tasks: Task[];
   onOpenApproval?: (task: Task) => void;
   onOpenDetail?: (task: Task) => void;
+  onNewTask?: () => void;
 }) {
   const colBg: Record<Status, string> = {
     todo: 'bg-gray-50 dark:bg-gray-800/40',
@@ -658,7 +721,11 @@ function Column({
             {tasks.length}
           </span>
         </div>
-        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+        <button
+          onClick={onNewTask}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:text-indigo-600 transition-colors"
+          title={`New ${label} task`}
+        >
           <Plus size={15} />
         </button>
       </div>
@@ -700,6 +767,11 @@ export default function KanbanBoard() {
   const [showFilters, setShowFilters] = useState(false);
   const [approvalTask, setApprovalTask] = useState<Task | null>(null);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const [showNewTaskModal, setShowNewTaskModal] = useState(false);
+  const [newTaskDefaultStatus, setNewTaskDefaultStatus] = useState<string>('todo');
+  const [archiveTaskId, setArchiveTaskId] = useState<string | null>(null);
+  const [editTask, setEditTask] = useState<Task | null>(null);
+  const [, startTransition] = useTransition();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -753,6 +825,7 @@ export default function KanbanBoard() {
     const activeId = active.id as string;
     const overId = over.id as string;
     if (activeId === overId) return;
+
     setTaskState(prev => {
       const activeIndex = prev.findIndex(t => t.id === activeId);
       const overIndex = prev.findIndex(t => t.id === overId);
@@ -761,7 +834,21 @@ export default function KanbanBoard() {
       }
       return prev;
     });
-  }, []);
+
+    // Persist new status to Supabase
+    const newStatus = taskState.find(t => t.id === activeId)?.status;
+    if (newStatus) {
+      startTransition(async () => {
+        try {
+          await updateTaskStatus(activeId, newStatus);
+        } catch {
+          toast.error('Failed to save status change');
+          // Revert optimistic update
+          setTaskState(TASKS.filter(t => !t.isMilestone));
+        }
+      });
+    }
+  }, [taskState, TASKS]);
 
   const handleApprove = (note: string) => {
     if (!approvalTask) return;
@@ -814,14 +901,60 @@ export default function KanbanBoard() {
     setDetailTask(latest);
   };
 
+  const handleArchiveTask = (taskId: string) => {
+    setArchiveTaskId(taskId);
+  };
+
+  const confirmArchive = () => {
+    if (!archiveTaskId) return;
+    const id = archiveTaskId;
+    setArchiveTaskId(null);
+    setDetailTask(null);
+    // Optimistic remove
+    setTaskState(prev => prev.filter(t => t.id !== id));
+    startTransition(async () => {
+      try {
+        await archiveTask(id);
+        toast.success('Task archived');
+      } catch {
+        toast.error('Failed to archive task');
+        setTaskState(TASKS.filter(t => !t.isMilestone));
+      }
+    });
+  };
+
   return (
     <div>
+      {/* New/Edit Task Modal */}
+      {(showNewTaskModal || editTask) && (
+        <TaskModal
+          task={editTask || undefined}
+          defaultStatus={newTaskDefaultStatus}
+          onClose={() => { setShowNewTaskModal(false); setEditTask(null); }}
+          onSuccess={() => { setShowNewTaskModal(false); setEditTask(null); setDetailTask(null); }}
+        />
+      )}
+
+      {/* Archive confirmation */}
+      {archiveTaskId && (
+        <ConfirmDialog
+          title="Archive Task"
+          message="Archive this task? It will be hidden from all views but can be recovered."
+          confirmLabel="Archive"
+          destructive
+          onConfirm={confirmArchive}
+          onCancel={() => setArchiveTaskId(null)}
+        />
+      )}
+
       {/* Task Detail Modal */}
-      {detailTask && (
+      {detailTask && !editTask && !archiveTaskId && (
         <TaskDetailModal
           task={detailTask}
           onClose={() => setDetailTask(null)}
           onOpenApproval={(task) => { setDetailTask(null); openApproval(task); }}
+          onEdit={(task) => { setEditTask(task); }}
+          onArchive={(taskId) => handleArchiveTask(taskId)}
         />
       )}
 
@@ -883,15 +1016,24 @@ export default function KanbanBoard() {
           </span>
         )}
 
-        {/* Reviewer indicator */}
-        <div className="ml-auto hidden sm:flex items-center gap-2 text-xs text-gray-500">
-          <div
-            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
-            style={{ backgroundColor: TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.color }}
+        {/* New Task + Reviewer indicator */}
+        <div className="ml-auto flex items-center gap-3">
+          <button
+            onClick={() => { setNewTaskDefaultStatus('todo'); setShowNewTaskModal(true); }}
+            className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
-            {TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.initials}
+            <Plus size={14} />
+            New Task
+          </button>
+          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+              style={{ backgroundColor: TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.color }}
+            >
+              {TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.initials}
+            </div>
+            Reviewing as {TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.name.split(' ')[0]} (Owner)
           </div>
-          Reviewing as {TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.name.split(' ')[0]} (Owner)
         </div>
       </div>
 
@@ -967,6 +1109,7 @@ export default function KanbanBoard() {
                   tasks={getColumnTasks(col.id)}
                   onOpenApproval={openApproval}
                   onOpenDetail={openDetail}
+                  onNewTask={() => { setNewTaskDefaultStatus(col.id); setShowNewTaskModal(true); }}
                 />
               </div>
             ))}

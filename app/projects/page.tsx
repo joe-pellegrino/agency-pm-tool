@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { Project, Task, PRIORITY_COLORS } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   FolderOpen, Filter, Search, ChevronRight, X, Calendar, CheckCircle,
   Clock, AlertCircle, PauseCircle, ArrowRight, Tag, Lock, Unlock,
-  BarChart3, Users, Layers,
+  BarChart3, Users, Layers, Plus, Pencil, Archive,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import ProjectModal from '@/components/projects/ProjectModal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { archiveProject } from '@/lib/actions';
 
 const STATUS_CONFIG = {
   planning: { label: 'Planning', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', icon: Clock },
@@ -309,7 +313,7 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
   );
 }
 
-function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project; onClick: () => void; onEdit?: (p: Project) => void; onArchive?: (id: string) => void }) {
   const { CLIENTS = [], TASKS = [], WORKFLOW_TEMPLATES = [], STRATEGIES = [], TEAM_MEMBERS = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === project.clientId)!;
   const tasks = TASKS.filter(t => project.taskIds.includes(t.id));
@@ -391,11 +395,31 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
             <span className="truncate max-w-[100px]">{pillarName}</span>
           </div>
         )}
-        {template && (
-          <div className="ml-auto text-indigo-400 font-medium truncate max-w-[120px]">
-            📋 {template.category}
-          </div>
-        )}
+        <div className="ml-auto flex items-center gap-1">
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(project); }}
+              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="Edit project"
+            >
+              <Pencil size={12} />
+            </button>
+          )}
+          {onArchive && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onArchive(project.id); }}
+              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              title="Archive project"
+            >
+              <Archive size={12} />
+            </button>
+          )}
+          {template && (
+            <span className="text-indigo-400 font-medium truncate max-w-[120px]">
+              📋 {template.category}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -408,6 +432,11 @@ export default function ProjectsPage() {
   const [selectedService, setSelectedService] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [editProject, setEditProject] = useState<Project | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const { refresh } = useAppData();
 
   // Map projectId → serviceId via CLIENT_SERVICES
   const projectServiceMap = useMemo(() => {
@@ -439,14 +468,54 @@ export default function ProjectsPage() {
     planning: PROJECTS.filter(p => p.status === 'planning').length,
   }), []);
 
+  const handleArchive = () => {
+    if (!archiveId) return;
+    const id = archiveId;
+    setArchiveId(null);
+    startTransition(async () => {
+      try {
+        await archiveProject(id);
+        toast.success('Project archived');
+        refresh?.();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Projects" subtitle="Manage client projects and track progress" />
 
+      {(showNewProject || editProject) && (
+        <ProjectModal project={editProject || undefined} onClose={() => { setShowNewProject(false); setEditProject(null); }} />
+      )}
+      {archiveId && (
+        <ConfirmDialog
+          title="Archive Project"
+          message="Archive this project? It will be hidden from all views."
+          confirmLabel="Archive"
+          destructive
+          onConfirm={handleArchive}
+          onCancel={() => setArchiveId(null)}
+        />
+      )}
+
       <div className="p-4 sm:p-6 lg:p-8">
-        {selectedProject && (
+        {selectedProject && !editProject && !archiveId && (
           <ProjectDetailModal project={selectedProject} onClose={() => setSelectedProject(null)} />
         )}
+
+        {/* Header with New button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowNewProject(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={14} />
+            New Project
+          </button>
+        </div>
 
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
@@ -554,7 +623,7 @@ export default function ProjectsPage() {
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map(project => (
-              <ProjectCard key={project.id} project={project} onClick={() => setSelectedProject(project)} />
+              <ProjectCard key={project.id} project={project} onClick={() => setSelectedProject(project)} onEdit={setEditProject} onArchive={setArchiveId} />
             ))}
           </div>
         ) : (

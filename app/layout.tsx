@@ -4,6 +4,7 @@ import './globals.css';
 import Sidebar from '@/components/layout/Sidebar';
 import { SidebarProvider } from '@/components/layout/SidebarContext';
 import { ClientProviders } from './ClientProviders';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </main>
           </SidebarProvider>
         </ClientProviders>
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   );

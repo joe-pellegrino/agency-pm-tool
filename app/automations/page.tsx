@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Automation } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { Zap, Play, Pause, Plus, X, Calendar, Clock, CheckCircle2 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
+import { toast } from 'sonner';
+import { createAutomation, updateAutomation } from '@/lib/actions';
 
 const FREQ_LABELS: Record<string, string> = {
   monthly: 'Monthly',
@@ -17,6 +19,43 @@ const FREQ_COLORS: Record<string, string> = {
   weekly: 'bg-purple-100 text-purple-700',
   custom: 'bg-amber-100 text-amber-700',
 };
+
+function SaveButton({ form, onClose, canProceed }: { form: { clientId: string; templateId: string; frequency: string; assigneeId: string }; onClose: () => void; canProceed: () => boolean }) {
+  const { refresh } = useAppData();
+  const [isPending, startTransition] = useTransition();
+
+  const handleSave = () => {
+    if (!canProceed()) return;
+    startTransition(async () => {
+      try {
+        await createAutomation({
+          clientId: form.clientId,
+          templateId: form.templateId,
+          frequency: form.frequency,
+          assigneeId: form.assigneeId,
+          status: 'active',
+          nextRunDate: (() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d.toISOString().split('T')[0]; })(),
+        });
+        toast.success('Automation created');
+        refresh?.();
+        onClose();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  return (
+    <button
+      disabled={!canProceed() || isPending}
+      onClick={handleSave}
+      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
+    >
+      <Zap size={15} />
+      Activate
+    </button>
+  );
+}
 
 function CreateAutomationModal({ onClose }: { onClose: () => void }) {
   const { CLIENTS = [], TASK_TEMPLATES = [], TEAM_MEMBERS = [] } = useAppData();
@@ -166,14 +205,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
               Continue
             </button>
           ) : (
-            <button
-              disabled={!canProceed()}
-              onClick={onClose}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
-            >
-              <Zap size={15} />
-              Activate
-            </button>
+            <SaveButton form={form} onClose={onClose} canProceed={canProceed} />
           )}
         </div>
       </div>
@@ -266,15 +298,29 @@ function AutomationRow({ automation, onToggle }: { automation: Automation; onTog
 }
 
 export default function AutomationsPage() {
-  const { AUTOMATIONS = [], TASK_TEMPLATES = [], CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
+  const { AUTOMATIONS = [], TASK_TEMPLATES = [], CLIENTS = [], TEAM_MEMBERS = [], refresh } = useAppData();
   const [automations, setAutomations] = useState<Automation[]>(AUTOMATIONS);
   const [selectedClient, setSelectedClient] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
+  const [, startTransition] = useTransition();
+
+  // Sync when data loads
+  useState(() => { if (AUTOMATIONS.length > 0) setAutomations(AUTOMATIONS); });
 
   const toggleAutomation = (id: string) => {
-    setAutomations(prev =>
-      prev.map(a => a.id === id ? { ...a, status: a.status === 'active' ? 'paused' : 'active' } : a)
-    );
+    const current = automations.find(a => a.id === id);
+    if (!current) return;
+    const newStatus = current.status === 'active' ? 'paused' : 'active';
+    // Optimistic update
+    setAutomations(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+    startTransition(async () => {
+      try {
+        await updateAutomation(id, { status: newStatus });
+      } catch {
+        toast.error('Failed to update automation');
+        setAutomations(AUTOMATIONS);
+      }
+    });
   };
 
   const filtered = automations.filter(a => selectedClient === 'all' || a.clientId === selectedClient);

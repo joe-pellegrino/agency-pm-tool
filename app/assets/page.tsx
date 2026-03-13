@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Asset } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { FolderOpen, Upload, Search, X, Download, Image, FileText, Video, Bookmark, History, ChevronDown } from 'lucide-react';
+import { FolderOpen, Upload, Search, X, Download, Image, FileText, Video, Bookmark, History, ChevronDown, Plus, Pencil, Archive as ArchiveIcon } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
+import { toast } from 'sonner';
+import AssetModal from '@/components/assets/AssetModal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { archiveAsset } from '@/lib/actions';
 
 const FILE_TYPE_ICONS: Record<Asset['fileType'], React.ReactNode> = {
   image: <Image size={20} />,
@@ -156,7 +160,7 @@ function AssetDetailModal({ asset, onClose }: { asset: Asset; onClose: () => voi
   );
 }
 
-function AssetCard({ asset, onClick }: { asset: Asset; onClick: () => void }) {
+function AssetCard({ asset, onClick, onEdit, onArchive }: { asset: Asset; onClick: () => void; onEdit?: (a: Asset) => void; onArchive?: (id: string) => void }) {
   const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === asset.clientId);
   const uploader = TEAM_MEMBERS.find(m => m.id === asset.uploadedBy);
@@ -202,12 +206,28 @@ function AssetCard({ asset, onClick }: { asset: Asset; onClick: () => void }) {
             {uploader?.initials}
           </div>
         </div>
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {asset.tags.slice(0, 1).map(tag => (
-            <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded">
-              {tag}
-            </span>
-          ))}
+        <div className="mt-1.5 flex flex-wrap gap-1 justify-between items-start">
+          <div className="flex flex-wrap gap-1">
+            {asset.tags.slice(0, 1).map(tag => (
+              <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+          {(onEdit || onArchive) && (
+            <div className="flex items-center gap-0.5 ml-auto">
+              {onEdit && (
+                <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-1 text-gray-400 hover:text-indigo-600 rounded transition-colors" title="Edit">
+                  <Pencil size={11} />
+                </button>
+              )}
+              {onArchive && (
+                <button onClick={(e) => { e.stopPropagation(); onArchive(asset.id); }} className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors" title="Archive">
+                  <ArchiveIcon size={11} />
+                </button>
+              )}
+            </div>
+          )}
           {asset.tags.length > 1 && (
             <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded">+{asset.tags.length - 1}</span>
           )}
@@ -224,6 +244,11 @@ export default function AssetsPage() {
   const [search, setSearch] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showNewAsset, setShowNewAsset] = useState(false);
+  const [editAsset, setEditAsset] = useState<Asset | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const { refresh } = useAppData();
 
   const filtered = ASSETS.filter(a => {
     if (selectedClient !== 'all' && a.clientId !== selectedClient) return false;
@@ -236,12 +261,41 @@ export default function AssetsPage() {
     (selectedClient === 'all' || a.clientId === selectedClient) && a.fileType === type
   ).length;
 
+  const handleArchive = () => {
+    if (!archiveId) return;
+    const id = archiveId;
+    setArchiveId(null);
+    startTransition(async () => {
+      try {
+        await archiveAsset(id);
+        toast.success('Asset archived');
+        refresh?.();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Asset Library" subtitle="Brand assets, creatives, and media files" />
 
+      {(showNewAsset || editAsset) && (
+        <AssetModal asset={editAsset || undefined} onClose={() => { setShowNewAsset(false); setEditAsset(null); }} />
+      )}
+      {archiveId && (
+        <ConfirmDialog
+          title="Archive Asset"
+          message="Archive this asset? It will be hidden from the library."
+          confirmLabel="Archive"
+          destructive
+          onConfirm={handleArchive}
+          onCancel={() => setArchiveId(null)}
+        />
+      )}
+
       <div className="p-4 sm:p-6 lg:p-8">
-        {selectedAsset && (
+        {selectedAsset && !editAsset && !archiveId && (
           <AssetDetailModal asset={selectedAsset} onClose={() => setSelectedAsset(null)} />
         )}
 
@@ -268,6 +322,17 @@ export default function AssetsPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* New Asset button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowNewAsset(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={14} />
+            Add Asset
+          </button>
         </div>
 
         {/* Toolbar */}
@@ -357,7 +422,7 @@ export default function AssetsPage() {
         {filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {filtered.map(asset => (
-              <AssetCard key={asset.id} asset={asset} onClick={() => setSelectedAsset(asset)} />
+              <AssetCard key={asset.id} asset={asset} onClick={() => setSelectedAsset(asset)} onEdit={setEditAsset} onArchive={setArchiveId} />
             ))}
           </div>
         ) : (

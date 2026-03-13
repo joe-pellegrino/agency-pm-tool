@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { Strategy, StrategyPillar, KPI, ServiceStrategy } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   TrendingUp, Target, CheckCircle, Clock, AlertTriangle, ChevronDown, ChevronUp,
-  BarChart3, Layers, FolderOpen, Calendar, Zap, ArrowRight,
+  BarChart3, Layers, FolderOpen, Calendar, Zap, ArrowRight, Plus, Pencil,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { createStrategy, updateStrategy, archiveStrategy } from '@/lib/actions';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const STATUS_CONFIG = {
   planning: { label: 'Planning', color: 'bg-gray-100 text-gray-600', icon: Clock },
@@ -347,9 +350,91 @@ function StrategyView({ strategy }: { strategy: Strategy }) {
   );
 }
 
+function StrategyModal({ clientId, strategy, onClose }: { clientId: string; strategy?: Strategy | null; onClose: () => void }) {
+  const { refresh } = useAppData();
+  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState({
+    name: strategy?.name || 'Q1 2025 Strategy',
+    quarter: strategy?.quarter || 'Q1 2025',
+    startDate: strategy?.startDate || new Date().toISOString().split('T')[0],
+    endDate: strategy?.endDate || (() => { const d = new Date(); d.setMonth(d.getMonth() + 3); return d.toISOString().split('T')[0]; })(),
+    status: strategy?.status || 'planning',
+  });
+
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      try {
+        if (strategy) {
+          await updateStrategy(strategy.id, form);
+          toast.success('Strategy updated');
+        } else {
+          await createStrategy({ clientId, ...form });
+          toast.success('Strategy created');
+        }
+        refresh?.();
+        onClose();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900 dark:text-white text-lg">{strategy ? 'Edit Strategy' : 'New Strategy'}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><Plus size={18} className="rotate-45" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div>
+            <label className={labelClass}>Name</label>
+            <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className={inputClass} autoFocus />
+          </div>
+          <div>
+            <label className={labelClass}>Quarter</label>
+            <input type="text" value={form.quarter} onChange={e => setForm(p => ({ ...p, quarter: e.target.value }))} placeholder="e.g. Q1 2025" className={inputClass} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Start Date</label>
+              <input type="date" value={form.startDate} onChange={e => setForm(p => ({ ...p, startDate: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>End Date</label>
+              <input type="date" value={form.endDate} onChange={e => setForm(p => ({ ...p, endDate: e.target.value }))} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Status</label>
+            <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value as Strategy['status'] }))} className={inputClass}>
+              <option value="planning">Planning</option>
+              <option value="active">Active</option>
+              <option value="complete">Complete</option>
+            </select>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+              {strategy ? 'Save Changes' : 'Create Strategy'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function StrategyPage() {
-  const { STRATEGIES = [], CLIENTS = [], PROJECTS = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], loading } = useAppData();
+  const { STRATEGIES = [], CLIENTS = [], PROJECTS = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], loading, refresh } = useAppData();
   const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [showStrategyModal, setShowStrategyModal] = useState(false);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
   // Set initial client after data loads
   useEffect(() => {
     if (!selectedClientId && CLIENTS.length > 0) {
@@ -357,11 +442,43 @@ export default function StrategyPage() {
     }
   }, [CLIENTS, selectedClientId]);
 
-  const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === selectedClientId) || null, [selectedClientId]);
+  const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === selectedClientId) || null, [selectedClientId, STRATEGIES]);
+
+  const handleArchive = () => {
+    if (!archiveId) return;
+    const id = archiveId;
+    setArchiveId(null);
+    startTransition(async () => {
+      try {
+        await archiveStrategy(id);
+        toast.success('Strategy archived');
+        refresh?.();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Strategy" subtitle="Client strategies, service strategies, and KPI hierarchy" />
+      {showStrategyModal && (
+        <StrategyModal
+          clientId={selectedClientId}
+          strategy={strategy}
+          onClose={() => setShowStrategyModal(false)}
+        />
+      )}
+      {archiveId && (
+        <ConfirmDialog
+          title="Archive Strategy"
+          message="Archive this strategy? It will be hidden from all views."
+          confirmLabel="Archive"
+          destructive
+          onConfirm={handleArchive}
+          onCancel={() => setArchiveId(null)}
+        />
+      )}
 
       <div className="p-4 sm:p-6 lg:p-8">
         {/* Client selector */}
@@ -400,13 +517,52 @@ export default function StrategyPage() {
           })}
         </div>
 
+        {/* Strategy actions */}
+        <div className="flex items-center justify-between mb-4">
+          <div />
+          <div className="flex items-center gap-2">
+            {strategy && (
+              <>
+                <button
+                  onClick={() => setShowStrategyModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-200"
+                >
+                  <Pencil size={12} />
+                  Edit Strategy
+                </button>
+                <button
+                  onClick={() => setArchiveId(strategy.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+                >
+                  Archive
+                </button>
+              </>
+            )}
+            {!strategy && selectedClientId && (
+              <button
+                onClick={() => setShowStrategyModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <Plus size={14} />
+                New Strategy
+              </button>
+            )}
+          </div>
+        </div>
+
         {strategy ? (
           <StrategyView strategy={strategy} />
         ) : (
           <div className="text-center py-20 text-gray-400">
             <Target size={40} className="mx-auto mb-4 opacity-30" />
             <p className="font-medium">No strategy found for this client</p>
-            <p className="text-sm mt-1">Strategies will appear here once created</p>
+            <button
+              onClick={() => setShowStrategyModal(true)}
+              className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+            >
+              <Plus size={14} />
+              Create Strategy
+            </button>
           </div>
         )}
       </div>
