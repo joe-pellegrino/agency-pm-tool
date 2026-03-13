@@ -454,21 +454,33 @@ export async function archiveStrategy(id: string) {
   revalidatePath('/strategy');
 }
 
-export async function createStrategyPillar(strategyId: string, name: string, description: string) {
+export async function createStrategyPillar(strategyId: string, data: { name: string; description?: string }) {
   const id = `pillar-${Date.now()}`;
   const { error } = await db()
     .from('strategy_pillars')
-    .insert({ id, strategy_id: strategyId, name, description });
+    .insert({ id, strategy_id: strategyId, name: data.name, description: data.description || '' });
   if (error) throw new Error(error.message);
   revalidatePath('/strategy');
   return id;
 }
 
-export async function updateStrategyPillar(id: string, name: string, description: string) {
+export async function updateStrategyPillar(id: string, data: { name?: string; description?: string }) {
+  const update: Record<string, unknown> = {};
+  if (data.name !== undefined) update.name = data.name;
+  if (data.description !== undefined) update.description = data.description;
   const { error } = await db()
     .from('strategy_pillars')
-    .update({ name, description })
+    .update(update)
     .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/strategy');
+}
+
+export async function archiveStrategyPillar(id: string) {
+  const now = new Date().toISOString();
+  // Archive KPIs first
+  await db().from('strategy_kpis').update({ archived_at: now }).eq('pillar_id', id).is('archived_at', null);
+  const { error } = await db().from('strategy_pillars').update({ archived_at: now }).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/strategy');
 }
@@ -503,6 +515,15 @@ export async function updateStrategyKPI(id: string, data: Partial<{
   unit: string;
 }>) {
   const { error } = await db().from('strategy_kpis').update(data).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/strategy');
+}
+
+export async function archiveStrategyKPI(id: string) {
+  const { error } = await db()
+    .from('strategy_kpis')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/strategy');
 }
