@@ -686,7 +686,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
   });
 
   const statusAccent: Record<string, string> = {
-    todo: '#3B5BDB', inprogress: '#F59F00', review: '#8B5CF6', done: '#22C55E',
+    todo: '#3B5BDB', inprogress: '#3B5BDB', review: '#F59F00', done: '#2BB673',
   };
   const accentColor = statusAccent[task.status] || '#3B5BDB';
 
