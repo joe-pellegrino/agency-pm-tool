@@ -1,13 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useTransition } from 'react';
 import { PRIORITY_COLORS, PRIORITY_DOT, TaskTemplate, WorkflowTemplate, WorkflowStep } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import {
   LayoutTemplate, Clock, Users, Calendar, Tag, ChevronRight, Plus, Search, X,
-  ArrowRight, Zap, GitBranch,
+  ArrowRight, Zap, GitBranch, Pencil, Archive, Trash2, GripVertical, AlertTriangle,
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
+import { toast } from 'sonner';
+import {
+  createTaskTemplate, updateTaskTemplate, archiveTaskTemplate,
+  createWorkflowTemplate, updateWorkflowTemplate, archiveWorkflowTemplate,
+} from '@/lib/actions';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const TYPE_COLORS: Record<string, string> = {
   social: 'bg-pink-100 text-pink-700',
@@ -20,13 +26,8 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const TYPE_ICONS: Record<string, string> = {
-  social: '📱',
-  ad: '📣',
-  blog: '✍️',
-  report: '📊',
-  meeting: '🤝',
-  design: '🎨',
-  other: '📋',
+  social: '📱', ad: '📣', blog: '✍️', report: '📊',
+  meeting: '🤝', design: '🎨', other: '📋',
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -39,100 +40,488 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const TASK_CATEGORIES = ['All', 'Reporting', 'Content', 'Paid Media', 'Local SEO', 'Client Relations', 'Reputation', 'Email Marketing'];
+const TASK_TYPES = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'] as const;
+const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'] as const;
 
-// =========================================================
-// TASK TEMPLATE COMPONENTS (existing)
-// =========================================================
+// ─── Task Template Edit Modal ─────────────────────────────────────────────────
 
-function TemplateDetailModal({ template, onClose }: { template: TaskTemplate; onClose: () => void }) {
+function TaskTemplateModal({
+  template,
+  onClose,
+}: {
+  template?: TaskTemplate;
+  onClose: () => void;
+}) {
+  const { refresh } = useAppData();
+  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState({
+    title: template?.title || '',
+    description: template?.description || '',
+    defaultAssigneeRole: template?.defaultAssigneeRole || '',
+    defaultPriority: template?.defaultPriority || 'Medium',
+    estimatedDuration: template?.estimatedDuration || 1,
+    type: template?.type || 'other',
+    dueRule: template?.dueRule || '',
+    category: template?.category || 'Reporting',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      try {
+        if (template) {
+          await updateTaskTemplate(template.id, {
+            title: form.title,
+            description: form.description,
+            defaultAssigneeRole: form.defaultAssigneeRole,
+            defaultPriority: form.defaultPriority,
+            estimatedDuration: Number(form.estimatedDuration),
+            type: form.type,
+            dueRule: form.dueRule,
+            category: form.category,
+          });
+          toast.success('Task template updated');
+        } else {
+          await createTaskTemplate({
+            title: form.title,
+            description: form.description,
+            defaultAssigneeRole: form.defaultAssigneeRole,
+            defaultPriority: form.defaultPriority,
+            estimatedDuration: Number(form.estimatedDuration),
+            type: form.type,
+            dueRule: form.dueRule,
+            category: form.category,
+          });
+          toast.success('Task template created');
+        }
+        refresh?.();
+        onClose();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg overflow-hidden"
+        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg overflow-hidden max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        <div className="px-5 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
-              {TYPE_ICONS[template.type || 'other']}
-            </div>
-            <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">{template.title}</h2>
-              <span className="text-xs text-gray-400">{template.category}</span>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 min-h-[44px] min-w-[44px] flex items-center justify-center">
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
+          <h2 className="font-semibold text-gray-900 dark:text-white text-lg">
+            {template ? 'Edit Task Template' : 'New Task Template'}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
             <X size={18} />
           </button>
         </div>
 
-        <div className="px-5 sm:px-6 py-5 space-y-4 sm:space-y-5">
-          <p className="text-sm text-gray-600 dark:text-gray-300">{template.description}</p>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 sm:p-4">
-              <div className="text-xs text-gray-500 mb-1">Default Priority</div>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1 w-fit ${PRIORITY_COLORS[template.defaultPriority]}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[template.defaultPriority]}`} />
-                {template.defaultPriority}
-              </span>
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
+          <div className="px-6 py-5 space-y-4">
+            <div>
+              <label className={labelClass}>Title *</label>
+              <input
+                required
+                type="text"
+                value={form.title}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="e.g. Monthly Analytics Report"
+                className={inputClass}
+                autoFocus
+              />
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 sm:p-4">
-              <div className="text-xs text-gray-500 mb-1">Duration</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
-                <Clock size={13} className="text-gray-400" />
-                {template.estimatedDuration}d
+
+            <div>
+              <label className={labelClass}>Description</label>
+              <textarea
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                rows={3}
+                placeholder="What does this task template cover?"
+                className={inputClass + ' resize-none'}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Type</label>
+                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as typeof TASK_TYPES[number] }))} className={inputClass}>
+                  {TASK_TYPES.map(t => (
+                    <option key={t} value={t}>{TYPE_ICONS[t]} {t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Category</label>
+                <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
+                  {TASK_CATEGORIES.slice(1).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 sm:p-4">
-              <div className="text-xs text-gray-500 mb-1">Assignee Role</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
-                <Users size={13} className="text-gray-400" />
-                <span className="truncate">{template.defaultAssigneeRole}</span>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Default Priority</label>
+                <select value={form.defaultPriority} onChange={e => setForm(f => ({ ...f, defaultPriority: e.target.value as typeof PRIORITIES[number] }))} className={inputClass}>
+                  {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Est. Duration (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.estimatedDuration}
+                  onChange={e => setForm(f => ({ ...f, estimatedDuration: Number(e.target.value) }))}
+                  className={inputClass}
+                />
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 sm:p-4">
-              <div className="text-xs text-gray-500 mb-1">Schedule Rule</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
-                <Calendar size={13} className="text-gray-400" />
-                <span className="truncate">{template.dueRule}</span>
-              </div>
+
+            <div>
+              <label className={labelClass}>Assignee Role</label>
+              <input
+                type="text"
+                value={form.defaultAssigneeRole}
+                onChange={e => setForm(f => ({ ...f, defaultAssigneeRole: e.target.value }))}
+                placeholder="e.g. Social Media Manager"
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Due Rule</label>
+              <input
+                type="text"
+                value={form.dueRule}
+                onChange={e => setForm(f => ({ ...f, dueRule: e.target.value }))}
+                placeholder="e.g. 5th of each month"
+                className={inputClass}
+              />
             </div>
           </div>
-          <div className="flex gap-3">
-            <button className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]">
-              Create Automation
+
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 flex-shrink-0">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+              Cancel
             </button>
-            <button onClick={onClose} className="px-4 py-3 text-gray-600 hover:text-gray-800 dark:text-gray-400 text-sm transition-colors min-h-[44px]">
-              Close
+            <button
+              type="submit"
+              disabled={isPending}
+              className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              {isPending ? 'Saving...' : template ? 'Save Changes' : 'Create Template'}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
 
-function TaskTemplateCard({ template, onClick }: { template: TaskTemplate; onClick: () => void }) {
+// ─── Workflow Step Editor ──────────────────────────────────────────────────────
+
+interface EditableStep {
+  tempId: string;
+  title: string;
+  description: string;
+  defaultDurationDays: number;
+  assigneeRole: string;
+}
+
+function WorkflowStepEditor({
+  steps,
+  onChange,
+}: {
+  steps: EditableStep[];
+  onChange: (steps: EditableStep[]) => void;
+}) {
+  const addStep = () => {
+    onChange([...steps, {
+      tempId: `new-${Date.now()}`,
+      title: '',
+      description: '',
+      defaultDurationDays: 1,
+      assigneeRole: '',
+    }]);
+  };
+
+  const updateStep = (tempId: string, field: string, value: string | number) => {
+    onChange(steps.map(s => s.tempId === tempId ? { ...s, [field]: value } : s));
+  };
+
+  const removeStep = (tempId: string) => {
+    onChange(steps.filter(s => s.tempId !== tempId));
+  };
+
   return (
-    <div
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all cursor-pointer group"
-      onClick={onClick}
-    >
+    <div className="space-y-2">
+      {steps.map((step, idx) => (
+        <div key={step.tempId} className="flex items-start gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+          <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-2">
+            {idx + 1}
+          </div>
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input
+              type="text"
+              value={step.title}
+              onChange={e => updateStep(step.tempId, 'title', e.target.value)}
+              placeholder="Step title *"
+              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <input
+              type="text"
+              value={step.assigneeRole}
+              onChange={e => updateStep(step.tempId, 'assigneeRole', e.target.value)}
+              placeholder="Assignee role"
+              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <input
+              type="text"
+              value={step.description}
+              onChange={e => updateStep(step.tempId, 'description', e.target.value)}
+              placeholder="Description"
+              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 whitespace-nowrap">Days:</label>
+              <input
+                type="number"
+                min={1}
+                value={step.defaultDurationDays}
+                onChange={e => updateStep(step.tempId, 'defaultDurationDays', Number(e.target.value))}
+                className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 w-20"
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => removeStep(step.tempId)}
+            className="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 mt-2"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addStep}
+        className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+      >
+        <Plus size={14} /> Add Step
+      </button>
+    </div>
+  );
+}
+
+// ─── Workflow Template Edit Modal ─────────────────────────────────────────────
+
+const WORKFLOW_CATEGORIES = ['Paid Media', 'Web Dev', 'Social Media', 'Onboarding', 'SEO', 'Strategy'];
+
+function WorkflowTemplateModal({
+  template,
+  onClose,
+}: {
+  template?: WorkflowTemplate;
+  onClose: () => void;
+}) {
+  const { refresh } = useAppData();
+  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState({
+    name: template?.name || '',
+    description: template?.description || '',
+    category: template?.category || 'Paid Media',
+    defaultDurationDays: template?.defaultDurationDays || 30,
+  });
+  const [steps, setSteps] = useState<EditableStep[]>(
+    template?.steps.map(s => ({
+      tempId: s.id,
+      title: s.title,
+      description: s.description,
+      defaultDurationDays: s.defaultDurationDays,
+      assigneeRole: s.assigneeRole,
+    })) || []
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (steps.some(s => !s.title.trim())) {
+      toast.error('All steps must have a title');
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const stepsData = steps.map((s, idx) => ({
+          id: s.tempId,
+          title: s.title,
+          description: s.description,
+          defaultDurationDays: s.defaultDurationDays,
+          assigneeRole: s.assigneeRole,
+          order: idx + 1,
+          dependsOn: [] as string[],
+        }));
+
+        if (template) {
+          await updateWorkflowTemplate(template.id, {
+            name: form.name,
+            description: form.description,
+            category: form.category,
+            defaultDurationDays: Number(form.defaultDurationDays),
+            steps: stepsData,
+          });
+          toast.success('Workflow template updated');
+        } else {
+          await createWorkflowTemplate({
+            name: form.name,
+            description: form.description,
+            category: form.category,
+            defaultDurationDays: Number(form.defaultDurationDays),
+            steps: stepsData,
+          });
+          toast.success('Workflow template created');
+        }
+        refresh?.();
+        onClose();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl overflow-hidden max-h-[92vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
+          <h2 className="font-semibold text-gray-900 dark:text-white text-lg">
+            {template ? 'Edit Workflow Template' : 'New Workflow Template'}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
+          <div className="px-6 py-5 space-y-4">
+            <div>
+              <label className={labelClass}>Name *</label>
+              <input
+                required
+                type="text"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Monthly Ad Campaign Management"
+                className={inputClass}
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Description</label>
+              <textarea
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                rows={2}
+                placeholder="What does this workflow cover?"
+                className={inputClass + ' resize-none'}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Category</label>
+                <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
+                  {WORKFLOW_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Total Duration (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.defaultDurationDays}
+                  onChange={e => setForm(f => ({ ...f, defaultDurationDays: Number(e.target.value) }))}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={labelClass + ' mb-2'}>Steps ({steps.length})</label>
+              <WorkflowStepEditor steps={steps} onChange={setSteps} />
+            </div>
+          </div>
+
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 flex-shrink-0">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isPending || steps.length === 0}
+              className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              {isPending ? 'Saving...' : template ? 'Save Changes' : 'Create Template'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Task Template Card ────────────────────────────────────────────────────────
+
+function TaskTemplateCard({
+  template,
+  onEdit,
+  onArchive,
+}: {
+  template: TaskTemplate;
+  onEdit: () => void;
+  onArchive: () => void;
+}) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all group">
       <div className="flex items-start justify-between mb-3">
         <div className="w-10 h-10 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-center text-xl group-hover:bg-indigo-50 transition-colors flex-shrink-0">
           {TYPE_ICONS[template.type || 'other']}
         </div>
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1">
           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${TYPE_COLORS[template.type || 'other']}`}>
             {template.type}
           </span>
-          <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-400 transition-colors" />
+          <button
+            onClick={e => { e.stopPropagation(); onEdit(); }}
+            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="Edit"
+          >
+            <Pencil size={12} />
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onArchive(); }}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            title="Archive"
+          >
+            <Archive size={12} />
+          </button>
         </div>
       </div>
       <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
         {template.title}
       </h3>
-      <p className="text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 line-clamp-2">{template.description}</p>
+      <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">{template.description}</p>
       <div className="flex items-center gap-3 text-xs text-gray-400">
         <div className="flex items-center gap-1">
           <Clock size={11} />
@@ -152,279 +541,41 @@ function TaskTemplateCard({ template, onClick }: { template: TaskTemplate; onCli
   );
 }
 
-// =========================================================
-// WORKFLOW TEMPLATE COMPONENTS (new)
-// =========================================================
+// ─── Workflow Template Card ────────────────────────────────────────────────────
 
-function WorkflowStepFlow({ steps }: { steps: WorkflowStep[] }) {
-  // Build a simple level-based layout for the flow diagram
-  const levels: number[] = new Array(steps.length).fill(0);
-  const stepMap: Record<string, WorkflowStep> = {};
-  steps.forEach(s => { stepMap[s.id] = s; });
-
-  // Topological sort to assign levels
-  const getLevels = () => {
-    const levelMap: Record<string, number> = {};
-    steps.forEach(s => { levelMap[s.id] = 0; });
-    let changed = true;
-    while (changed) {
-      changed = false;
-      steps.forEach(s => {
-        s.dependsOn.forEach(depId => {
-          if (levelMap[depId] !== undefined && levelMap[s.id] <= levelMap[depId]) {
-            levelMap[s.id] = levelMap[depId] + 1;
-            changed = true;
-          }
-        });
-      });
-    }
-    return levelMap;
-  };
-
-  const levelMap = getLevels();
-  const maxLevel = Math.max(...Object.values(levelMap));
-
-  // Group steps by level
-  const byLevel: Record<number, WorkflowStep[]> = {};
-  steps.forEach(s => {
-    const lv = levelMap[s.id] || 0;
-    if (!byLevel[lv]) byLevel[lv] = [];
-    byLevel[lv].push(s);
-  });
-
+function WorkflowTemplateCard({
+  template,
+  onEdit,
+  onArchive,
+}: {
+  template: WorkflowTemplate;
+  onEdit: () => void;
+  onArchive: () => void;
+}) {
   return (
-    <div className="overflow-x-auto">
-      <div className="flex items-start gap-3 min-w-max py-2">
-        {Array.from({ length: maxLevel + 1 }, (_, i) => i).map((level, idx) => (
-          <div key={level} className="flex items-center gap-3">
-            <div className="flex flex-col gap-2">
-              {(byLevel[level] || []).map(step => (
-                <div
-                  key={step.id}
-                  className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 min-w-[120px] max-w-[160px]"
-                >
-                  <div className="text-xs font-semibold text-gray-800 dark:text-white leading-tight">{step.title}</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">{step.defaultDurationDays}d · {step.assigneeRole.split(' ')[0]}</div>
-                </div>
-              ))}
-            </div>
-            {idx < maxLevel && (
-              <ArrowRight size={16} className="text-gray-300 flex-shrink-0" />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function UseTemplateModal({ template, onClose }: { template: WorkflowTemplate; onClose: () => void }) {
-  const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
-  const [selectedClient, setSelectedClient] = useState('');
-  const [startDate, setStartDate] = useState('');
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="px-5 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-start justify-between">
-          <div>
-            <h2 className="font-bold text-gray-900 dark:text-white text-lg">Use Template</h2>
-            <p className="text-sm text-gray-500 mt-0.5">{template.name}</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 min-h-[44px] min-w-[44px] flex items-center justify-center">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="overflow-y-auto flex-1 px-5 sm:px-6 py-5 space-y-5">
-          <p className="text-sm text-gray-600 dark:text-gray-300">{template.description}</p>
-
-          {/* Config */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Client</label>
-              <select
-                value={selectedClient}
-                onChange={e => setSelectedClient(e.target.value)}
-                className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select a client...</option>
-                {CLIENTS.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          {/* Step flow preview */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Workflow Steps</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-              <WorkflowStepFlow steps={template.steps} />
-            </div>
-          </div>
-
-          {/* Steps list detail */}
-          <div className="space-y-2">
-            {template.steps.map((step, idx) => (
-              <div key={step.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                  {idx + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-gray-800 dark:text-white">{step.title}</span>
-                    <span className="text-[10px] text-gray-500">{step.defaultDurationDays}d</span>
-                    <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded font-medium">{step.assigneeRole}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{step.description}</p>
-                  {step.dependsOn.length > 0 && (
-                    <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
-                      <ArrowRight size={9} />
-                      Depends on: {step.dependsOn.map(depId => template.steps.find(s => s.id === depId)?.title || depId).join(', ')}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="px-5 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 flex gap-3">
-          <button
-            disabled={!selectedClient || !startDate}
-            className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center justify-center gap-2"
-          >
-            <Zap size={15} />
-            Create Project from Template
-          </button>
-          <button onClick={onClose} className="px-4 py-3 text-gray-600 hover:text-gray-800 dark:text-gray-400 text-sm transition-colors min-h-[44px]">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WorkflowTemplateDetailModal({ template, onClose, onUse }: { template: WorkflowTemplate; onClose: () => void; onUse: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="px-5 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[template.category] || 'bg-gray-100 text-gray-600'}`}>
-                {template.category}
-              </span>
-              <span className="text-xs text-gray-400">{template.defaultDurationDays} days · {template.steps.length} steps</span>
-            </div>
-            <h2 className="font-bold text-gray-900 dark:text-white text-lg">{template.name}</h2>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 min-h-[44px] min-w-[44px] flex items-center justify-center">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="overflow-y-auto flex-1 px-5 sm:px-6 py-5 space-y-5">
-          <p className="text-sm text-gray-600 dark:text-gray-300">{template.description}</p>
-
-          {/* Flow diagram */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <GitBranch size={12} />
-              Step Flow
-            </div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-              <WorkflowStepFlow steps={template.steps} />
-            </div>
-          </div>
-
-          {/* Step detail */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">All Steps</div>
-            <div className="space-y-2">
-              {template.steps.map((step, idx) => (
-                <div key={step.id} className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="text-sm font-semibold text-gray-800 dark:text-white">{step.title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">{step.defaultDurationDays}d</span>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded font-medium">{step.assigneeRole}</span>
-                    </div>
-                    <p className="text-xs text-gray-500">{step.description}</p>
-                    {step.dependsOn.length > 0 && (
-                      <div className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
-                        <ArrowRight size={9} />
-                        After: {step.dependsOn.map(depId => template.steps.find(s => s.id === depId)?.title || depId).join(' & ')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="px-5 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 flex gap-3">
-          <button
-            onClick={onUse}
-            className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center justify-center gap-2"
-          >
-            <Zap size={15} />
-            Use This Template
-          </button>
-          <button onClick={onClose} className="px-4 py-3 text-gray-600 hover:text-gray-800 dark:text-gray-400 text-sm transition-colors min-h-[44px]">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WorkflowTemplateCard({ template, onClick }: { template: WorkflowTemplate; onClick: () => void }) {
-  const parallelSteps = template.steps.filter(s => s.dependsOn.length > 0).some(s => {
-    return template.steps.filter(other => other.id !== s.id && other.dependsOn.length > 0 && 
-      other.dependsOn.some(d => s.dependsOn.includes(d))).length > 0;
-  });
-
-  return (
-    <div
-      onClick={onClick}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all cursor-pointer group"
-    >
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700 transition-all group">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[template.category] || 'bg-gray-100 text-gray-600'}`}>
             {template.category}
           </span>
-          {parallelSteps && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium flex items-center gap-0.5">
-              <GitBranch size={9} />
-              Parallel
-            </span>
-          )}
         </div>
-        <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-400 transition-colors flex-shrink-0" />
+        <div className="flex items-center gap-1">
+          <button
+            onClick={e => { e.stopPropagation(); onEdit(); }}
+            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="Edit"
+          >
+            <Pencil size={12} />
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onArchive(); }}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            title="Archive"
+          >
+            <Archive size={12} />
+          </button>
+        </div>
       </div>
 
       <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -461,26 +612,46 @@ function WorkflowTemplateCard({ template, onClick }: { template: WorkflowTemplat
           <GitBranch size={11} />
           {template.steps.length} steps
         </div>
-        <div className="ml-auto">
-          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium">Use Template</span>
-        </div>
       </div>
     </div>
   );
 }
 
-// =========================================================
-// MAIN PAGE
-// =========================================================
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TemplatesPage() {
-  const { TASK_TEMPLATES = [], TEAM_MEMBERS = [], WORKFLOW_TEMPLATES = [], CLIENTS = [] } = useAppData();
+  const { TASK_TEMPLATES = [], WORKFLOW_TEMPLATES = [], refresh } = useAppData();
   const [activeTab, setActiveTab] = useState<'workflow' | 'task'>('workflow');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');
-  const [selectedTaskTemplate, setSelectedTaskTemplate] = useState<TaskTemplate | null>(null);
-  const [selectedWorkflowTemplate, setSelectedWorkflowTemplate] = useState<WorkflowTemplate | null>(null);
-  const [useTemplate, setUseTemplate] = useState<WorkflowTemplate | null>(null);
+  const [, startTransition] = useTransition();
+
+  // Modal state
+  const [editTaskTemplate, setEditTaskTemplate] = useState<TaskTemplate | null>(null);
+  const [newTaskTemplate, setNewTaskTemplate] = useState(false);
+  const [editWorkflowTemplate, setEditWorkflowTemplate] = useState<WorkflowTemplate | null>(null);
+  const [newWorkflowTemplate, setNewWorkflowTemplate] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<{ id: string; type: 'task' | 'workflow'; name: string } | null>(null);
+
+  const handleArchive = () => {
+    if (!archiveTarget) return;
+    const { id, type } = archiveTarget;
+    setArchiveTarget(null);
+    startTransition(async () => {
+      try {
+        if (type === 'task') {
+          await archiveTaskTemplate(id);
+          toast.success('Task template archived');
+        } else {
+          await archiveWorkflowTemplate(id);
+          toast.success('Workflow template archived');
+        }
+        refresh?.();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
 
   // Task template filtering
   const filteredTasks = TASK_TEMPLATES.filter(t => {
@@ -513,29 +684,37 @@ export default function TemplatesPage() {
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Templates" subtitle="Workflow templates and reusable task templates" />
 
-      <div className="p-4 sm:p-6 lg:p-8">
-        {selectedTaskTemplate && (
-          <TemplateDetailModal template={selectedTaskTemplate} onClose={() => setSelectedTaskTemplate(null)} />
-        )}
-        {selectedWorkflowTemplate && !useTemplate && (
-          <WorkflowTemplateDetailModal
-            template={selectedWorkflowTemplate}
-            onClose={() => setSelectedWorkflowTemplate(null)}
-            onUse={() => { setUseTemplate(selectedWorkflowTemplate); setSelectedWorkflowTemplate(null); }}
-          />
-        )}
-        {useTemplate && (
-          <UseTemplateModal template={useTemplate} onClose={() => setUseTemplate(null)} />
-        )}
+      {/* Modals */}
+      {(newTaskTemplate || editTaskTemplate) && (
+        <TaskTemplateModal
+          template={editTaskTemplate || undefined}
+          onClose={() => { setNewTaskTemplate(false); setEditTaskTemplate(null); }}
+        />
+      )}
+      {(newWorkflowTemplate || editWorkflowTemplate) && (
+        <WorkflowTemplateModal
+          template={editWorkflowTemplate || undefined}
+          onClose={() => { setNewWorkflowTemplate(false); setEditWorkflowTemplate(null); }}
+        />
+      )}
+      {archiveTarget && (
+        <ConfirmDialog
+          title={`Archive ${archiveTarget.type === 'task' ? 'Task' : 'Workflow'} Template`}
+          message={`Archive "${archiveTarget.name}"? It will be hidden from the list.`}
+          confirmLabel="Archive"
+          destructive
+          onConfirm={handleArchive}
+          onCancel={() => setArchiveTarget(null)}
+        />
+      )}
 
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* Tab switcher */}
         <div className="flex items-center gap-2 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-1.5 w-fit">
           <button
             onClick={() => handleTabChange('workflow')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
-              activeTab === 'workflow'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              activeTab === 'workflow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <GitBranch size={14} />
@@ -547,9 +726,7 @@ export default function TemplatesPage() {
           <button
             onClick={() => handleTabChange('task')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
-              activeTab === 'task'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              activeTab === 'task' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <LayoutTemplate size={14} />
@@ -572,7 +749,10 @@ export default function TemplatesPage() {
               className="pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]">
+          <button
+            onClick={() => activeTab === 'task' ? setNewTaskTemplate(true) : setNewWorkflowTemplate(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
+          >
             <Plus size={15} />
             <span className="hidden sm:inline">New Template</span>
             <span className="sm:hidden">New</span>
@@ -603,7 +783,7 @@ export default function TemplatesPage() {
               { label: 'Workflow Templates', value: WORKFLOW_TEMPLATES.length, icon: GitBranch, color: 'text-indigo-600' },
               { label: 'Categories', value: workflowCategories.length - 1, icon: Tag, color: 'text-purple-600' },
               { label: 'Total Steps', value: WORKFLOW_TEMPLATES.reduce((s, t) => s + t.steps.length, 0), icon: LayoutTemplate, color: 'text-blue-600' },
-              { label: 'Avg Duration', value: `${Math.round(WORKFLOW_TEMPLATES.reduce((s, t) => s + t.defaultDurationDays, 0) / WORKFLOW_TEMPLATES.length)}d`, icon: Clock, color: 'text-green-600' },
+              { label: 'Avg Duration', value: WORKFLOW_TEMPLATES.length > 0 ? `${Math.round(WORKFLOW_TEMPLATES.reduce((s, t) => s + t.defaultDurationDays, 0) / WORKFLOW_TEMPLATES.length)}d` : '0d', icon: Clock, color: 'text-green-600' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -623,7 +803,7 @@ export default function TemplatesPage() {
             {[
               { label: 'Total Templates', value: TASK_TEMPLATES.length, icon: LayoutTemplate, color: 'text-indigo-600' },
               { label: 'Categories', value: TASK_CATEGORIES.length - 1, icon: Tag, color: 'text-purple-600' },
-              { label: 'Avg Duration', value: `${Math.round(TASK_TEMPLATES.reduce((s, t) => s + t.estimatedDuration, 0) / TASK_TEMPLATES.length)}d`, icon: Clock, color: 'text-blue-600' },
+              { label: 'Avg Duration', value: TASK_TEMPLATES.length > 0 ? `${Math.round(TASK_TEMPLATES.reduce((s, t) => s + t.estimatedDuration, 0) / TASK_TEMPLATES.length)}d` : '0d', icon: Clock, color: 'text-blue-600' },
               { label: 'Team Roles', value: [...new Set(TASK_TEMPLATES.map(t => t.defaultAssigneeRole))].length, icon: Users, color: 'text-green-600' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
@@ -645,12 +825,23 @@ export default function TemplatesPage() {
         {activeTab === 'workflow' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredWorkflows.map(wt => (
-              <WorkflowTemplateCard key={wt.id} template={wt} onClick={() => setSelectedWorkflowTemplate(wt)} />
+              <WorkflowTemplateCard
+                key={wt.id}
+                template={wt}
+                onEdit={() => setEditWorkflowTemplate(wt)}
+                onArchive={() => setArchiveTarget({ id: wt.id, type: 'workflow', name: wt.name })}
+              />
             ))}
             {filteredWorkflows.length === 0 && (
               <div className="col-span-full text-center py-16 text-gray-400">
                 <GitBranch size={40} className="mx-auto mb-4 opacity-30" />
                 <p className="font-medium">No workflow templates found</p>
+                <button
+                  onClick={() => setNewWorkflowTemplate(true)}
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+                >
+                  <Plus size={14} /> New Workflow Template
+                </button>
               </div>
             )}
           </div>
@@ -665,7 +856,12 @@ export default function TemplatesPage() {
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     {templates.map(t => (
-                      <TaskTemplateCard key={t.id} template={t} onClick={() => setSelectedTaskTemplate(t)} />
+                      <TaskTemplateCard
+                        key={t.id}
+                        template={t}
+                        onEdit={() => setEditTaskTemplate(t)}
+                        onArchive={() => setArchiveTarget({ id: t.id, type: 'task', name: t.title })}
+                      />
                     ))}
                   </div>
                 </div>
@@ -673,7 +869,12 @@ export default function TemplatesPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {filteredTasks.map(t => (
-                  <TaskTemplateCard key={t.id} template={t} onClick={() => setSelectedTaskTemplate(t)} />
+                  <TaskTemplateCard
+                    key={t.id}
+                    template={t}
+                    onEdit={() => setEditTaskTemplate(t)}
+                    onArchive={() => setArchiveTarget({ id: t.id, type: 'task', name: t.title })}
+                  />
                 ))}
               </div>
             )}
@@ -681,7 +882,12 @@ export default function TemplatesPage() {
               <div className="text-center py-16 sm:py-20 text-gray-400">
                 <LayoutTemplate size={40} className="mx-auto mb-4 opacity-30" />
                 <p className="font-medium">No templates found</p>
-                <p className="text-sm mt-1">Try adjusting your search or category filter</p>
+                <button
+                  onClick={() => setNewTaskTemplate(true)}
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+                >
+                  <Plus size={14} /> New Task Template
+                </button>
               </div>
             )}
           </>

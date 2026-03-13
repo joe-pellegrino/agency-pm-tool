@@ -40,10 +40,16 @@ export default async function DashboardPage() {
     return { client, total: clientTasks.length, done };
   });
 
-  // Recent tasks
+  // Upcoming deadlines — tasks due in the next 7 days, not done
+  const now = new Date();
+  const sevenDaysOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const recentTasks = TASKS
-    .filter(t => !t.isMilestone)
-    .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())
+    .filter(t => !t.isMilestone && t.status !== 'done' && t.dueDate)
+    .filter(t => {
+      const due = new Date(t.dueDate);
+      return due <= sevenDaysOut;
+    })
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 5);
 
   const standardView = (
@@ -61,7 +67,7 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900 dark:text-white">Client Overview</h2>
-            <Link href="/kanban" className="text-xs text-indigo-600 hover:underline flex items-center gap-1">
+            <Link href="/clients" className="text-xs text-indigo-600 hover:underline flex items-center gap-1">
               View all <ArrowRight size={12} />
             </Link>
           </div>

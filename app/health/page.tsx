@@ -1,57 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { Client } from '@/lib/data';
+import { Client, Task } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { TrendingUp, TrendingDown, Minus, Activity, Clock, CheckCircle, AlertTriangle, Users, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 
-// Mock health data per client
-const CLIENT_HEALTH: Record<string, {
-  score: number;
-  trend: 'up' | 'down' | 'stable';
-  sentiment: 'positive' | 'neutral' | 'cautious';
-  lastMeeting: string;
-  hoursThisMonth: number;
-  sentimentNote: string;
-}> = {
-  'happy-days': {
-    score: 75,
-    trend: 'stable',
-    sentiment: 'positive',
-    lastMeeting: '2026-03-28',
-    hoursThisMonth: 42,
-    sentimentNote: 'Client is engaged and responsive. Excited about Q2 campaign launch.',
-  },
-  'k-pacho': {
-    score: 70,
-    trend: 'stable',
-    sentiment: 'neutral',
-    lastMeeting: '2026-03-27',
-    hoursThisMonth: 31,
-    sentimentNote: 'Slight hesitation on ad creative direction. Needs closer alignment.',
-  },
-  'the-refuge': {
-    score: 70,
-    trend: 'up',
-    sentiment: 'positive',
-    lastMeeting: '2026-03-31',
-    hoursThisMonth: 56,
-    sentimentNote: 'Grand opening was a huge success. Momentum is strong.',
-  },
-};
+/**
+ * Client Health Score Formula:
+ * - Base score = (done_count / total_count) * 100
+ * - Overdue penalty: subtract 10 points per overdue task (due_date < today AND status != 'done')
+ * - Final score capped 0–100
+ * - If no tasks exist for a client: health = 100 (no news is good news)
+ * - "Unhealthy" = score < 70 OR 2+ overdue tasks
+ */
+function calcClientHealth(clientId: string, tasks: Task[]) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-const SENTIMENT_EMOJI: Record<string, string> = {
-  positive: '😊',
-  neutral: '😐',
-  cautious: '😟',
-};
+  const clientTasks = tasks.filter(t => t.clientId === clientId && !t.isMilestone);
+  const total = clientTasks.length;
+  const done = clientTasks.filter(t => t.status === 'done').length;
+  const overdue = clientTasks.filter(t => {
+    if (t.status === 'done') return false;
+    if (!t.dueDate) return false;
+    return new Date(t.dueDate) < today;
+  }).length;
+  const inProgress = clientTasks.filter(t => t.status === 'inprogress').length;
+  const inReview = clientTasks.filter(t => t.status === 'review').length;
 
-const SENTIMENT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  positive: { bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
-  neutral: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' },
-  cautious: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-800' },
-};
+  let score = total > 0 ? Math.round((done / total) * 100) - (overdue * 10) : 100;
+  score = Math.min(100, Math.max(0, score));
+
+  return { score, total, done, overdue, inProgress, inReview };
+}
 
 function getScoreColor(score: number): string {
   if (score > 80) return 'text-green-600';
@@ -71,10 +53,10 @@ function getScoreLabel(score: number): string {
   return 'Critical';
 }
 
-function TrendIcon({ trend }: { trend: 'up' | 'down' | 'stable' }) {
-  if (trend === 'up') return <TrendingUp size={16} className="text-green-500" />;
-  if (trend === 'down') return <TrendingDown size={16} className="text-red-500" />;
-  return <Minus size={16} className="text-gray-400" />;
+function TrendIcon({ score }: { score: number }) {
+  if (score > 80) return <TrendingUp size={16} className="text-green-500" />;
+  if (score >= 60) return <Minus size={16} className="text-gray-400" />;
+  return <TrendingDown size={16} className="text-red-500" />;
 }
 
 function ScoreGauge({ score }: { score: number }) {
@@ -108,28 +90,17 @@ function ScoreGauge({ score }: { score: number }) {
 }
 
 function ClientHealthCard({ client }: { client: Client }) {
-  const { TASKS = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], TIME_ENTRIES = [], TEAM_MEMBERS = [] } = useAppData();
+  const { TASKS = [] } = useAppData();
   const [expanded, setExpanded] = useState(false);
-  const health = CLIENT_HEALTH[client.id];
+  const { score, total, done, overdue, inProgress, inReview } = calcClientHealth(client.id, TASKS);
   const clientTasks = TASKS.filter(t => t.clientId === client.id);
-  const completed = clientTasks.filter(t => t.status === 'done').length;
-  const inReview = clientTasks.filter(t => t.status === 'review').length;
-  const overdue = clientTasks.filter(t => {
-    return t.status !== 'done' && new Date(t.dueDate) < new Date();
-  }).length;
-  const inProgress = clientTasks.filter(t => t.status === 'inprogress').length;
-
-  const sentiment = SENTIMENT_COLORS[health.sentiment];
-  const lastMeetingDate = new Date(health.lastMeeting);
-  const daysSince = Math.floor((new Date().getTime() - lastMeetingDate.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-      {/* Top accent bar */}
       <div className="h-1" style={{ backgroundColor: client.color }} />
 
       <div className="p-6">
-        {/* Header row */}
+        {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
             <div
@@ -144,40 +115,43 @@ function ClientHealthCard({ client }: { client: Client }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <TrendIcon trend={health.trend} />
-            <span className="text-xs text-gray-500 capitalize">{health.trend}</span>
+            <TrendIcon score={score} />
+            <span className="text-xs text-gray-500">{getScoreLabel(score)}</span>
           </div>
         </div>
 
-        {/* Score + Sentiment */}
+        {/* Score gauge + stats */}
         <div className="flex items-center gap-5 mb-5">
-          <ScoreGauge score={health.score} />
-          <div className="flex-1 space-y-3">
-            {/* Sentiment */}
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${sentiment.bg} ${sentiment.border}`}>
-              <span className="text-base">{SENTIMENT_EMOJI[health.sentiment]}</span>
-              <div>
-                <p className={`text-xs font-semibold capitalize ${sentiment.text}`}>{health.sentiment}</p>
-                <p className="text-[11px] text-gray-500 leading-tight line-clamp-2">{health.sentimentNote}</p>
-              </div>
-            </div>
-
-            {/* Hours */}
+          <ScoreGauge score={score} />
+          <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2 text-sm">
-              <Clock size={14} className="text-indigo-500" />
+              <CheckCircle size={14} className="text-green-500" />
               <span className="text-gray-600 dark:text-gray-300">
-                <span className="font-semibold text-gray-900 dark:text-white">{health.hoursThisMonth}h</span>
-                {' '}tracked this month
+                <span className="font-semibold text-gray-900 dark:text-white">{done}</span> tasks completed
               </span>
             </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Clock size={14} className="text-blue-500" />
+              <span className="text-gray-600 dark:text-gray-300">
+                <span className="font-semibold text-gray-900 dark:text-white">{inProgress}</span> in progress
+              </span>
+            </div>
+            {overdue > 0 && (
+              <div className="flex items-center gap-2 text-sm">
+                <AlertTriangle size={14} className="text-red-500" />
+                <span className="text-red-600 dark:text-red-400">
+                  <span className="font-semibold">{overdue}</span> overdue
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Task stats grid */}
         <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-4">
           {[
-            { label: 'Total', value: clientTasks.length, color: 'text-gray-700 dark:text-gray-200', bg: 'bg-gray-100 dark:bg-gray-700' },
-            { label: 'Done', value: completed, color: 'text-green-700', bg: 'bg-green-100 dark:bg-green-900/30' },
+            { label: 'Total', value: total, color: 'text-gray-700 dark:text-gray-200', bg: 'bg-gray-100 dark:bg-gray-700' },
+            { label: 'Done', value: done, color: 'text-green-700', bg: 'bg-green-100 dark:bg-green-900/30' },
             { label: 'Review', value: inReview, color: 'text-amber-700', bg: 'bg-amber-100 dark:bg-amber-900/30' },
             { label: 'Overdue', value: overdue, color: overdue > 0 ? 'text-red-700' : 'text-gray-500', bg: overdue > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-gray-100 dark:bg-gray-700' },
           ].map(stat => (
@@ -188,14 +162,11 @@ function ClientHealthCard({ client }: { client: Client }) {
           ))}
         </div>
 
-        {/* Last meeting */}
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700">
-          <span>Last meeting: <span className="font-medium text-gray-700 dark:text-gray-300">
-            {lastMeetingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-          </span> ({daysSince}d ago)</span>
+        {/* Toggle */}
+        <div className="flex items-center justify-end pt-3 border-t border-gray-100 dark:border-gray-700">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 transition-colors font-medium"
+            className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 transition-colors font-medium"
           >
             Details
             {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -219,6 +190,9 @@ function ClientHealthCard({ client }: { client: Client }) {
                   </span>
                 </div>
               ))}
+              {clientTasks.filter(t => t.status !== 'done').length === 0 && (
+                <p className="text-xs text-gray-400">No active tasks</p>
+              )}
               {clientTasks.filter(t => t.status !== 'done').length > 5 && (
                 <p className="text-xs text-gray-400 pl-1">+{clientTasks.filter(t => t.status !== 'done').length - 5} more</p>
               )}
@@ -231,26 +205,33 @@ function ClientHealthCard({ client }: { client: Client }) {
 }
 
 export default function HealthPage() {
-  const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [], TIME_ENTRIES = [] } = useAppData();
+  const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const totalOverdue = TASKS.filter(t =>
-    t.status !== 'done' && new Date(t.dueDate) < new Date()
+    t.status !== 'done' && t.dueDate && new Date(t.dueDate) < today
   ).length;
 
-  const avgHealth = Math.round(
-    Object.values(CLIENT_HEALTH).reduce((sum, h) => sum + h.score, 0) / Object.keys(CLIENT_HEALTH).length
-  );
-
-  const totalHours = Object.values(CLIENT_HEALTH).reduce((sum, h) => sum + h.hoursThisMonth, 0);
-  const maxCapacity = TEAM_MEMBERS.length * 160; // ~160h per person per month
-  const utilization = Math.round((totalHours / maxCapacity) * 100);
+  // Calculate avg health from real data
+  const healthScores = CLIENTS.map(c => calcClientHealth(c.id, TASKS).score);
+  const avgHealth = CLIENTS.length > 0
+    ? Math.round(healthScores.reduce((a, b) => a + b, 0) / CLIENTS.length)
+    : 100;
 
   const allTasksDone = TASKS.filter(t => t.status === 'done').length;
   const allTasksTotal = TASKS.length;
-  const completionRate = Math.round((allTasksDone / allTasksTotal) * 100);
+  const completionRate = allTasksTotal > 0 ? Math.round((allTasksDone / allTasksTotal) * 100) : 0;
+
+  // Team utilization based on active (non-done) tasks per member
+  const activeTasks = TASKS.filter(t => t.status !== 'done').length;
+  const maxCapacity = TEAM_MEMBERS.length > 0 ? TEAM_MEMBERS.length * 20 : 1; // ~20 tasks per person as baseline
+  const utilization = Math.min(100, Math.round((activeTasks / maxCapacity) * 100));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <TopBar title="Client Health" subtitle="Relationship scores, sentiment, and task performance per client" />
+      <TopBar title="Client Health" subtitle="Relationship scores and task performance per client" />
 
       <div className="pt-16 p-4 sm:p-8">
         {/* Summary bar */}
@@ -274,9 +255,9 @@ export default function HealthPage() {
             },
             {
               icon: <Users size={20} className="text-purple-600" />,
-              label: 'Team Utilization',
-              value: `${utilization}%`,
-              sub: `${totalHours}h of ${maxCapacity}h capacity`,
+              label: 'Active Tasks',
+              value: `${activeTasks}`,
+              sub: `${TEAM_MEMBERS.length} team members`,
               color: 'bg-purple-50 dark:bg-purple-900/20',
               iconBg: 'bg-purple-100 dark:bg-purple-900/40',
             },
@@ -302,40 +283,51 @@ export default function HealthPage() {
           ))}
         </div>
 
-        {/* Health score bar */}
+        {/* Health score comparison bar */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Health Score Comparison</h3>
-          <div className="space-y-3">
-            {CLIENTS.map(client => {
-              const health = CLIENT_HEALTH[client.id];
-              return (
-                <div key={client.id} className="flex items-center gap-2 sm:gap-4">
-                  <div className="w-20 sm:w-28 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 truncate flex-shrink-0">{client.name}</div>
-                  <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full bg-gradient-to-r ${getScoreBg(health.score)} transition-all duration-700`}
-                      style={{ width: `${health.score}%` }}
-                    />
+          {CLIENTS.length === 0 ? (
+            <p className="text-sm text-gray-400">No clients found</p>
+          ) : (
+            <div className="space-y-3">
+              {CLIENTS.map(client => {
+                const { score } = calcClientHealth(client.id, TASKS);
+                return (
+                  <div key={client.id} className="flex items-center gap-2 sm:gap-4">
+                    <div className="w-20 sm:w-28 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 truncate flex-shrink-0">{client.name}</div>
+                    <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${getScoreBg(score)} transition-all duration-700`}
+                        style={{ width: `${score}%` }}
+                      />
+                    </div>
+                    <div className="w-8 sm:w-10 text-right flex-shrink-0">
+                      <span className={`text-sm font-bold ${getScoreColor(score)}`}>{score}</span>
+                    </div>
+                    <div className="hidden sm:flex w-16 items-center gap-1">
+                      <TrendIcon score={score} />
+                      <span className="text-xs text-gray-500">{getScoreLabel(score)}</span>
+                    </div>
                   </div>
-                  <div className="w-8 sm:w-10 text-right flex-shrink-0">
-                    <span className={`text-sm font-bold ${getScoreColor(health.score)}`}>{health.score}</span>
-                  </div>
-                  <div className="hidden sm:flex w-16 items-center gap-1">
-                    <TrendIcon trend={health.trend} />
-                    <span className="text-xs text-gray-500 capitalize">{health.trend}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Client cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {CLIENTS.map(client => (
-            <ClientHealthCard key={client.id} client={client} />
-          ))}
-        </div>
+        {CLIENTS.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <Users size={40} className="mx-auto mb-4 opacity-30" />
+            <p className="font-medium">No clients found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {CLIENTS.map(client => (
+              <ClientHealthCard key={client.id} client={client} />
+            ))}
+          </div>
+        )}
 
         {/* Score legend */}
         <div className="mt-6 flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-gray-500">

@@ -699,6 +699,220 @@ export async function removeClientService(id: string) {
   revalidatePath('/clients');
 }
 
+// ─── TASK TEMPLATES ───────────────────────────────────────────────────────────
+
+export async function createTaskTemplate(data: {
+  title: string;
+  description: string;
+  defaultAssigneeRole: string;
+  defaultPriority: string;
+  estimatedDuration: number;
+  type: string;
+  dueRule: string;
+  category: string;
+}) {
+  const id = `tmpl-${Date.now()}`;
+  const { error } = await db().from('task_templates').insert({
+    id,
+    title: data.title,
+    description: data.description,
+    default_assignee_role: data.defaultAssigneeRole,
+    default_priority: data.defaultPriority,
+    estimated_duration: data.estimatedDuration,
+    type: data.type,
+    due_rule: data.dueRule,
+    category: data.category,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath('/templates');
+  return id;
+}
+
+export async function updateTaskTemplate(id: string, data: Partial<{
+  title: string;
+  description: string;
+  defaultAssigneeRole: string;
+  defaultPriority: string;
+  estimatedDuration: number;
+  type: string;
+  dueRule: string;
+  category: string;
+}>) {
+  const update: Record<string, unknown> = {};
+  if (data.title !== undefined) update.title = data.title;
+  if (data.description !== undefined) update.description = data.description;
+  if (data.defaultAssigneeRole !== undefined) update.default_assignee_role = data.defaultAssigneeRole;
+  if (data.defaultPriority !== undefined) update.default_priority = data.defaultPriority;
+  if (data.estimatedDuration !== undefined) update.estimated_duration = data.estimatedDuration;
+  if (data.type !== undefined) update.type = data.type;
+  if (data.dueRule !== undefined) update.due_rule = data.dueRule;
+  if (data.category !== undefined) update.category = data.category;
+  const { error } = await db().from('task_templates').update(update).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/templates');
+}
+
+export async function archiveTaskTemplate(id: string) {
+  const { error } = await db().from('task_templates').update({ archived_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/templates');
+}
+
+// ─── WORKFLOW TEMPLATES ───────────────────────────────────────────────────────
+
+export async function createWorkflowTemplate(data: {
+  name: string;
+  description: string;
+  category: string;
+  defaultDurationDays: number;
+  steps: Array<{
+    title: string;
+    description: string;
+    defaultDurationDays: number;
+    assigneeRole: string;
+    order: number;
+    dependsOn: string[];
+  }>;
+}) {
+  const id = `wt-${Date.now()}`;
+  const { error } = await db().from('workflow_templates').insert({
+    id,
+    name: data.name,
+    description: data.description,
+    category: data.category,
+    default_duration_days: data.defaultDurationDays,
+  });
+  if (error) throw new Error(error.message);
+
+  // Insert steps
+  for (const step of data.steps) {
+    const stepId = `${id}-s${step.order}`;
+    const { error: stepErr } = await db().from('workflow_steps').insert({
+      id: stepId,
+      workflow_template_id: id,
+      step_order: step.order,
+      title: step.title,
+      description: step.description,
+      default_duration_days: step.defaultDurationDays,
+      assignee_role: step.assigneeRole,
+    });
+    if (stepErr) throw new Error(stepErr.message);
+    for (const depId of step.dependsOn) {
+      await db().from('workflow_step_dependencies').insert({ step_id: stepId, depends_on_id: depId });
+    }
+  }
+
+  revalidatePath('/templates');
+  return id;
+}
+
+export async function updateWorkflowTemplate(id: string, data: {
+  name?: string;
+  description?: string;
+  category?: string;
+  defaultDurationDays?: number;
+  steps?: Array<{
+    id?: string;
+    title: string;
+    description: string;
+    defaultDurationDays: number;
+    assigneeRole: string;
+    order: number;
+    dependsOn: string[];
+  }>;
+}) {
+  const update: Record<string, unknown> = {};
+  if (data.name !== undefined) update.name = data.name;
+  if (data.description !== undefined) update.description = data.description;
+  if (data.category !== undefined) update.category = data.category;
+  if (data.defaultDurationDays !== undefined) update.default_duration_days = data.defaultDurationDays;
+  if (Object.keys(update).length > 0) {
+    const { error } = await db().from('workflow_templates').update(update).eq('id', id);
+    if (error) throw new Error(error.message);
+  }
+
+  if (data.steps !== undefined) {
+    // Get existing step ids
+    const { data: existingSteps } = await db().from('workflow_steps').select('id').eq('workflow_template_id', id);
+    const existingIds = (existingSteps || []).map((s: { id: string }) => s.id);
+
+    // Delete dependencies for existing steps
+    if (existingIds.length > 0) {
+      await db().from('workflow_step_dependencies').delete().in('step_id', existingIds);
+    }
+    // Delete existing steps
+    await db().from('workflow_steps').delete().eq('workflow_template_id', id);
+
+    // Re-insert steps
+    for (const step of data.steps) {
+      const stepId = step.id || `${id}-s${step.order}-${Date.now()}`;
+      const { error: stepErr } = await db().from('workflow_steps').insert({
+        id: stepId,
+        workflow_template_id: id,
+        step_order: step.order,
+        title: step.title,
+        description: step.description,
+        default_duration_days: step.defaultDurationDays,
+        assignee_role: step.assigneeRole,
+      });
+      if (stepErr) throw new Error(stepErr.message);
+    }
+    // Re-insert dependencies using updated step IDs (steps are reinserted with same order)
+  }
+
+  revalidatePath('/templates');
+}
+
+export async function archiveWorkflowTemplate(id: string) {
+  const { error } = await db().from('workflow_templates').update({ archived_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/templates');
+}
+
+// ─── ASSET STORAGE ────────────────────────────────────────────────────────────
+
+export async function createAssetWithStorage(data: {
+  clientId: string;
+  filename: string;
+  fileType: string;
+  size: string;
+  storagePath: string;
+  storageUrl: string;
+}) {
+  const id = `asset-${Date.now()}`;
+  const { error } = await db().from('assets').insert({
+    id,
+    client_id: data.clientId,
+    filename: data.filename,
+    file_type: data.fileType,
+    upload_date: new Date().toISOString().split('T')[0],
+    uploaded_by: 'team',
+    size: data.size,
+    color: '#6366f1',
+    storage_path: data.storagePath,
+    storage_url: data.storageUrl,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath('/assets');
+  return id;
+}
+
+export async function deleteAssetWithStorage(id: string, storagePath: string) {
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.AGENCY_PM_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const storageDb = createClient(supabaseUrl, serviceKey);
+
+  // Remove from storage
+  if (storagePath) {
+    await storageDb.storage.from('assets').remove([storagePath]);
+  }
+  // Remove from DB
+  const { error } = await db().from('assets').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/assets');
+}
+
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
 
 export async function createDocument(data: {

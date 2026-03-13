@@ -161,7 +161,7 @@ function toTimeEntry(r: Row): TimeEntry {
   };
 }
 
-function toAsset(r: Row, tags: string[], versions: AssetVersion[]): Asset {
+function toAsset(r: Row, tags: string[], versions: AssetVersion[]): Asset & { storagePath?: string; storageUrl?: string } {
   return {
     id: r.id as string,
     clientId: r.client_id as string,
@@ -171,6 +171,8 @@ function toAsset(r: Row, tags: string[], versions: AssetVersion[]): Asset {
     uploadedBy: r.uploaded_by as string,
     size: r.size as string,
     color: r.color as string,
+    storagePath: (r.storage_path as string) || undefined,
+    storageUrl: (r.storage_url as string) || undefined,
     tags,
     versions,
   };

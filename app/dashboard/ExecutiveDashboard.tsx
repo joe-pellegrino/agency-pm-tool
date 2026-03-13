@@ -146,6 +146,14 @@ interface ClientHealth {
   totalTasks: number;
 }
 
+/**
+ * Client Health Score Formula:
+ * - Base score = (done_count / total_count) * 100
+ * - Overdue penalty: subtract 10 points per overdue task (due_date < today AND status != 'done')
+ * - Final score is capped between 0–100
+ * - If a client has no tasks, score defaults to 100 (no news is good news)
+ * - "Unhealthy" threshold: score < 70 OR 2+ overdue tasks
+ */
 function UnhealthyClients({ tasks, clients }: Pick<Props, 'tasks' | 'clients'>) {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -161,9 +169,10 @@ function UnhealthyClients({ tasks, clients }: Pick<Props, 'tasks' | 'clients'>) 
     }).length;
     const openTasks = clientTasks.filter(t => t.status !== 'done').length;
 
-    let score = total > 0 ? Math.round((done / total) * 100) : 100;
-    // Penalize overdue: each overdue task reduces score by 10
-    score = Math.max(0, score - overdue * 10);
+    // Health score: (done/total)*100 minus 10 per overdue task, capped 0–100
+    // If no tasks exist for client, health = 100 (no news is good news)
+    let score = total > 0 ? Math.round((done / total) * 100) - (overdue * 10) : 100;
+    score = Math.min(100, Math.max(0, score));
 
     return { client, score, overdue, openTasks, totalTasks: total };
   });
