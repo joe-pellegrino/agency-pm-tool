@@ -654,3 +654,26 @@ export async function archiveClientService(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/services');
 }
+
+export async function removeClientService(id: string) {
+  // Delete linked service_strategies (cascades to pillars + kpis via FK ON DELETE CASCADE)
+  const { data: ss } = await db()
+    .from('service_strategies')
+    .select('id')
+    .eq('client_service_id', id);
+
+  if (ss && ss.length > 0) {
+    const ssIds = ss.map((r: { id: string }) => r.id);
+    // Delete kpis and pillars explicitly (in case cascade not set)
+    await db().from('service_strategy_kpis').delete().in('service_strategy_id', ssIds);
+    await db().from('service_strategy_pillars').delete().in('service_strategy_id', ssIds);
+    await db().from('service_strategies').delete().in('id', ssIds);
+  }
+
+  // Hard delete the client_service row
+  const { error } = await db().from('client_services').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/services');
+  revalidatePath('/clients');
+}

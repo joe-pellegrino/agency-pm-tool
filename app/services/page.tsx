@@ -10,7 +10,7 @@ import {
   CheckCircle, Zap, FolderOpen, ChevronRight, Users, Plus, Pencil, X, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { upsertClientService, updateClientService, archiveClientService } from '@/lib/actions';
+import { upsertClientService, updateClientService, archiveClientService, removeClientService } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string; cell: string }> = {
@@ -152,10 +152,26 @@ function MatrixQuickAssign({
 }
 
 function MatrixCell({ cs, clientId, serviceId }: { cs: ClientService | null; clientId: string; serviceId: string }) {
-  const { SERVICE_STRATEGIES = [], TASKS = [], PROJECTS = [], CLIENTS = [], SERVICES = [] } = useAppData();
+  const { SERVICE_STRATEGIES = [], TASKS = [], PROJECTS = [], CLIENTS = [], SERVICES = [], refresh } = useAppData();
   const [showAssign, setShowAssign] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [isRemoving, startRemoveTransition] = useTransition();
   const client = CLIENTS.find(c => c.id === clientId);
   const service = SERVICES.find(s => s.id === serviceId);
+
+  const handleRemove = () => {
+    if (!cs) return;
+    startRemoveTransition(async () => {
+      try {
+        await removeClientService(cs.id);
+        toast.success(`${service?.name ?? 'Service'} removed from ${client?.name ?? 'client'}`);
+        refresh?.();
+        setShowRemoveConfirm(false);
+      } catch (err) {
+        toast.error('Failed to remove: ' + (err as Error).message);
+      }
+    });
+  };
 
   if (!cs) {
     return (
@@ -185,41 +201,59 @@ function MatrixCell({ cs, clientId, serviceId }: { cs: ClientService | null; cli
   const statusCfg = STATUS_CONFIG[cs.status];
 
   return (
-    <Link
-      href={`/clients/${cs.clientId}`}
-      className={`h-20 rounded-lg border flex flex-col justify-between p-2.5 transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer ${getCellBg(health, cs.status)} ${getCellBorder(health, cs.status)}`}
-    >
-      <div className="flex items-start justify-between">
-        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${statusCfg.color}`}>
-          <span className={`w-1 h-1 rounded-full ${statusCfg.dot}`} />
-          {statusCfg.label}
-        </span>
-        {health !== null && (
-          <span className={`text-xs font-bold ${getHealthColor(health)}`}>{health}%</span>
-        )}
-      </div>
-      {cs.status !== 'cancelled' && (
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-2 text-[10px] text-gray-500">
-            <span>{openTasks} tasks</span>
-            {blockers > 0 && (
-              <span className="text-red-500 flex items-center gap-0.5">
-                <AlertTriangle size={9} />
-                {blockers}
-              </span>
-            )}
-          </div>
-          {tasks.length > 0 && (
-            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1 overflow-hidden">
-              <div
-                className={`h-1 rounded-full ${health !== null && health >= 70 ? 'bg-green-500' : health !== null && health >= 40 ? 'bg-amber-500' : 'bg-indigo-400'}`}
-                style={{ width: `${donePct}%` }}
-              />
-            </div>
+    <>
+      {showRemoveConfirm && (
+        <ConfirmDialog
+          title="Remove Service"
+          message={`Remove ${service?.name ?? 'this service'} from ${client?.name ?? 'this client'}? This will unlink the service entirely.`}
+          confirmLabel={isRemoving ? 'Removing…' : 'Remove'}
+          destructive
+          onConfirm={handleRemove}
+          onCancel={() => setShowRemoveConfirm(false)}
+        />
+      )}
+      <div className={`relative h-20 rounded-lg border flex flex-col justify-between p-2.5 transition-all group/cell ${getCellBg(health, cs.status)} ${getCellBorder(health, cs.status)}`}>
+        {/* Remove button on hover */}
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowRemoveConfirm(true); }}
+          className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-700 opacity-0 group-hover/cell:opacity-100 transition-opacity z-10"
+          title="Remove service"
+        >
+          <X size={10} />
+        </button>
+        <Link href={`/clients/${cs.clientId}`} className="absolute inset-0 rounded-lg" />
+        <div className="relative flex items-start justify-between pointer-events-none">
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${statusCfg.color}`}>
+            <span className={`w-1 h-1 rounded-full ${statusCfg.dot}`} />
+            {statusCfg.label}
+          </span>
+          {health !== null && (
+            <span className={`text-xs font-bold ${getHealthColor(health)}`}>{health}%</span>
           )}
         </div>
-      )}
-    </Link>
+        {cs.status !== 'cancelled' && (
+          <div className="relative space-y-1 pointer-events-none">
+            <div className="flex items-center justify-between gap-2 text-[10px] text-gray-500">
+              <span>{openTasks} tasks</span>
+              {blockers > 0 && (
+                <span className="text-red-500 flex items-center gap-0.5">
+                  <AlertTriangle size={9} />
+                  {blockers}
+                </span>
+              )}
+            </div>
+            {tasks.length > 0 && (
+              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1 overflow-hidden">
+                <div
+                  className={`h-1 rounded-full ${health !== null && health >= 70 ? 'bg-green-500' : health !== null && health >= 40 ? 'bg-amber-500' : 'bg-indigo-400'}`}
+                  style={{ width: `${donePct}%` }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

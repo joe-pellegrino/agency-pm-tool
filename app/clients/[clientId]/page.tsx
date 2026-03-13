@@ -12,7 +12,8 @@ import {
   X, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { upsertClientService } from '@/lib/actions';
+import { upsertClientService, removeClientService } from '@/lib/actions';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -210,8 +211,24 @@ function ServiceTile({
   clientName: string;
   clientId: string;
 }) {
-  const { SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [] } = useAppData();
+  const { SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [], refresh } = useAppData();
   const [showAssign, setShowAssign] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [isRemoving, startRemoveTransition] = useTransition();
+
+  const handleRemove = () => {
+    if (!clientService) return;
+    startRemoveTransition(async () => {
+      try {
+        await removeClientService(clientService.id);
+        toast.success(`${service.name} removed from ${clientName}`);
+        refresh?.();
+        setShowRemoveConfirm(false);
+      } catch (err) {
+        toast.error('Failed to remove: ' + (err as Error).message);
+      }
+    });
+  };
 
   const isActive = clientService && (clientService.status === 'active' || clientService.status === 'planning');
   const isPaused = clientService?.status === 'paused';
@@ -274,6 +291,16 @@ function ServiceTile({
           onClose={() => setShowAssign(false)}
         />
       )}
+      {showRemoveConfirm && clientService && (
+        <ConfirmDialog
+          title="Remove Service"
+          message={`Remove ${service.name} from ${clientName}? This will unlink the service entirely.`}
+          confirmLabel={isRemoving ? 'Removing…' : 'Remove'}
+          destructive
+          onConfirm={handleRemove}
+          onCancel={() => setShowRemoveConfirm(false)}
+        />
+      )}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -295,12 +322,22 @@ function ServiceTile({
         )}
         <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
           <span>{projs.length} project{projs.length !== 1 ? 's' : ''} · {openTasks} open tasks</span>
-          <button
-            onClick={() => setShowAssign(true)}
-            className="text-indigo-500 hover:text-indigo-700 text-[10px] font-medium hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors"
-          >
-            Edit
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowAssign(true)}
+              className="text-indigo-500 hover:text-indigo-700 text-[10px] font-medium hover:bg-indigo-50 px-1.5 py-0.5 rounded transition-colors"
+            >
+              Edit
+            </button>
+            {clientService && (
+              <button
+                onClick={() => setShowRemoveConfirm(true)}
+                className="text-red-500 hover:text-red-700 text-[10px] font-medium hover:bg-red-50 px-1.5 py-0.5 rounded transition-colors"
+              >
+                Remove
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </>
@@ -318,10 +355,26 @@ function ServiceCard({
   linkedProjects: Project[];
   recentTasks: Task[];
 }) {
-  const { SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [], SERVICES = [] } = useAppData();
+  const { SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [], SERVICES = [], CLIENTS = [], refresh } = useAppData();
   const [expanded, setExpanded] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [isRemoving, startRemoveTransition] = useTransition();
   const service = SERVICES.find(s => s.id === clientService.serviceId)!;
+  const client = CLIENTS.find(c => c.id === clientService.clientId);
   const statusCfg = STATUS_CONFIG[clientService.status];
+
+  const handleRemove = () => {
+    startRemoveTransition(async () => {
+      try {
+        await removeClientService(clientService.id);
+        toast.success(`${service?.name ?? 'Service'} removed from ${client?.name ?? 'client'}`);
+        refresh?.();
+        setShowRemoveConfirm(false);
+      } catch (err) {
+        toast.error('Failed to remove: ' + (err as Error).message);
+      }
+    });
+  };
 
   const allTasks = linkedProjects.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
   const doneTasks = allTasks.filter(t => t.status === 'done').length;
@@ -339,6 +392,17 @@ function ServiceCard({
   const isInactive = clientService.status === 'cancelled';
 
   return (
+    <>
+      {showRemoveConfirm && (
+        <ConfirmDialog
+          title="Remove Service"
+          message={`Remove ${service?.name ?? 'this service'} from ${client?.name ?? 'this client'}? This will unlink the service entirely.`}
+          confirmLabel={isRemoving ? 'Removing…' : 'Remove'}
+          destructive
+          onConfirm={handleRemove}
+          onCancel={() => setShowRemoveConfirm(false)}
+        />
+      )}
     <div className={`rounded-xl border transition-all ${isInactive ? 'border-gray-200 dark:border-gray-700 opacity-60' : 'border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-600'} bg-white dark:bg-gray-800 overflow-hidden`}>
       {/* Card header */}
       <div
@@ -368,6 +432,13 @@ function ServiceCard({
                 <div className="text-[9px] text-gray-400 mt-0.5">health</div>
               </div>
             )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowRemoveConfirm(true); }}
+              className="text-red-400 hover:text-red-600 transition-colors p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Remove service"
+            >
+              <X size={14} />
+            </button>
             {!isInactive && (
               <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                 {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -492,6 +563,7 @@ function ServiceCard({
         </div>
       )}
     </div>
+    </>
   );
 }
 
