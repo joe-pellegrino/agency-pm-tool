@@ -4,10 +4,10 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 
 export default function KanbanPage() {
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Kanban Board" subtitle="Drag and drop tasks to update status" />
-      <div className="p-4 sm:p-6">
-        <Suspense fallback={<div className="text-gray-500">Loading board...</div>}>
+      <div style={{ padding: '24px 32px' }}>
+        <Suspense fallback={<div style={{ color: '#8896A6' }}>Loading board...</div>}>
           <KanbanBoard />
         </Suspense>
       </div>

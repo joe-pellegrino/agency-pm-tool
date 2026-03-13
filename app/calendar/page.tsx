@@ -139,10 +139,10 @@ export default function CalendarPage() {
   const monthTasks = Object.values(tasksByDate).flat();
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Calendar" subtitle="Monthly view of tasks and deadlines" />
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         {selectedDay && (
           <DayModal
             date={selectedDay}
@@ -184,7 +184,7 @@ export default function CalendarPage() {
                   </button>
                   <button
                     onClick={() => { setYear(2026); setMonth(2); }}
-                    className="px-3 py-1.5 text-sm text-[#4F6AE8] hover:bg-[#EEF2FF] rounded-lg transition-colors font-medium"
+                    className="px-3 py-1.5 text-sm text-[#3B5BDB] hover:bg-[#EEF2FF] rounded-lg transition-colors font-medium"
                   >
                     Today
                   </button>
@@ -250,7 +250,7 @@ export default function CalendarPage() {
                     >
                       {/* Day number */}
                       <div className={`w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs font-medium rounded-full mb-0.5 sm:mb-1 ${
-                        isT ? 'bg-[#4F6AE8] text-white' : 'text-gray-700 dark:text-gray-300'
+                        isT ? 'bg-[#3B5BDB] text-white' : 'text-gray-700 dark:text-gray-300'
                       }`}>
                         {day}
                       </div>

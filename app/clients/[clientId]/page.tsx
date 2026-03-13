@@ -103,7 +103,7 @@ function QuickAssignModal({
   const [strategyId, setStrategyId] = useState(existingCs?.linkedStrategyId || '');
   const [isPending, startTransition] = useTransition();
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
 
   const handleConfirm = () => {
     startTransition(async () => {
@@ -188,7 +188,7 @@ function QuickAssignModal({
             type="button"
             onClick={handleConfirm}
             disabled={isPending}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
           >
             {isPending ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             {existingCs ? 'Update Assignment' : 'Confirm Assignment'}
@@ -261,7 +261,7 @@ function ServiceTile({
         )}
         <button
           onClick={() => setShowAssign(true)}
-          className="w-full text-left bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 hover:border-indigo-300 dark:hover:border-[#4F6AE8] hover:bg-[#EEF2FF]/30 dark:hover:bg-indigo-900/10 transition-all group"
+          className="w-full text-left bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 hover:border-indigo-300 dark:hover:border-[#3B5BDB] hover:bg-[#EEF2FF]/30 dark:hover:bg-indigo-900/10 transition-all group"
         >
           <div className="flex items-center gap-3">
             <span className="text-xl opacity-50 group-hover:opacity-100 transition-opacity">{service.icon}</span>
@@ -269,7 +269,7 @@ function ServiceTile({
               <div className="text-sm font-medium text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400 truncate">{service.name}</div>
               <div className="text-[10px] text-gray-300 dark:text-gray-600">{service.category}</div>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-[#4F6AE8] opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1.5 text-xs text-[#3B5BDB] opacity-0 group-hover:opacity-100 transition-opacity">
               <Plus size={13} />
               Assign
             </div>
@@ -325,7 +325,7 @@ function ServiceTile({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowAssign(true)}
-              className="text-[#4F6AE8] hover:text-[#3B5BDB] text-[10px] font-medium hover:bg-[#EEF2FF] px-1.5 py-0.5 rounded transition-colors"
+              className="text-[#3B5BDB] hover:text-[#3B5BDB] text-[10px] font-medium hover:bg-[#EEF2FF] px-1.5 py-0.5 rounded transition-colors"
             >
               Edit
             </button>
@@ -403,7 +403,7 @@ function ServiceCard({
           onCancel={() => setShowRemoveConfirm(false)}
         />
       )}
-    <div className={`rounded-xl border transition-all ${isInactive ? 'border-gray-200 dark:border-gray-700 opacity-60' : 'border-gray-200 dark:border-gray-700 hover:border-[#C7D2FE] dark:hover:border-[#4F6AE8]'} bg-white dark:bg-gray-800 overflow-hidden`}>
+    <div className={`rounded-xl border transition-all ${isInactive ? 'border-gray-200 dark:border-gray-700 opacity-60' : 'border-gray-200 dark:border-gray-700 hover:border-[#C7D2FE] dark:hover:border-[#3B5BDB]'} bg-white dark:bg-gray-800 overflow-hidden`}>
       {/* Card header */}
       <div
         className={`px-4 py-4 ${!isInactive ? 'cursor-pointer' : ''}`}
@@ -470,7 +470,7 @@ function ServiceCard({
           <div className="mt-3">
             <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
               <div
-                className="h-1.5 rounded-full bg-[#4F6AE8] transition-all"
+                className="h-1.5 rounded-full bg-[#3B5BDB] transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -613,10 +613,10 @@ export default function ClientPage() {
 
   if (!client) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F0F3F8' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
         <div className="text-center">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Client not found</h2>
-          <Link href="/dashboard" className="text-[#4F6AE8] hover:text-[#3B5BDB] text-sm">
+          <Link href="/dashboard" className="text-[#3B5BDB] hover:text-[#3B5BDB] text-sm">
             ← Back to dashboard
           </Link>
         </div>
@@ -625,10 +625,10 @@ export default function ClientPage() {
   }
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#EDF0F5' }}>
       <TopBar title={client.name} subtitle={`${client.industry} · ${client.location}`} />
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         {/* Back nav */}
         <Link
           href="/services"
@@ -712,7 +712,7 @@ export default function ClientPage() {
         {/* All Services Grid — active + unassigned */}
         <div className="mb-8">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-            <Activity size={18} className="text-[#4F6AE8]" />
+            <Activity size={18} className="text-[#3B5BDB]" />
             Services
           </h2>
           <p className="text-sm text-gray-400 mb-4">Active services are filled. Click any empty slot to assign a service.</p>
@@ -733,7 +733,7 @@ export default function ClientPage() {
         {activeServices.length > 0 && (
           <div className="mb-8">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <BarChart3 size={18} className="text-[#4F6AE8]" />
+              <BarChart3 size={18} className="text-[#3B5BDB]" />
               Service Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

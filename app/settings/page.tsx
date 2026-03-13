@@ -33,7 +33,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Settings" subtitle="Manage your workspace preferences" />
 
       {(showNewMember || editMember) && (
@@ -55,7 +55,7 @@ export default function SettingsPage() {
           {/* Team Members */}
           <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <User size={16} className="text-[#4F6AE8]" />
+              <User size={16} className="text-[#3B5BDB]" />
               Team Members
             </h2>
             {loading ? (
@@ -88,7 +88,7 @@ export default function SettingsPage() {
                       </span>
                       <button
                         onClick={() => setEditMember(member)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-[#4F6AE8] rounded-lg transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-[#3B5BDB] rounded-lg transition-all"
                         title="Edit"
                       >
                         <Pencil size={13} />
@@ -109,7 +109,7 @@ export default function SettingsPage() {
             )}
             <button
               onClick={() => setShowNewMember(true)}
-              className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-[#4F6AE8] border border-dashed border-indigo-300 rounded-lg hover:bg-[#EEF2FF] dark:hover:bg-indigo-900/20 transition-colors"
+              className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-[#3B5BDB] border border-dashed border-indigo-300 rounded-lg hover:bg-[#EEF2FF] dark:hover:bg-indigo-900/20 transition-colors"
             >
               <Plus size={14} />
               Add team member
@@ -119,7 +119,7 @@ export default function SettingsPage() {
           {/* Clients */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Building2 size={16} className="text-[#4F6AE8]" />
+              <Building2 size={16} className="text-[#3B5BDB]" />
               Clients
             </h2>
             <div className="space-y-2">
@@ -152,7 +152,7 @@ export default function SettingsPage() {
             ].map(({ icon: Icon, label, desc }) => (
               <div key={label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-[#EEF2FF] dark:bg-indigo-900/20 flex items-center justify-center flex-shrink-0">
-                  <Icon size={18} className="text-[#4F6AE8]" />
+                  <Icon size={18} className="text-[#3B5BDB]" />
                 </div>
                 <div>
                   <div className="font-medium text-sm text-gray-900 dark:text-white">{label}</div>

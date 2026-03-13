@@ -122,7 +122,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
 
   const inputStyle = {
     height: '44px',
-    border: '1px solid #D0D5DD',
+    border: '1px solid #D0D6E0',
     borderRadius: '6px',
     backgroundColor: '#FFFFFF',
     fontSize: '14px',
@@ -138,19 +138,19 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
         className="w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
         style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '12px',
-          boxShadow: '0 24px 48px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08)',
+          borderRadius: '8px',
+          boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)',
         }}
         onClick={e => e.stopPropagation()}
       >
         <div
           className="px-6 py-5 flex items-center justify-between flex-shrink-0"
-          style={{ borderBottom: '1px solid #E8ECF1' }}
+          style={{ borderBottom: '1px solid #E2E6EE' }}
         >
           <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>
             {task ? 'Edit Task' : 'New Task'}
           </h2>
-          <button onClick={onClose} className="transition-colors" style={{ color: '#8B95A5' }}>
+          <button onClick={onClose} className="transition-colors" style={{ color: '#8896A6' }}>
             <X size={18} />
           </button>
         </div>
@@ -165,14 +165,14 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                 placeholder="Task title..."
                 style={{
                   ...inputStyle,
-                  borderColor: errors.title ? '#DC2626' : '#D0D5DD',
+                  borderColor: errors.title ? '#DC2626' : '#D0D6E0',
                 }}
                 onFocus={e => {
-                  e.currentTarget.style.borderColor = '#4F6AE8';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)';
+                  e.currentTarget.style.borderColor = '#3B5BDB';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)';
                 }}
                 onBlur={e => {
-                  e.currentTarget.style.borderColor = errors.title ? '#DC2626' : '#D0D5DD';
+                  e.currentTarget.style.borderColor = errors.title ? '#DC2626' : '#D0D6E0';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 autoFocus
@@ -185,8 +185,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   value={form.clientId}
                   onChange={e => set('clientId', e.target.value)}
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -196,8 +196,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   value={form.assigneeId}
                   onChange={e => set('assigneeId', e.target.value)}
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
@@ -210,8 +210,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   value={form.status}
                   onChange={e => set('status', e.target.value)}
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
@@ -221,8 +221,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   value={form.priority}
                   onChange={e => set('priority', e.target.value)}
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
@@ -236,8 +236,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   value={form.startDate}
                   onChange={e => set('startDate', e.target.value)}
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 />
               </Field>
               <Field label="Due Date *" error={errors.dueDate}>
@@ -245,9 +245,9 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   type="date"
                   value={form.dueDate}
                   onChange={e => set('dueDate', e.target.value)}
-                  style={{ ...inputStyle, borderColor: errors.dueDate ? '#DC2626' : '#D0D5DD' }}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = errors.dueDate ? '#DC2626' : '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  style={{ ...inputStyle, borderColor: errors.dueDate ? '#DC2626' : '#D0D6E0' }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = errors.dueDate ? '#DC2626' : '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 />
               </Field>
               <Field label="End Date">
@@ -256,8 +256,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   value={form.endDate}
                   onChange={e => set('endDate', e.target.value)}
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 />
               </Field>
             </div>
@@ -267,8 +267,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                 value={form.type}
                 onChange={e => set('type', e.target.value)}
                 style={inputStyle}
-                onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 {TYPES.map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
               </select>
@@ -280,8 +280,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   value={form.projectId}
                   onChange={e => set('projectId', e.target.value)}
                   style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                  onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   <option value="">No project</option>
                   {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -302,21 +302,21 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
                   resize: 'none',
                   lineHeight: '1.6',
                 }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#4F6AE8'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,106,232,0.15)'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#D0D5DD'; e.currentTarget.style.boxShadow = 'none'; }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#3B5BDB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
               />
             </Field>
           </div>
 
           <div
             className="px-6 py-4 flex gap-3 flex-shrink-0"
-            style={{ borderTop: '1px solid #E8ECF1' }}
+            style={{ borderTop: '1px solid #E2E6EE' }}
           >
             <button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-colors"
-              style={{ border: '1px solid #D0D5DD', color: '#4A5568', backgroundColor: '#FFFFFF' }}
+              style={{ border: '1px solid #D0D6E0', color: '#4A5568', backgroundColor: '#FFFFFF' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F8F9FA'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FFFFFF'; }}
             >
@@ -326,9 +326,9 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
               type="submit"
               disabled={isPending}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors text-white"
-              style={{ backgroundColor: isPending ? '#9ab0f5' : '#4F6AE8' }}
+              style={{ backgroundColor: isPending ? '#9ab0f5' : '#3B5BDB' }}
               onMouseEnter={e => { if (!isPending) (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
-              onMouseLeave={e => { if (!isPending) (e.currentTarget as HTMLElement).style.backgroundColor = '#4F6AE8'; }}
+              onMouseLeave={e => { if (!isPending) (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {task ? 'Save Changes' : 'Create Task'}

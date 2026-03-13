@@ -99,7 +99,7 @@ function ClientHealthCard({ client }: { client: Client }) {
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
       <div className="h-1" style={{ backgroundColor: client.color }} />
 
-      <div className="p-6">
+      <div style={{ padding: '24px 32px' }}>
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -166,7 +166,7 @@ function ClientHealthCard({ client }: { client: Client }) {
         <div className="flex items-center justify-end pt-3 border-t border-gray-100 dark:border-gray-700">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-[#4F6AE8] hover:text-[#3B5BDB] transition-colors font-medium"
+            className="flex items-center gap-1 text-xs text-[#3B5BDB] hover:text-[#3B5BDB] transition-colors font-medium"
           >
             Details
             {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -230,15 +230,15 @@ export default function HealthPage() {
   const utilization = Math.min(100, Math.round((activeTasks / maxCapacity) * 100));
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#EDF0F5' }}>
       <TopBar title="Client Health" subtitle="Relationship scores and task performance per client" />
 
-      <div className="pt-16 p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         {/* Summary bar */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             {
-              icon: <Activity size={20} className="text-[#4F6AE8]" />,
+              icon: <Activity size={20} className="text-[#3B5BDB]" />,
               label: 'Avg Health Score',
               value: `${avgHealth}`,
               sub: avgHealth >= 80 ? 'All clients healthy' : avgHealth >= 60 ? 'Some at risk' : 'Needs attention',

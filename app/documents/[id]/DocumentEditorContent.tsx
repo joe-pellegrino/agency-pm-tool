@@ -296,7 +296,7 @@ function CommentsSidebar({
         </div>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <MessageSquare size={14} className="text-[#4F6AE8]" /> Comments
+            <MessageSquare size={14} className="text-[#3B5BDB]" /> Comments
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
         </div>
@@ -336,13 +336,13 @@ function CommentsSidebar({
                       value={replyText} onChange={e => setReplyText(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') submitComment(replyText, comment.id); }}
                       placeholder="Write a reply..." autoFocus
-                      className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]"
+                      className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]"
                     />
-                    <button onClick={() => submitComment(replyText, comment.id)} className="p-1 bg-[#4F6AE8] text-white rounded hover:bg-[#3B5BDB]"><Send size={10} /></button>
+                    <button onClick={() => submitComment(replyText, comment.id)} className="p-1 bg-[#3B5BDB] text-white rounded hover:bg-[#3B5BDB]"><Send size={10} /></button>
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-2">
-                  <button onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)} className="text-[10px] text-gray-400 hover:text-[#4F6AE8] flex items-center gap-1 transition-colors">
+                  <button onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)} className="text-[10px] text-gray-400 hover:text-[#3B5BDB] flex items-center gap-1 transition-colors">
                     <CornerDownRight size={9} /> Reply
                   </button>
                   <button onClick={() => toggleResolve(comment)} className={`text-[10px] flex items-center gap-1 transition-colors ${comment.resolved ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}`}>
@@ -360,9 +360,9 @@ function CommentsSidebar({
               <textarea
                 value={newText} onChange={e => setNewText(e.target.value)}
                 placeholder="Add a comment..." rows={2}
-                className="w-full text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#4F6AE8] resize-none"
+                className="w-full text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#3B5BDB] resize-none"
               />
-              <button onClick={() => submitComment(newText)} className="mt-1 flex items-center gap-1 text-xs font-medium bg-[#4F6AE8] text-white px-2.5 py-1 rounded hover:bg-[#3B5BDB] transition-colors">
+              <button onClick={() => submitComment(newText)} className="mt-1 flex items-center gap-1 text-xs font-medium bg-[#3B5BDB] text-white px-2.5 py-1 rounded hover:bg-[#3B5BDB] transition-colors">
                 <Send size={10} /> Post
               </button>
             </div>
@@ -409,7 +409,7 @@ function VersionHistoryPanel({
         </div>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <History size={14} className="text-[#4F6AE8]" /> Version History
+            <History size={14} className="text-[#3B5BDB]" /> Version History
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
         </div>
@@ -430,7 +430,7 @@ function VersionHistoryPanel({
                   <span className="text-[10px] text-gray-400">{author.name.split(' ')[0]}</span>
                 </div>
                 {preview?.id === v.id && (
-                  <button onClick={e => { e.stopPropagation(); onRestore(v.version); }} className="mt-2 w-full flex items-center justify-center gap-1 text-[11px] font-medium bg-[#4F6AE8] text-white py-1 rounded hover:bg-[#3B5BDB] transition-colors">
+                  <button onClick={e => { e.stopPropagation(); onRestore(v.version); }} className="mt-2 w-full flex items-center justify-center gap-1 text-[11px] font-medium bg-[#3B5BDB] text-white py-1 rounded hover:bg-[#3B5BDB] transition-colors">
                     <RotateCcw size={10} /> Restore this version
                   </button>
                 )}
@@ -500,13 +500,13 @@ function DocumentSettingsPanel({
           <div className="w-8 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
         </div>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2"><Settings size={14} className="text-[#4F6AE8]" /> Settings</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2"><Settings size={14} className="text-[#3B5BDB]" /> Settings</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"><X size={14} /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]" />
+            <input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
@@ -519,7 +519,7 @@ function DocumentSettingsPanel({
           {type === 'client' && (
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Client</label>
-              <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]">
+              <select value={clientId} onChange={e => setClientId(e.target.value)} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]">
                 <option value="">Select...</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -540,7 +540,7 @@ function DocumentSettingsPanel({
           </div>
         </div>
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-          <button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50">
+          <button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium bg-[#3B5BDB] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors disabled:opacity-50">
             {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Save Changes
           </button>
           {!archiveConfirm ? (
@@ -777,10 +777,10 @@ export default function DocumentEditorPage() {
 
   if (notFound) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F0F3F8' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
         <div className="text-center">
           <p className="text-gray-500 dark:text-gray-400 font-medium mb-3">Document not found</p>
-          <button onClick={() => router.push('/documents')} className="flex items-center gap-2 text-sm text-[#4F6AE8] hover:underline">
+          <button onClick={() => router.push('/documents')} className="flex items-center gap-2 text-sm text-[#3B5BDB] hover:underline">
             <ArrowLeft size={14} /> Back to documents
           </button>
         </div>
@@ -790,8 +790,8 @@ export default function DocumentEditorPage() {
 
   if (!docData) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F0F3F8' }}>
-        <Loader2 size={24} className="animate-spin text-[#4F6AE8]" />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
+        <Loader2 size={24} className="animate-spin text-[#3B5BDB]" />
       </div>
     );
   }
@@ -803,7 +803,7 @@ export default function DocumentEditorPage() {
   const maxPresenceVisible = 3;
 
   return (
-    <div className="pt-16 h-screen flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="h-screen flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
         {/* Back button — always visible */}

@@ -91,7 +91,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
         <div className="px-5 sm:px-6 pt-4">
           <div className="flex gap-1.5">
             {steps.map((_, i) => (
-              <div key={i} className={`flex-1 h-1 rounded-full transition-colors ${i + 1 <= step ? 'bg-[#4F6AE8]' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div key={i} className={`flex-1 h-1 rounded-full transition-colors ${i + 1 <= step ? 'bg-[#3B5BDB]' : 'bg-gray-200 dark:bg-gray-700'}`} />
             ))}
           </div>
         </div>
@@ -114,7 +114,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{client.name}</div>
                       <div className="text-xs text-gray-400">{client.industry}</div>
                     </div>
-                    {form.clientId === client.id && <CheckCircle2 size={16} className="text-[#4F6AE8] flex-shrink-0" />}
+                    {form.clientId === client.id && <CheckCircle2 size={16} className="text-[#3B5BDB] flex-shrink-0" />}
                   </button>
                 ))}
               </div>
@@ -137,7 +137,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{tmpl.title}</div>
                       <div className="text-xs text-gray-400 mt-0.5">Due: {tmpl.dueRule} · {tmpl.estimatedDuration}d</div>
                     </div>
-                    {form.templateId === tmpl.id && <CheckCircle2 size={16} className="text-[#4F6AE8] flex-shrink-0 mt-0.5" />}
+                    {form.templateId === tmpl.id && <CheckCircle2 size={16} className="text-[#3B5BDB] flex-shrink-0 mt-0.5" />}
                   </button>
                 ))}
               </div>
@@ -158,7 +158,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
                   >
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${FREQ_COLORS[freq]}`}>{FREQ_LABELS[freq]}</span>
                     <span className="text-sm text-gray-500">{freq === 'monthly' ? 'Once per month' : freq === 'weekly' ? 'Every week' : 'Custom schedule'}</span>
-                    {form.frequency === freq && <CheckCircle2 size={16} className="ml-auto text-[#4F6AE8] flex-shrink-0" />}
+                    {form.frequency === freq && <CheckCircle2 size={16} className="ml-auto text-[#3B5BDB] flex-shrink-0" />}
                   </button>
                 ))}
               </div>
@@ -182,7 +182,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{member.name}</div>
                       <div className="text-xs text-gray-400">{member.role}</div>
                     </div>
-                    {form.assigneeId === member.id && <CheckCircle2 size={16} className="text-[#4F6AE8] flex-shrink-0" />}
+                    {form.assigneeId === member.id && <CheckCircle2 size={16} className="text-[#3B5BDB] flex-shrink-0" />}
                   </button>
                 ))}
               </div>
@@ -200,7 +200,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={!canProceed()}
-              className="flex-1 px-4 py-3 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
+              className="flex-1 px-4 py-3 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
             >
               Continue
             </button>
@@ -328,16 +328,16 @@ export default function AutomationsPage() {
   const pausedCount = automations.filter(a => a.status === 'paused').length;
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Automations" subtitle="Recurring task rules per client" />
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         {showCreate && <CreateAutomationModal onClose={() => setShowCreate(false)} />}
 
         {/* Stats — 2 cols mobile, 4 desktop */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
-            { label: 'Total', value: automations.length, color: 'text-[#4F6AE8]' },
+            { label: 'Total', value: automations.length, color: 'text-[#3B5BDB]' },
             { label: 'Active', value: activeCount, color: 'text-green-600' },
             { label: 'Paused', value: pausedCount, color: 'text-amber-600' },
             { label: 'Weekly', value: automations.filter(a => a.status === 'active' && a.frequency === 'weekly').length, color: 'text-blue-600' },
@@ -355,7 +355,7 @@ export default function AutomationsPage() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1 flex-1">
             <button
               onClick={() => setSelectedClient('all')}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${selectedClient === 'all' ? 'bg-[#4F6AE8] text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${selectedClient === 'all' ? 'bg-[#3B5BDB] text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
             >
               All
             </button>
@@ -372,7 +372,7 @@ export default function AutomationsPage() {
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors min-h-[44px] flex-shrink-0"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors min-h-[44px] flex-shrink-0"
           >
             <Plus size={15} />
             Create Automation

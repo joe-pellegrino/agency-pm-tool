@@ -1,38 +1,55 @@
 import TopBar from '@/components/layout/TopBar';
 import { getAllData, PRIORITY_DOT } from '@/lib/supabase/queries';
-import { CheckCircle2, Clock, AlertCircle, Users, TrendingUp, ArrowRight } from 'lucide-react';
+import { AlertCircle, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import DashboardView from './DashboardView';
 import ExecutiveDashboard from './ExecutiveDashboard';
 
-function StatCard({ label, value, sub, icon: Icon, iconBg, iconColor }: {
+function DonutRing({ pct, color = '#3B5BDB' }: { pct: number; color?: string }) {
+  const r = 18;
+  const circ = 2 * Math.PI * r;
+  const filled = (pct / 100) * circ;
+  return (
+    <svg width="48" height="48" viewBox="0 0 48 48" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+      <circle cx="24" cy="24" r={r} fill="none" stroke="#E2E6EE" strokeWidth="6" />
+      <circle
+        cx="24" cy="24" r={r} fill="none"
+        stroke={color} strokeWidth="6"
+        strokeLinecap="round"
+        strokeDasharray={`${filled} ${circ}`}
+      />
+    </svg>
+  );
+}
+
+function StatCard({ label, value, sub, pct, donutColor }: {
   label: string;
   value: string | number;
   sub: string;
-  icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
+  pct: number;
+  donutColor?: string;
 }) {
   return (
     <div
-      className="rounded-lg p-5 sm:p-6"
       style={{
         backgroundColor: '#FFFFFF',
-        border: '1px solid #E8ECF1',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
+        border: '1px solid #E2E6EE',
+        borderRadius: '8px',
+        padding: '20px 24px',
+        boxShadow: 'var(--shadow-card)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm" style={{ color: '#8B95A5' }}>{label}</span>
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: iconBg }}
-        >
-          <Icon size={16} style={{ color: iconColor }} />
+      <div>
+        <div style={{ fontSize: '11px', fontWeight: 600, color: '#8896A6', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+          {label}
         </div>
+        <div style={{ fontSize: '28px', fontWeight: 700, color: '#1E2A3A', lineHeight: 1.2 }}>{value}</div>
+        <div style={{ fontSize: '12px', color: '#8896A6', marginTop: '4px' }}>{sub}</div>
       </div>
-      <div className="text-3xl font-bold mb-1" style={{ color: '#1E2A3A' }}>{value}</div>
-      <div className="text-xs" style={{ color: '#8B95A5' }}>{sub}</div>
+      <DonutRing pct={pct} color={donutColor} />
     </div>
   );
 }
@@ -70,7 +87,7 @@ export default async function DashboardPage() {
       review:     { backgroundColor: '#F3E8FF', color: '#7C3AED' },
       done:       { backgroundColor: '#D1FAE5', color: '#059669' },
     };
-    return styles[status] || { backgroundColor: '#F0F3F8', color: '#4A5568' };
+    return styles[status] || { backgroundColor: '#EDF0F5', color: '#4A5568' };
   };
 
   const statusLabel = (status: string) => {
@@ -84,10 +101,10 @@ export default async function DashboardPage() {
     <>
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Tasks"   value={totalTasks}      sub="Across all clients"   icon={CheckCircle2} iconBg="#E0E7FF" iconColor="#4F6AE8" />
-        <StatCard label="In Progress"   value={inProgressTasks} sub="Currently active"     icon={Clock}        iconBg="#FEF3C7" iconColor="#D97706" />
-        <StatCard label="Completed"     value={doneTasks}       sub={`${totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0}% completion rate`} icon={TrendingUp} iconBg="#D1FAE5" iconColor="#059669" />
-        <StatCard label="Urgent Items"  value={urgentTasks}     sub="Needs attention"      icon={AlertCircle}  iconBg="#FEE2E2" iconColor="#DC2626" />
+        <StatCard label="Total Tasks"   value={totalTasks}      sub="Across all clients"   pct={totalTasks > 0 ? Math.min(100, Math.round((totalTasks/50)*100)) : 0} donutColor="#3B5BDB" />
+        <StatCard label="In Progress"   value={inProgressTasks} sub="Currently active"     pct={totalTasks > 0 ? Math.round((inProgressTasks/totalTasks)*100) : 0} donutColor="#F59F00" />
+        <StatCard label="Completed"     value={doneTasks}       sub={`${totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0}% completion rate`} pct={totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0} donutColor="#2BB673" />
+        <StatCard label="Urgent Items"  value={urgentTasks}     sub="Needs attention"      pct={totalTasks > 0 ? Math.round((urgentTasks/totalTasks)*100) : 0} donutColor="#E03131" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -96,13 +113,13 @@ export default async function DashboardPage() {
           className="lg:col-span-2 rounded-lg p-5 sm:p-6"
           style={{
             backgroundColor: '#FFFFFF',
-            border: '1px solid #E8ECF1',
+            border: '1px solid #E2E6EE',
             boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
           }}
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>Client Overview</h2>
-            <Link href="/clients" className="text-xs flex items-center gap-1 hover:underline" style={{ color: '#4F6AE8' }}>
+            <Link href="/clients" className="text-xs flex items-center gap-1 hover:underline" style={{ color: '#3B5BDB' }}>
               View all <ArrowRight size={12} />
             </Link>
           </div>
@@ -122,22 +139,22 @@ export default async function DashboardPage() {
                       </span>
                       <div>
                         <div className="text-sm font-medium" style={{ color: '#1E2A3A' }}>{client.name}</div>
-                        <div className="text-xs" style={{ color: '#8B95A5' }}>{client.industry}</div>
+                        <div className="text-xs" style={{ color: '#8896A6' }}>{client.industry}</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>{done}/{total}</div>
-                      <div className="text-xs" style={{ color: '#8B95A5' }}>{inProg} active</div>
+                      <div className="text-xs" style={{ color: '#8896A6' }}>{inProg} active</div>
                     </div>
                   </div>
                   {/* Progress bar */}
                   <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#E0E7FF' }}>
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, backgroundColor: '#4F6AE8' }}
+                      style={{ width: `${pct}%`, backgroundColor: '#3B5BDB' }}
                     />
                   </div>
-                  <div className="text-xs mt-1" style={{ color: '#8B95A5' }}>{pct}% complete</div>
+                  <div className="text-xs mt-1" style={{ color: '#8896A6' }}>{pct}% complete</div>
                 </div>
               );
             })}
@@ -149,13 +166,13 @@ export default async function DashboardPage() {
           className="rounded-lg p-5 sm:p-6"
           style={{
             backgroundColor: '#FFFFFF',
-            border: '1px solid #E8ECF1',
+            border: '1px solid #E2E6EE',
             boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
           }}
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-lg flex items-center gap-2" style={{ color: '#1E2A3A' }}>
-              <Users size={15} style={{ color: '#4F6AE8' }} />
+              <Users size={15} style={{ color: '#3B5BDB' }} />
               Team Load
             </h2>
           </div>
@@ -178,12 +195,12 @@ export default async function DashboardPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium" style={{ color: '#1E2A3A' }}>{member.name.split(' ')[0]}</span>
-                      <span className="text-xs" style={{ color: '#8B95A5' }}>{memberTasks.length} tasks</span>
+                      <span className="text-xs" style={{ color: '#8896A6' }}>{memberTasks.length} tasks</span>
                     </div>
                     <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#E0E7FF' }}>
                       <div
                         className="h-full rounded-full"
-                        style={{ width: `${pct}%`, backgroundColor: '#4F6AE8' }}
+                        style={{ width: `${pct}%`, backgroundColor: '#3B5BDB' }}
                       />
                     </div>
                     {urgent > 0 && (
@@ -204,13 +221,13 @@ export default async function DashboardPage() {
         className="mt-6 rounded-lg p-5 sm:p-6"
         style={{
           backgroundColor: '#FFFFFF',
-          border: '1px solid #E8ECF1',
+          border: '1px solid #E2E6EE',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
         }}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>Upcoming Deadlines</h2>
-          <Link href="/kanban" className="text-xs flex items-center gap-1 hover:underline" style={{ color: '#4F6AE8' }}>
+          <Link href="/kanban" className="text-xs flex items-center gap-1 hover:underline" style={{ color: '#3B5BDB' }}>
             View board <ArrowRight size={12} />
           </Link>
         </div>
@@ -225,7 +242,7 @@ export default async function DashboardPage() {
               <div
                 key={task.id}
                 className="flex flex-col gap-2 p-3 rounded-lg"
-                style={{ backgroundColor: '#F0F3F8', border: '1px solid #E8ECF1' }}
+                style={{ backgroundColor: '#EDF0F5', border: '1px solid #E2E6EE' }}
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-medium text-sm leading-snug" style={{ color: '#1E2A3A' }}>{task.title}</span>
@@ -236,7 +253,7 @@ export default async function DashboardPage() {
                     {statusLabel(task.status)}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap text-xs" style={{ color: '#8B95A5' }}>
+                <div className="flex items-center gap-3 flex-wrap text-xs" style={{ color: '#8896A6' }}>
                   <span
                     className="inline-flex items-center gap-1 font-medium px-2 py-0.5 rounded-full"
                     style={{ backgroundColor: client.color + '18', color: client.color }}
@@ -271,7 +288,7 @@ export default async function DashboardPage() {
                   <th
                     key={h}
                     className="pb-3 text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: '#8B95A5' }}
+                    style={{ color: '#8896A6' }}
                   >
                     {h}
                   </th>
@@ -288,7 +305,7 @@ export default async function DashboardPage() {
                   <tr
                     key={task.id}
                     className="transition-colors hover:bg-gray-50"
-                    style={{ borderTop: '1px solid #E8ECF1' }}
+                    style={{ borderTop: '1px solid #E2E6EE' }}
                   >
                     <td className="py-3 pr-4">
                       <span className="font-medium" style={{ color: '#1E2A3A' }}>{task.title}</span>
@@ -344,9 +361,9 @@ export default async function DashboardPage() {
   );
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Dashboard" subtitle="Welcome back, Joe" />
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+      <div style={{ padding: '24px 32px', maxWidth: '1400px' }}>
         <DashboardView standardView={standardView} executiveView={executiveView} />
       </div>
     </div>

@@ -111,7 +111,7 @@ function TagsInput({ tags, onChange }: { tags: string[]; onChange: (tags: string
     <div>
       <div className="flex flex-wrap gap-1.5 mb-2">
         {tags.map(tag => (
-          <span key={tag} className="flex items-center gap-1 text-xs bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#4F6AE8] dark:text-indigo-300 px-2 py-0.5 rounded-full">
+          <span key={tag} className="flex items-center gap-1 text-xs bg-[#EEF2FF] dark:bg-indigo-900/30 text-[#3B5BDB] dark:text-indigo-300 px-2 py-0.5 rounded-full">
             <Hash size={9} /> {tag}
             <button onClick={() => onChange(tags.filter(t => t !== tag))} className="hover:text-red-500 transition-colors"><X size={9} /></button>
           </span>
@@ -125,11 +125,11 @@ function TagsInput({ tags, onChange }: { tags: string[]; onChange: (tags: string
             if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); }
           }}
           placeholder="Add tag..."
-          className="flex-1 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]"
+          className="flex-1 px-2.5 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]"
         />
         <button
           onClick={addTag}
-          className="px-2.5 py-1.5 text-xs font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors"
+          className="px-2.5 py-1.5 text-xs font-medium bg-[#3B5BDB] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors"
         >Add</button>
       </div>
     </div>
@@ -253,10 +253,10 @@ export default function KBArticleEditorPage() {
 
   if (notFound) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F0F3F8' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
         <div className="text-center">
           <p className="text-gray-500 dark:text-gray-400 font-medium mb-3">Article not found</p>
-          <button onClick={() => router.push('/knowledge-base')} className="flex items-center gap-2 text-sm text-[#4F6AE8] hover:underline">
+          <button onClick={() => router.push('/knowledge-base')} className="flex items-center gap-2 text-sm text-[#3B5BDB] hover:underline">
             <ArrowLeft size={14} /> Back to Knowledge Base
           </button>
         </div>
@@ -266,14 +266,14 @@ export default function KBArticleEditorPage() {
 
   if (!article) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F0F3F8' }}>
-        <Loader2 size={24} className="animate-spin text-[#4F6AE8]" />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
+        <Loader2 size={24} className="animate-spin text-[#3B5BDB]" />
       </div>
     );
   }
 
   return (
-    <div className="pt-16 h-screen flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="h-screen flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
         <button
@@ -321,7 +321,7 @@ export default function KBArticleEditorPage() {
                 <select
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8] appearance-none"
+                  className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB] appearance-none"
                 >
                   <option value="">No category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -368,7 +368,7 @@ export default function KBArticleEditorPage() {
               <select
                 value={authorId}
                 onChange={e => setAuthorId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]"
               >
                 <option value="">No author</option>
                 {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -378,7 +378,7 @@ export default function KBArticleEditorPage() {
             {/* Save button */}
             <button
               onClick={doSave}
-              className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-[#4F6AE8] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-medium bg-[#3B5BDB] text-white rounded-lg hover:bg-[#3B5BDB] transition-colors"
             >
               {saveStatus === 'saving' ? (
                 <><Loader2 size={13} className="animate-spin" /> Saving...</>

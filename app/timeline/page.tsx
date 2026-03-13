@@ -3,7 +3,7 @@ import GanttChart from '@/components/timeline/GanttChart';
 
 export default function TimelinePage() {
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Timeline" subtitle="Gantt view of all project tasks" />
       <div className="p-4 sm:p-6 overflow-x-auto">
         <GanttChart />

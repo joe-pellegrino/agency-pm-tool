@@ -71,7 +71,7 @@ function MatrixQuickAssign({
   const clientStrategies = STRATEGIES.filter(s => s.clientId === client.id);
   const [stratId, setStratId] = useState('');
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
 
   const handleConfirm = () => {
     startTransition(async () => {
@@ -141,7 +141,7 @@ function MatrixQuickAssign({
         </div>
         <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex gap-3">
           <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-          <button onClick={handleConfirm} disabled={isPending} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+          <button onClick={handleConfirm} disabled={isPending} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
             {isPending ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={14} />}
             Assign
           </button>
@@ -181,11 +181,11 @@ function MatrixCell({ cs, clientId, serviceId }: { cs: ClientService | null; cli
         )}
         <button
           onClick={() => setShowAssign(true)}
-          className="h-20 w-full rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/20 flex items-center justify-center hover:border-indigo-300 hover:bg-[#EEF2FF]/40 dark:hover:border-[#4F6AE8] dark:hover:bg-indigo-900/10 transition-all group"
+          className="h-20 w-full rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/20 flex items-center justify-center hover:border-indigo-300 hover:bg-[#EEF2FF]/40 dark:hover:border-[#3B5BDB] dark:hover:bg-indigo-900/10 transition-all group"
         >
           <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Plus size={14} className="text-[#4F6AE8]" />
-            <span className="text-[10px] text-[#4F6AE8] font-medium">Assign</span>
+            <Plus size={14} className="text-[#3B5BDB]" />
+            <span className="text-[10px] text-[#3B5BDB] font-medium">Assign</span>
           </div>
         </button>
       </>
@@ -367,7 +367,7 @@ function ClientServiceModal({ onClose }: { onClose: () => void }) {
     linkedStrategyId: '',
   });
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -434,7 +434,7 @@ function ClientServiceModal({ onClose }: { onClose: () => void }) {
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={isPending} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+            <button type="submit" disabled={isPending} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
               {isPending && <Loader2 size={13} className="animate-spin" />}
               Assign Service
             </button>
@@ -502,16 +502,16 @@ export default function ServicesPage() {
   }, [filteredServices, statusFilter, clientFilter, CLIENTS, CLIENT_SERVICES]);
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Services" subtitle="Agency-wide service delivery across all clients" />
       {showNewService && <ClientServiceModal onClose={() => setShowNewService(false)} />}
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         {/* Assign Service button */}
         <div className="flex justify-end mb-4">
           <button
             onClick={() => setShowNewService(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={14} />
             Assign Service
@@ -523,7 +523,7 @@ export default function ServicesPage() {
           {[
             { label: 'Active Services', value: stats.totalActive, icon: Zap, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
             { label: 'In Planning', value: stats.planning, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Open Tasks', value: stats.openTasks, icon: CheckCircle, color: 'text-[#4F6AE8]', bg: 'bg-[#EEF2FF] dark:bg-indigo-900/20' },
+            { label: 'Open Tasks', value: stats.openTasks, icon: CheckCircle, color: 'text-[#3B5BDB]', bg: 'bg-[#EEF2FF] dark:bg-indigo-900/20' },
             { label: 'Urgent Items', value: stats.blockers, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20' },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <div key={label} className={`rounded-xl border border-gray-200 dark:border-gray-700 p-4 ${bg} flex items-center gap-3`}>
@@ -548,7 +548,7 @@ export default function ServicesPage() {
               placeholder="Search services..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] dark:text-white"
+              className="w-full pl-8 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] dark:text-white"
             />
           </div>
 
@@ -556,7 +556,7 @@ export default function ServicesPage() {
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] dark:text-white"
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] dark:text-white"
           >
             {categories.map(cat => (
               <option key={cat} value={cat}>{cat === 'all' ? 'All Categories' : cat}</option>
@@ -567,7 +567,7 @@ export default function ServicesPage() {
           <select
             value={clientFilter}
             onChange={e => setClientFilter(e.target.value)}
-            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] dark:text-white"
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] dark:text-white"
           >
             <option value="all">All Clients</option>
             {CLIENTS.map(c => (
@@ -579,7 +579,7 @@ export default function ServicesPage() {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] dark:text-white"
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] dark:text-white"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
@@ -592,14 +592,14 @@ export default function ServicesPage() {
           <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 flex-shrink-0 ml-auto">
             <button
               onClick={() => setView('matrix')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-all ${view === 'matrix' ? 'bg-[#4F6AE8] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-all ${view === 'matrix' ? 'bg-[#3B5BDB] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               <LayoutGrid size={14} />
               Matrix
             </button>
             <button
               onClick={() => setView('list')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-all ${view === 'list' ? 'bg-[#4F6AE8] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-all ${view === 'list' ? 'bg-[#3B5BDB] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               <List size={14} />
               List
@@ -701,7 +701,7 @@ export default function ServicesPage() {
                 <Link
                   key={client.id}
                   href={`/clients/${client.id}`}
-                  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-[#C7D2FE] dark:hover:border-[#4F6AE8] transition-all flex items-center gap-4 group"
+                  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-[#C7D2FE] dark:hover:border-[#3B5BDB] transition-all flex items-center gap-4 group"
                 >
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"

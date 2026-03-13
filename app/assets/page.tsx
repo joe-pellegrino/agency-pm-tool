@@ -80,71 +80,130 @@ function AssetCard({
   const isImage = isImageFile(asset.filename) && asset.storageUrl;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all group">
-      {/* Thumbnail / Preview */}
-      <div className="h-32 sm:h-40 flex items-center justify-center relative bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
+    <div
+      className="group"
+      style={{
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E2E6EE',
+        borderRadius: '8px',
+        boxShadow: 'var(--shadow-card)',
+        overflow: 'hidden',
+        transition: 'box-shadow 0.15s ease',
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'; }}
+    >
+      {/* Thumbnail */}
+      <div
+        style={{
+          position: 'relative',
+          aspectRatio: '4/3',
+          backgroundColor: '#EDF0F5',
+          overflow: 'hidden',
+          borderRadius: '8px 8px 0 0',
+        }}
+      >
         {isImage ? (
           <img
             src={asset.storageUrl}
             alt={asset.filename}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <div className="flex flex-col items-center gap-2 text-gray-400">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px', color: '#A0AAB8' }}>
             {getFileIcon(asset.filename, asset.fileType)}
-            <span className="text-[10px] uppercase font-semibold tracking-wider">
+            <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.08em', color: '#8896A6' }}>
               {asset.filename.split('.').pop()?.toUpperCase()}
             </span>
           </div>
         )}
 
+        {/* Delete icon top-right */}
+        <button
+          onClick={() => onDelete(asset.id, asset.storagePath || '')}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            padding: '4px',
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            color: '#A0AAB8',
+            opacity: 0,
+            transition: 'opacity 0.15s ease, color 0.15s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          className="group-hover:opacity-100"
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#E03131'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#A0AAB8'; }}
+          title="Delete"
+        >
+          <Trash2 size={16} />
+        </button>
+
         {/* Client badge */}
         <div
-          className="absolute bottom-2 left-2 text-[10px] font-semibold px-1.5 py-0.5 rounded"
-          style={{ backgroundColor: clientColor + '20', color: clientColor }}
+          style={{
+            position: 'absolute',
+            bottom: '8px',
+            left: '8px',
+            fontSize: '10px',
+            fontWeight: 600,
+            padding: '2px 6px',
+            borderRadius: '4px',
+            backgroundColor: clientColor + '20',
+            color: clientColor,
+          }}
         >
           {clientName.split(' ')[0]}
-        </div>
-
-        {/* Actions overlay */}
-        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {asset.storageUrl && (
-            <a
-              href={asset.storageUrl}
-              download={asset.filename}
-              target="_blank"
-              rel="noreferrer"
-              onClick={e => e.stopPropagation()}
-              className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow text-gray-600 hover:text-[#4F6AE8] transition-colors"
-              title="Download"
-            >
-              <Download size={12} />
-            </a>
-          )}
-          <button
-            onClick={() => onDelete(asset.id, asset.storagePath || '')}
-            className="p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow text-gray-600 hover:text-red-600 transition-colors"
-            title="Delete"
-          >
-            <Trash2 size={12} />
-          </button>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-2 sm:p-3">
-        <p className="text-xs font-medium text-gray-900 dark:text-white truncate mb-1" title={asset.filename}>
+      <div style={{ padding: '12px', textAlign: 'center' }}>
+        <p
+          style={{ fontSize: '13px', fontWeight: 500, color: '#1E2A3A', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          title={asset.filename}
+        >
           {asset.filename}
         </p>
-        <div className="flex items-center justify-between text-[11px] text-gray-400">
-          <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-[10px] font-medium capitalize">
-            {asset.fileType}
-          </span>
-          <span>{asset.size}</span>
-        </div>
-        <div className="text-[10px] text-gray-400 mt-1">
+        <p style={{ fontSize: '12px', color: '#8896A6', marginBottom: '4px' }}>
+          {asset.size} &middot; {asset.filename.split('.').pop()?.toUpperCase()}
+        </p>
+        <p style={{ fontSize: '12px', color: '#8896A6', marginBottom: '10px' }}>
           {new Date(asset.uploadDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-        </div>
+        </p>
+        {asset.storageUrl && (
+          <a
+            href={asset.storageUrl}
+            download={asset.filename}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              fontSize: '13px',
+              fontWeight: 500,
+              color: '#5A6A7E',
+              border: '1px solid #E2E6EE',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              transition: 'background 0.15s ease',
+              backgroundColor: '#FFFFFF',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F7FA'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FFFFFF'; }}
+          >
+            <Download size={14} color="#5A6A7E" />
+            Download
+          </a>
+        )}
       </div>
     </div>
   );
@@ -239,7 +298,7 @@ function UploadZone({
 
       {uploading ? (
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={24} className="text-[#4F6AE8] animate-spin" />
+          <Loader2 size={24} className="text-[#3B5BDB] animate-spin" />
           <div className="space-y-1">
             {progress.map((p, i) => (
               <p key={i} className="text-xs text-gray-600 dark:text-gray-300">{p}</p>
@@ -307,7 +366,7 @@ export default function AssetsPage() {
   const videoCount = assetsWithStorage.filter(a => ['mp4','mov','avi','webm','mkv'].some(e => a.filename.endsWith('.' + e))).length;
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Asset Library" subtitle="Brand assets, creatives, and media files" />
 
       {deleteTarget && (
@@ -321,7 +380,7 @@ export default function AssetsPage() {
         />
       )}
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
           {[
@@ -352,7 +411,7 @@ export default function AssetsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search files..."
-              className="pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] w-full"
+              className="pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] w-full"
             />
           </div>
 
@@ -390,7 +449,7 @@ export default function AssetsPage() {
 
             <button
               onClick={() => setShowUpload(v => !v)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
             >
               <Plus size={14} />
               <span className="hidden sm:inline">Upload Files</span>
@@ -437,7 +496,7 @@ export default function AssetsPage() {
               <select
                 value={uploadClientId}
                 onChange={e => setSelectedClient(e.target.value)}
-                className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] w-full sm:w-auto"
+                className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] w-full sm:w-auto"
               >
                 {CLIENTS.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
@@ -462,7 +521,7 @@ export default function AssetsPage() {
 
         {/* Asset grid */}
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
             {filtered.map(asset => {
               const client = CLIENTS.find(c => c.id === asset.clientId);
               return (
@@ -483,7 +542,7 @@ export default function AssetsPage() {
             <p className="text-sm mt-1">Click &quot;Upload Files&quot; to add your first asset</p>
             <button
               onClick={() => setShowUpload(true)}
-              className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+              className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
             >
               <Upload size={14} />
               Upload Files

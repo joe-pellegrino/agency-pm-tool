@@ -102,7 +102,7 @@ function TaskTemplateModal({
     });
   };
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
   const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
 
   return (
@@ -214,7 +214,7 @@ function TaskTemplateModal({
             <button
               type="submit"
               disabled={isPending}
-              className="flex-1 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
             >
               {isPending ? 'Saving...' : template ? 'Save Changes' : 'Create Template'}
             </button>
@@ -273,21 +273,21 @@ function WorkflowStepEditor({
               value={step.title}
               onChange={e => updateStep(step.tempId, 'title', e.target.value)}
               placeholder="Step title *"
-              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]"
+              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]"
             />
             <input
               type="text"
               value={step.assigneeRole}
               onChange={e => updateStep(step.tempId, 'assigneeRole', e.target.value)}
               placeholder="Assignee role"
-              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]"
+              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]"
             />
             <input
               type="text"
               value={step.description}
               onChange={e => updateStep(step.tempId, 'description', e.target.value)}
               placeholder="Description"
-              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8]"
+              className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB]"
             />
             <div className="flex items-center gap-2">
               <label className="text-xs text-gray-500 whitespace-nowrap">Days:</label>
@@ -296,7 +296,7 @@ function WorkflowStepEditor({
                 min={1}
                 value={step.defaultDurationDays}
                 onChange={e => updateStep(step.tempId, 'defaultDurationDays', Number(e.target.value))}
-                className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F6AE8] w-20"
+                className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#3B5BDB] w-20"
               />
             </div>
           </div>
@@ -312,7 +312,7 @@ function WorkflowStepEditor({
       <button
         type="button"
         onClick={addStep}
-        className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 hover:border-indigo-300 hover:text-[#4F6AE8] transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 hover:border-indigo-300 hover:text-[#3B5BDB] transition-colors"
       >
         <Plus size={14} /> Add Step
       </button>
@@ -394,7 +394,7 @@ function WorkflowTemplateModal({
     });
   };
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
   const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
 
   return (
@@ -470,7 +470,7 @@ function WorkflowTemplateModal({
             <button
               type="submit"
               disabled={isPending || steps.length === 0}
-              className="flex-1 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
             >
               {isPending ? 'Saving...' : template ? 'Save Changes' : 'Create Template'}
             </button>
@@ -504,7 +504,7 @@ function TaskTemplateCard({
           </span>
           <button
             onClick={e => { e.stopPropagation(); onEdit(); }}
-            className="p-1.5 text-gray-400 hover:text-[#4F6AE8] hover:bg-[#EEF2FF] rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-[#3B5BDB] hover:bg-[#EEF2FF] rounded-lg transition-colors"
             title="Edit"
           >
             <Pencil size={12} />
@@ -518,7 +518,7 @@ function TaskTemplateCard({
           </button>
         </div>
       </div>
-      <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400 transition-colors">
+      <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-[#3B5BDB] dark:group-hover:text-indigo-400 transition-colors">
         {template.title}
       </h3>
       <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">{template.description}</p>
@@ -563,7 +563,7 @@ function WorkflowTemplateCard({
         <div className="flex items-center gap-1">
           <button
             onClick={e => { e.stopPropagation(); onEdit(); }}
-            className="p-1.5 text-gray-400 hover:text-[#4F6AE8] hover:bg-[#EEF2FF] rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-[#3B5BDB] hover:bg-[#EEF2FF] rounded-lg transition-colors"
             title="Edit"
           >
             <Pencil size={12} />
@@ -578,7 +578,7 @@ function WorkflowTemplateCard({
         </div>
       </div>
 
-      <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-[#4F6AE8] dark:group-hover:text-indigo-400 transition-colors">
+      <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1.5 group-hover:text-[#3B5BDB] dark:group-hover:text-indigo-400 transition-colors">
         {template.name}
       </h3>
       <p className="text-xs text-gray-500 leading-relaxed mb-4 line-clamp-2">{template.description}</p>
@@ -588,7 +588,7 @@ function WorkflowTemplateCard({
         {template.steps.slice(0, 6).map((step, idx) => (
           <div key={step.id} className="flex items-center gap-1">
             <div
-              className="w-5 h-5 rounded-full bg-[#E0E7FF] text-[#4F6AE8] flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+              className="w-5 h-5 rounded-full bg-[#E0E7FF] text-[#3B5BDB] flex items-center justify-center text-[9px] font-bold flex-shrink-0"
               title={step.title}
             >
               {idx + 1}
@@ -681,7 +681,7 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Templates" subtitle="Workflow templates and reusable task templates" />
 
       {/* Modals */}
@@ -708,13 +708,13 @@ export default function TemplatesPage() {
         />
       )}
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         {/* Tab switcher */}
         <div className="flex items-center gap-2 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-1.5 w-fit">
           <button
             onClick={() => handleTabChange('workflow')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
-              activeTab === 'workflow' ? 'bg-[#4F6AE8] text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              activeTab === 'workflow' ? 'bg-[#3B5BDB] text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <GitBranch size={14} />
@@ -726,7 +726,7 @@ export default function TemplatesPage() {
           <button
             onClick={() => handleTabChange('task')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
-              activeTab === 'task' ? 'bg-[#4F6AE8] text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              activeTab === 'task' ? 'bg-[#3B5BDB] text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <LayoutTemplate size={14} />
@@ -746,12 +746,12 @@ export default function TemplatesPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={`Search ${activeTab === 'workflow' ? 'workflow' : 'task'} templates...`}
-              className="pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] w-full"
+              className="pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] w-full"
             />
           </div>
           <button
             onClick={() => activeTab === 'task' ? setNewTaskTemplate(true) : setNewWorkflowTemplate(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
           >
             <Plus size={15} />
             <span className="hidden sm:inline">New Template</span>
@@ -767,7 +767,7 @@ export default function TemplatesPage() {
               onClick={() => setSelectedCategory(cat)}
               className={`flex-shrink-0 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
                 selectedCategory === cat
-                  ? 'bg-[#4F6AE8] text-white'
+                  ? 'bg-[#3B5BDB] text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -780,7 +780,7 @@ export default function TemplatesPage() {
         {activeTab === 'workflow' ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             {[
-              { label: 'Workflow Templates', value: WORKFLOW_TEMPLATES.length, icon: GitBranch, color: 'text-[#4F6AE8]' },
+              { label: 'Workflow Templates', value: WORKFLOW_TEMPLATES.length, icon: GitBranch, color: 'text-[#3B5BDB]' },
               { label: 'Categories', value: workflowCategories.length - 1, icon: Tag, color: 'text-purple-600' },
               { label: 'Total Steps', value: WORKFLOW_TEMPLATES.reduce((s, t) => s + t.steps.length, 0), icon: LayoutTemplate, color: 'text-blue-600' },
               { label: 'Avg Duration', value: WORKFLOW_TEMPLATES.length > 0 ? `${Math.round(WORKFLOW_TEMPLATES.reduce((s, t) => s + t.defaultDurationDays, 0) / WORKFLOW_TEMPLATES.length)}d` : '0d', icon: Clock, color: 'text-green-600' },
@@ -801,7 +801,7 @@ export default function TemplatesPage() {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             {[
-              { label: 'Total Templates', value: TASK_TEMPLATES.length, icon: LayoutTemplate, color: 'text-[#4F6AE8]' },
+              { label: 'Total Templates', value: TASK_TEMPLATES.length, icon: LayoutTemplate, color: 'text-[#3B5BDB]' },
               { label: 'Categories', value: TASK_CATEGORIES.length - 1, icon: Tag, color: 'text-purple-600' },
               { label: 'Avg Duration', value: TASK_TEMPLATES.length > 0 ? `${Math.round(TASK_TEMPLATES.reduce((s, t) => s + t.estimatedDuration, 0) / TASK_TEMPLATES.length)}d` : '0d', icon: Clock, color: 'text-blue-600' },
               { label: 'Team Roles', value: [...new Set(TASK_TEMPLATES.map(t => t.defaultAssigneeRole))].length, icon: Users, color: 'text-green-600' },
@@ -838,7 +838,7 @@ export default function TemplatesPage() {
                 <p className="font-medium">No workflow templates found</p>
                 <button
                   onClick={() => setNewWorkflowTemplate(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
                 >
                   <Plus size={14} /> New Workflow Template
                 </button>
@@ -884,7 +884,7 @@ export default function TemplatesPage() {
                 <p className="font-medium">No templates found</p>
                 <button
                   onClick={() => setNewTaskTemplate(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
                 >
                   <Plus size={14} /> New Task Template
                 </button>

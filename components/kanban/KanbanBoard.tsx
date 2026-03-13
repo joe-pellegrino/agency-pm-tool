@@ -30,10 +30,10 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import TaskComments from '@/components/tasks/TaskComments';
 
 const COLUMNS: { id: Status; label: string; accentColor: string }[] = [
-  { id: 'todo', label: 'To Do', accentColor: '#4F6AE8' },
-  { id: 'inprogress', label: 'In Progress', accentColor: '#F59F00' },
-  { id: 'review', label: 'Review', accentColor: '#8B5CF6' },
-  { id: 'done', label: 'Done', accentColor: '#22C55E' },
+  { id: 'todo', label: 'Pending', accentColor: '#3B5BDB' },
+  { id: 'inprogress', label: 'Doing', accentColor: '#3B5BDB' },
+  { id: 'review', label: 'Review', accentColor: '#F59F00' },
+  { id: 'done', label: 'Done', accentColor: '#2BB673' },
 ];
 
 const STATUS_BADGE: Record<string, { backgroundColor: string; color: string }> = {
@@ -66,16 +66,16 @@ function ApprovalModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-lg mx-4 overflow-hidden"
-        style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', boxShadow: '0 24px 48px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08)' }}
+        style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 flex items-start justify-between" style={{ borderBottom: '1px solid #E8ECF1' }}>
+        <div className="px-6 py-5 flex items-start justify-between" style={{ borderBottom: '1px solid #E2E6EE' }}>
           <div>
             <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>Task Review</h2>
-            <p className="text-sm mt-0.5 line-clamp-1" style={{ color: '#8B95A5' }}>{task.title}</p>
+            <p className="text-sm mt-0.5 line-clamp-1" style={{ color: '#8896A6' }}>{task.title}</p>
           </div>
-          <button onClick={onClose} className="transition-colors mt-0.5" style={{ color: '#8B95A5' }}>
+          <button onClick={onClose} className="transition-colors mt-0.5" style={{ color: '#8896A6' }}>
             <X size={18} />
           </button>
         </div>
@@ -137,7 +137,7 @@ function ApprovalModal({
                   onChange={e => setNote(e.target.value)}
                   placeholder="Add a note (optional)..."
                   rows={2}
-                  className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8] resize-none"
+                  className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] resize-none"
                 />
                 <div className="flex gap-3">
                   <button
@@ -361,16 +361,16 @@ function TaskDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
-        style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', boxShadow: '0 24px 48px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08)' }}
+        style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: '1px solid #E8ECF1' }}>
+        <div className="px-6 py-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: '1px solid #E2E6EE' }}>
           <div className="flex-1 pr-4">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
                 className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: (client.color || '#4F6AE8') + '18', color: client.color || '#4F6AE8' }}
+                style={{ backgroundColor: (client.color || '#3B5BDB') + '18', color: client.color || '#3B5BDB' }}
               >
                 {client.name}
               </span>
@@ -393,7 +393,7 @@ function TaskDetailModal({
               <button
                 onClick={() => onEdit(task)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                style={{ color: '#4F6AE8' }}
+                style={{ color: '#3B5BDB' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#E0E7FF'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                 title="Edit task"
@@ -415,22 +415,22 @@ function TaskDetailModal({
                 Archive
               </button>
             )}
-            <button onClick={onClose} className="transition-colors ml-1" style={{ color: '#8B95A5' }}>
+            <button onClick={onClose} className="transition-colors ml-1" style={{ color: '#8896A6' }}>
               <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex px-6 gap-1" style={{ borderBottom: '1px solid #E8ECF1' }}>
+        <div className="flex px-6 gap-1" style={{ borderBottom: '1px solid #E2E6EE' }}>
           {(['details', 'comments'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className="px-4 py-3 text-sm font-medium capitalize transition-colors"
               style={{
-                color: activeTab === tab ? '#4F6AE8' : '#8B95A5',
-                borderBottom: activeTab === tab ? '2px solid #4F6AE8' : '2px solid transparent',
+                color: activeTab === tab ? '#3B5BDB' : '#8896A6',
+                borderBottom: activeTab === tab ? '2px solid #3B5BDB' : '2px solid transparent',
                 marginBottom: '-1px',
               }}
             >
@@ -445,7 +445,7 @@ function TaskDetailModal({
           ) : (
           <div className="space-y-5">
           {/* Meta row */}
-          <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: '#8B95A5' }}>
+          <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: '#8896A6' }}>
             {/* Editable assignee */}
             <div className="flex items-center gap-1.5">
               <div
@@ -459,11 +459,11 @@ function TaskDetailModal({
                 onChange={e => handleAssigneeChange(e.target.value)}
                 disabled={savingAssignee}
                 className="text-xs rounded px-1.5 py-0.5 disabled:opacity-60"
-                style={{ border: '1px solid #D0D5DD', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
+                style={{ border: '1px solid #D0D6E0', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
               >
                 {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
-              {savingAssignee && <Loader2 size={11} className="animate-spin" style={{ color: '#4F6AE8' }} />}
+              {savingAssignee && <Loader2 size={11} className="animate-spin" style={{ color: '#3B5BDB' }} />}
             </div>
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
@@ -495,9 +495,9 @@ function TaskDetailModal({
 
           {/* Dependencies */}
           {((task.dependencies && task.dependencies.length > 0) || TASKS.some(t => t.dependencies?.includes(task.id))) && (
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E8ECF1' }}>
-              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: '#F0F3F8', borderBottom: '1px solid #E8ECF1' }}>
-                <Lock size={13} style={{ color: '#8B95A5' }} />
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E6EE' }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: '#EDF0F5', borderBottom: '1px solid #E2E6EE' }}>
+                <Lock size={13} style={{ color: '#8896A6' }} />
                 <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>Dependencies</span>
               </div>
               <div className="px-4 py-3 space-y-2">
@@ -550,13 +550,13 @@ function TaskDetailModal({
           )}
 
           {/* Time Tracking */}
-          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E8ECF1' }}>
-            <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#F0F3F8', borderBottom: '1px solid #E8ECF1' }}>
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E6EE' }}>
+            <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#EDF0F5', borderBottom: '1px solid #E2E6EE' }}>
               <div className="flex items-center gap-2">
-                <Timer size={14} style={{ color: '#4F6AE8' }} />
+                <Timer size={14} style={{ color: '#3B5BDB' }} />
                 <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>Time Tracking</span>
               </div>
-              <div className="text-sm" style={{ color: '#8B95A5' }}>
+              <div className="text-sm" style={{ color: '#8896A6' }}>
                 Total: <span className="font-semibold" style={{ color: '#1E2A3A' }}>{totalHours}h</span>
                 <span className="text-xs ml-1">({totalMinutes} min)</span>
               </div>
@@ -568,7 +568,7 @@ function TaskDetailModal({
                 {!isRunning ? (
                   <button
                     onClick={() => setIsRunning(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     <Play size={14} />
                     Start Timer
@@ -583,7 +583,7 @@ function TaskDetailModal({
                   </button>
                 )}
                 {isRunning && (
-                  <div className="flex items-center gap-2 text-sm text-[#4F6AE8] font-mono font-medium">
+                  <div className="flex items-center gap-2 text-sm text-[#3B5BDB] font-mono font-medium">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     {formatElapsed(elapsed)}
                   </div>
@@ -608,7 +608,7 @@ function TaskDetailModal({
                       onChange={e => setManualMinutes(e.target.value)}
                       placeholder="60"
                       min="1"
-                      className="w-20 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
+                      className="w-20 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
                     />
                   </div>
                   <div className="flex-1">
@@ -618,13 +618,13 @@ function TaskDetailModal({
                       value={manualNote}
                       onChange={e => setManualNote(e.target.value)}
                       placeholder="What did you work on?"
-                      className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]"
+                      className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
                     />
                   </div>
                   <button
                     onClick={addManualEntry}
                     disabled={!manualMinutes || parseInt(manualMinutes) <= 0}
-                    className="px-4 py-1.5 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                    className="px-4 py-1.5 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     Add
                   </button>
@@ -659,7 +659,7 @@ function TaskDetailModal({
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-center py-4" style={{ color: '#8B95A5' }}>No time entries yet. Start the timer or add a manual entry.</p>
+                <p className="text-xs text-center py-4" style={{ color: '#8896A6' }}>No time entries yet. Start the timer or add a manual entry.</p>
               )}
             </div>
           </div>
@@ -686,27 +686,28 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
   });
 
   const statusAccent: Record<string, string> = {
-    todo: '#4F6AE8', inprogress: '#F59F00', review: '#8B5CF6', done: '#22C55E',
+    todo: '#3B5BDB', inprogress: '#F59F00', review: '#8B5CF6', done: '#22C55E',
   };
-  const accentColor = statusAccent[task.status] || '#4F6AE8';
+  const accentColor = statusAccent[task.status] || '#3B5BDB';
 
   return (
     <div
       onClick={() => !isDragging && onOpenDetail?.(task)}
-      className="task-card overflow-hidden cursor-grab active:cursor-grabbing"
+      className="task-card cursor-grab active:cursor-grabbing"
       style={{
         backgroundColor: '#FFFFFF',
-        borderRadius: '10px',
-        border: isBlocked ? '1px solid #fca5a5' : '1px solid #E8ECF1',
+        borderRadius: '8px',
+        border: isBlocked ? '1px solid #fca5a5' : '1px solid #E2E6EE',
         boxShadow: isDragging
-          ? '0 20px 40px rgba(0,0,0,0.15)'
-          : '0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+          ? '0 20px 40px rgba(30,42,58,0.18)'
+          : 'var(--shadow-card)',
         transform: isDragging ? 'rotate(2deg)' : undefined,
         opacity: isDragging ? 0.95 : 1,
+        transition: 'box-shadow 0.15s ease',
       }}
+      onMouseEnter={e => { if (!isDragging) (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)'; }}
+      onMouseLeave={e => { if (!isDragging) (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'; }}
     >
-      {/* Top accent bar */}
-      <div style={{ height: '4px', backgroundColor: accentColor, borderRadius: '10px 10px 0 0' }} />
 
       <div className="p-3.5">
       {/* Client tag + priority */}
@@ -735,7 +736,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
       )}
 
       {/* Title */}
-      <p className="text-sm font-medium leading-snug mb-3" style={{ color: isBlocked ? '#8B95A5' : '#1E2A3A' }}>
+      <p className="text-sm font-medium leading-snug mb-3" style={{ color: isBlocked ? '#8896A6' : '#1E2A3A' }}>
         {task.title}
       </p>
 
@@ -778,14 +779,14 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs" style={{ color: overdue ? '#DC2626' : '#8B95A5', fontWeight: overdue ? 500 : 400 }}>
+        <div className="flex items-center gap-1 text-xs" style={{ color: overdue ? '#DC2626' : '#8896A6', fontWeight: overdue ? 500 : 400 }}>
           <CalendarDays size={11} />
           {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           {overdue && ' ⚠'}
         </div>
         <div
           className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-          style={{ backgroundColor: assignee?.color || '#4F6AE8' }}
+          style={{ backgroundColor: assignee?.color || '#3B5BDB' }}
           title={assignee?.name || 'Unknown'}
         >
           {assignee?.initials || '?'}
@@ -813,7 +814,7 @@ function SortableTaskCard({ task, onOpenApproval, onOpenDetail }: { task: Task; 
 }
 
 const COLUMN_BG: Record<Status, string> = {
-  todo: 'rgba(79,106,232,0.04)',
+  todo: 'rgba(59, 91, 219,0.04)',
   inprogress: 'rgba(245,159,0,0.04)',
   review: 'rgba(139,92,246,0.04)',
   done: 'rgba(34,197,94,0.04)',
@@ -838,15 +839,17 @@ function Column({
 }) {
   return (
     <div
-      className="flex flex-col min-h-[200px] rounded-xl overflow-hidden"
+      className="flex flex-col min-h-[200px]"
       style={{
-        border: '1px solid #E8ECF1',
-        backgroundColor: COLUMN_BG[id],
+        border: '1px solid #E2E6EE',
+        borderRadius: '8px',
+        backgroundColor: '#F8F9FC',
         borderTop: `3px solid ${accentColor}`,
+        overflow: 'hidden',
       }}
     >
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #E8ECF1' }}>
+      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #E2E6EE' }}>
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm" style={{ color: '#1E2A3A' }}>{label}</span>
           <span
@@ -859,9 +862,9 @@ function Column({
         <button
           onClick={onNewTask}
           className="transition-colors"
-          style={{ color: '#8B95A5' }}
+          style={{ color: '#8896A6' }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = accentColor; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8B95A5'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8896A6'; }}
           title={`New ${label} task`}
         >
           <Plus size={15} />
@@ -876,7 +879,7 @@ function Column({
           ))}
         </SortableContext>
         {tasks.length === 0 && (
-          <div className="text-center py-8 text-sm" style={{ color: '#B0B8C9' }}>
+          <div className="text-center py-8 text-sm" style={{ color: '#A0AAB8' }}>
             Drop tasks here
           </div>
         )}
@@ -1116,8 +1119,8 @@ export default function KanbanBoard() {
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors"
           style={
             showFilters || activeFilters > 0
-              ? { backgroundColor: '#E0E7FF', borderColor: '#4F6AE8', color: '#4338CA' }
-              : { backgroundColor: '#FFFFFF', borderColor: '#E8ECF1', color: '#4A5568' }
+              ? { backgroundColor: '#E0E7FF', borderColor: '#3B5BDB', color: '#4338CA' }
+              : { backgroundColor: '#FFFFFF', borderColor: '#E2E6EE', color: '#4A5568' }
           }
         >
           <Filter size={14} />
@@ -1125,7 +1128,7 @@ export default function KanbanBoard() {
           {activeFilters > 0 && (
             <span
               className="w-4 h-4 text-white text-[10px] rounded-full flex items-center justify-center font-bold"
-              style={{ backgroundColor: '#4F6AE8' }}
+              style={{ backgroundColor: '#3B5BDB' }}
             >
               {activeFilters}
             </span>
@@ -1137,7 +1140,7 @@ export default function KanbanBoard() {
           <button
             onClick={() => { setFilterClient('all'); setFilterAssignee('all'); setFilterPriority('all'); setFilterProject('all'); }}
             className="flex items-center gap-1 text-xs transition-colors"
-            style={{ color: '#8B95A5' }}
+            style={{ color: '#8896A6' }}
           >
             <X size={12} /> Clear filters
           </button>
@@ -1167,14 +1170,14 @@ export default function KanbanBoard() {
           <button
             onClick={() => { setNewTaskDefaultStatus('todo'); setShowNewTaskModal(true); }}
             className="flex items-center gap-2 px-4 py-2 text-white rounded-md text-sm font-medium transition-colors"
-            style={{ backgroundColor: '#4F6AE8' }}
+            style={{ backgroundColor: '#3B5BDB' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4F6AE8'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
           >
             <Plus size={14} />
             New Task
           </button>
-          <div className="hidden sm:flex items-center gap-2 text-xs" style={{ color: '#8B95A5' }}>
+          <div className="hidden sm:flex items-center gap-2 text-xs" style={{ color: '#8896A6' }}>
             <div
               className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
               style={{ backgroundColor: TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.color }}
@@ -1189,7 +1192,7 @@ export default function KanbanBoard() {
       {showFilters && (
         <div
           className="flex flex-wrap gap-3 mb-5 p-4 rounded-lg"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8ECF1' }}
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E6EE' }}
         >
           {[
             { label: 'Client', value: filterClient, onChange: setFilterClient, options: [{ value: 'all', label: 'All Clients' }, ...CLIENTS.map(c => ({ value: c.id, label: c.name }))] },
@@ -1203,7 +1206,7 @@ export default function KanbanBoard() {
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 className="text-sm px-3 py-1.5 rounded-md"
-                style={{ border: '1px solid #D0D5DD', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
+                style={{ border: '1px solid #D0D6E0', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
               >
                 {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>

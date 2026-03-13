@@ -100,7 +100,7 @@ function KPIGauge({
           {onEdit && (
             <button
               onClick={onEdit}
-              className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-[#4F6AE8] transition-all"
+              className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-[#3B5BDB] transition-all"
               title="Edit KPI"
             >
               <Pencil size={11} />
@@ -154,7 +154,7 @@ function KPIModal({
     unit: kpi?.unit || 'followers',
   });
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
   const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -236,7 +236,7 @@ function KPIModal({
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
               {kpi ? 'Save Changes' : 'Add KPI'}
             </button>
           </div>
@@ -264,7 +264,7 @@ function PillarModal({
     description: pillar?.description || '',
   });
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
   const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -318,7 +318,7 @@ function PillarModal({
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
               {pillar ? 'Save Changes' : 'Add Pillar'}
             </button>
           </div>
@@ -457,7 +457,7 @@ function PillarCard({
           </span>
           <button
             onClick={onEditPillar}
-            className="p-1 text-gray-400 hover:text-[#4F6AE8] rounded transition-colors"
+            className="p-1 text-gray-400 hover:text-[#3B5BDB] rounded transition-colors"
             title="Edit pillar"
           >
             <Pencil size={13} />
@@ -491,7 +491,7 @@ function PillarCard({
           )}
           <button
             onClick={onAddKPI}
-            className="mt-3 flex items-center gap-1.5 text-xs text-[#4F6AE8] hover:text-indigo-800 font-medium transition-colors"
+            className="mt-3 flex items-center gap-1.5 text-xs text-[#3B5BDB] hover:text-indigo-800 font-medium transition-colors"
           >
             <Plus size={12} />
             Add KPI
@@ -674,7 +674,7 @@ function StrategyView({
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#4F6AE8] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#3B5BDB] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
             >
               <Pencil size={13} />
               Edit Strategy
@@ -700,7 +700,7 @@ function StrategyView({
       {serviceStrategies.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <Zap size={16} className="text-[#4F6AE8]" />
+            <Zap size={16} className="text-[#3B5BDB]" />
             <h3 className="text-base font-bold text-gray-900 dark:text-white">Service Strategies</h3>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
               {serviceStrategies.length} services
@@ -718,7 +718,7 @@ function StrategyView({
       <div>
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <Target size={16} className="text-[#4F6AE8]" />
+            <Target size={16} className="text-[#3B5BDB]" />
             <h3 className="text-base font-bold text-gray-900 dark:text-white">Core Strategy Pillars</h3>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
               {strategy.pillars.length} pillars
@@ -726,7 +726,7 @@ function StrategyView({
           </div>
           <button
             onClick={() => setPillarModal({ open: true, pillar: null })}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#4F6AE8] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#3B5BDB] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
           >
             <Plus size={14} />
             Add Pillar
@@ -754,7 +754,7 @@ function StrategyView({
             <p className="text-sm font-medium mb-3">No pillars yet</p>
             <button
               onClick={() => setPillarModal({ open: true, pillar: null })}
-              className="flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+              className="flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
             >
               <Plus size={14} />
               Add First Pillar
@@ -788,7 +788,7 @@ function StrategyModal({
     status: strategy?.status || 'planning',
   });
 
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4F6AE8]';
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
   const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -864,7 +864,7 @@ function StrategyModal({
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
+            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
               {strategy ? 'Save Changes' : 'Create Strategy'}
             </button>
           </div>
@@ -907,7 +907,7 @@ export default function StrategyPage() {
   };
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       <TopBar title="Strategy" subtitle="Client strategies, service strategies, and KPI hierarchy" />
 
       {showStrategyModal && (
@@ -928,7 +928,7 @@ export default function StrategyPage() {
         />
       )}
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         {/* Top action bar — New Strategy always visible */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">
@@ -936,7 +936,7 @@ export default function StrategyPage() {
           </h2>
           <button
             onClick={() => setShowStrategyModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
           >
             <Plus size={14} />
             New Strategy
@@ -996,7 +996,7 @@ export default function StrategyPage() {
             {selectedClientId && (
               <button
                 onClick={() => setShowStrategyModal(true)}
-                className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#4F6AE8] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
+                className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
               >
                 <Plus size={14} />
                 Create Strategy

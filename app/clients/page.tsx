@@ -90,17 +90,17 @@ export default function ClientsPage() {
 
   if (loading) {
     return (
-      <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+      <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
         <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#4F6AE8' }} />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#3B5BDB' }} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pt-16 min-h-screen" style={{ backgroundColor: '#F0F3F8' }}>
+    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
       {(showNewClient || editClient) && (
         <ClientModal client={editClient || undefined} onClose={() => { setShowNewClient(false); setEditClient(null); }} />
       )}
@@ -116,14 +116,14 @@ export default function ClientsPage() {
       )}
       <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
 
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div style={{ padding: '24px 32px' }}>
         <div className="flex justify-end mb-5">
           <button
             onClick={() => setShowNewClient(true)}
             className="flex items-center gap-2 px-5 py-2.5 text-white rounded-md text-sm font-medium transition-colors"
-            style={{ backgroundColor: '#4F6AE8' }}
+            style={{ backgroundColor: '#3B5BDB' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#4F6AE8'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
           >
             <Plus size={14} />
             New Client
@@ -146,16 +146,16 @@ export default function ClientsPage() {
                 className="rounded-lg overflow-hidden transition-all group block"
                 style={{
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid #E8ECF1',
+                  border: '1px solid #E2E6EE',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
                 }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)';
-                  (e.currentTarget as HTMLElement).style.borderColor = '#D0D5DD';
+                  (e.currentTarget as HTMLElement).style.borderColor = '#D0D6E0';
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)';
-                  (e.currentTarget as HTMLElement).style.borderColor = '#E8ECF1';
+                  (e.currentTarget as HTMLElement).style.borderColor = '#E2E6EE';
                 }}
               >
                 {/* Client color accent bar */}
@@ -171,8 +171,8 @@ export default function ClientsPage() {
                       </div>
                       <div>
                         <h3 className="font-bold" style={{ color: '#1E2A3A' }}>{client.name}</h3>
-                        <p className="text-xs" style={{ color: '#8B95A5' }}>{client.industry}</p>
-                        <p className="text-xs" style={{ color: '#B0B8C9' }}>{client.location}</p>
+                        <p className="text-xs" style={{ color: '#8896A6' }}>{client.industry}</p>
+                        <p className="text-xs" style={{ color: '#A0AAB8' }}>{client.location}</p>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -209,25 +209,25 @@ export default function ClientsPage() {
                       { label: 'Open Tasks', value: openTasks, icon: CheckCircle },
                       { label: 'Planning', value: planningServices, icon: Activity },
                     ].map(({ label, value, icon: Icon }) => (
-                      <div key={label} className="rounded-lg py-2 px-1" style={{ backgroundColor: '#F0F3F8' }}>
+                      <div key={label} className="rounded-lg py-2 px-1" style={{ backgroundColor: '#EDF0F5' }}>
                         <div className="text-lg font-bold" style={{ color: '#1E2A3A' }}>{value}</div>
-                        <div className="text-[10px] leading-tight" style={{ color: '#8B95A5' }}>{label}</div>
+                        <div className="text-[10px] leading-tight" style={{ color: '#8896A6' }}>{label}</div>
                       </div>
                     ))}
                   </div>
 
                   <div
                     className="flex items-center justify-between mt-4 pt-4"
-                    style={{ borderTop: '1px solid #E8ECF1' }}
+                    style={{ borderTop: '1px solid #E2E6EE' }}
                   >
-                    <span className="text-xs" style={{ color: '#8B95A5' }}>View services & strategy</span>
+                    <span className="text-xs" style={{ color: '#8896A6' }}>View services & strategy</span>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={(e) => { e.preventDefault(); setEditClient(client); }}
                         className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: '#8B95A5' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#4F6AE8'; (e.currentTarget as HTMLElement).style.backgroundColor = '#E0E7FF'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8B95A5'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                        style={{ color: '#8896A6' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#3B5BDB'; (e.currentTarget as HTMLElement).style.backgroundColor = '#E0E7FF'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8896A6'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                         title="Edit client"
                       >
                         <Pencil size={13} />
@@ -235,14 +235,14 @@ export default function ClientsPage() {
                       <button
                         onClick={(e) => { e.preventDefault(); setArchiveId(client.id); }}
                         className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: '#8B95A5' }}
+                        style={{ color: '#8896A6' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#DC2626'; (e.currentTarget as HTMLElement).style.backgroundColor = '#FEE2E2'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8B95A5'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8896A6'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                         title="Archive client"
                       >
                         <Archive size={13} />
                       </button>
-                      <ChevronRight size={16} style={{ color: '#B0B8C9' }} className="group-hover:text-blue-500 transition-colors" />
+                      <ChevronRight size={16} style={{ color: '#A0AAB8' }} className="group-hover:text-blue-500 transition-colors" />
                     </div>
                   </div>
                 </div>
