@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { TASKS, CLIENTS, TEAM_MEMBERS, TIME_ENTRIES, Client } from '@/lib/data';
+import { Client } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import { TrendingUp, TrendingDown, Minus, Activity, Clock, CheckCircle, AlertTriangle, Users, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 
@@ -107,6 +108,7 @@ function ScoreGauge({ score }: { score: number }) {
 }
 
 function ClientHealthCard({ client }: { client: Client }) {
+  const { TASKS = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], TIME_ENTRIES = [], TEAM_MEMBERS = [] } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const health = CLIENT_HEALTH[client.id];
   const clientTasks = TASKS.filter(t => t.clientId === client.id);
@@ -229,6 +231,7 @@ function ClientHealthCard({ client }: { client: Client }) {
 }
 
 export default function HealthPage() {
+  const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [], TIME_ENTRIES = [] } = useAppData();
   const totalOverdue = TASKS.filter(t =>
     t.status !== 'done' && new Date(t.dueDate) < new Date()
   ).length;

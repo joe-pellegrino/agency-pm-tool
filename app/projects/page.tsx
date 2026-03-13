@@ -1,11 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  PROJECTS, CLIENTS, TASKS, STRATEGIES, WORKFLOW_TEMPLATES, TEAM_MEMBERS,
-  CLIENT_SERVICES, SERVICES,
-  Project, Task, PRIORITY_COLORS,
-} from '@/lib/data';
+import { Project, Task, PRIORITY_COLORS } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   FolderOpen, Filter, Search, ChevronRight, X, Calendar, CheckCircle,
@@ -32,6 +29,7 @@ function ProgressBar({ value, color = 'bg-indigo-500' }: { value: number; color?
 }
 
 function ProjectDetailModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  const { CLIENTS = [], TASKS = [], WORKFLOW_TEMPLATES = [], STRATEGIES = [], TEAM_MEMBERS = [], CLIENT_SERVICES = [], SERVICES = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === project.clientId)!;
   const tasks = TASKS.filter(t => project.taskIds.includes(t.id));
   const template = project.workflowTemplateId ? WORKFLOW_TEMPLATES.find(wt => wt.id === project.workflowTemplateId) : null;
@@ -312,6 +310,7 @@ function ProjectDetailModal({ project, onClose }: { project: Project; onClose: (
 }
 
 function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+  const { CLIENTS = [], TASKS = [], WORKFLOW_TEMPLATES = [], STRATEGIES = [], TEAM_MEMBERS = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === project.clientId)!;
   const tasks = TASKS.filter(t => project.taskIds.includes(t.id));
   const template = project.workflowTemplateId ? WORKFLOW_TEMPLATES.find(wt => wt.id === project.workflowTemplateId) : null;
@@ -403,6 +402,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
 }
 
 export default function ProjectsPage() {
+  const { PROJECTS = [], CLIENTS = [], TASKS = [], STRATEGIES = [], WORKFLOW_TEMPLATES = [], TEAM_MEMBERS = [], CLIENT_SERVICES = [], SERVICES = [] } = useAppData();
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedService, setSelectedService] = useState<string>('all');

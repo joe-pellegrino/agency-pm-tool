@@ -19,7 +19,8 @@ import {
 } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { TASKS, CLIENTS, TEAM_MEMBERS, TIME_ENTRIES, PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry, PROJECTS } from '@/lib/data';
+import { PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
@@ -44,6 +45,7 @@ function ApprovalModal({
   onSendBack: (note: string) => void;
   onClose: () => void;
 }) {
+  const { TEAM_MEMBERS = [] } = useAppData();
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'decide' | 'sendback'>('decide');
   const isOwner = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.isOwner;
@@ -194,6 +196,7 @@ function TaskDetailModal({
   onClose: () => void;
   onOpenApproval: (task: Task) => void;
 }) {
+  const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [], TIME_ENTRIES = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === task.clientId)!;
   const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
 
@@ -504,6 +507,7 @@ function TaskDetailModal({
 }
 
 function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { task: Task; isDragging?: boolean; onOpenApproval?: (task: Task) => void; onOpenDetail?: (task: Task) => void }) {
+  const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === task.clientId)!;
   const assignee = TEAM_MEMBERS.find(m => m.id === task.assigneeId)!;
   const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
@@ -679,8 +683,15 @@ function Column({
 export default function KanbanBoard() {
   const searchParams = useSearchParams();
   const clientFilter = searchParams.get('client') || 'all';
+  const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [], TIME_ENTRIES = [], PROJECTS = [] } = useAppData();
 
-  const [taskState, setTaskState] = useState<Task[]>(TASKS.filter(t => !t.isMilestone));
+  const [taskState, setTaskState] = useState<Task[]>([]);
+  // Update taskState when TASKS loads from Supabase
+  useEffect(() => {
+    if (TASKS.length > 0) {
+      setTaskState(TASKS.filter(t => !t.isMilestone));
+    }
+  }, [TASKS]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [filterClient, setFilterClient] = useState(clientFilter);
   const [filterAssignee, setFilterAssignee] = useState('all');

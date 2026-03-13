@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { TASKS, CLIENTS, TEAM_MEMBERS, Task, PROJECTS } from '@/lib/data';
+import { Task } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Flag } from 'lucide-react';
 import { addDays, addWeeks, addMonths, format, startOfWeek, differenceInDays, eachDayOfInterval, eachWeekOfInterval, isSameDay, parseISO, isWithinInterval, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 
 type ZoomLevel = 'day' | 'week' | 'month';
 
-function getClientColor(clientId: string) {
-  return CLIENTS.find(c => c.id === clientId)?.color || '#6366f1';
+function getClientColor(clientId: string, clients: { id: string; color: string }[]) {
+  return clients.find(c => c.id === clientId)?.color || '#6366f1';
 }
 
-function Avatar({ assigneeId, size = 20 }: { assigneeId: string; size?: number }) {
-  const m = TEAM_MEMBERS.find(m => m.id === assigneeId);
+function Avatar({ assigneeId, size = 20, teamMembers }: { assigneeId: string; size?: number; teamMembers: { id: string; color: string; initials: string; name: string }[] }) {
+  const m = teamMembers.find(m => m.id === assigneeId);
   if (!m) return null;
   return (
     <div
@@ -26,6 +27,7 @@ function Avatar({ assigneeId, size = 20 }: { assigneeId: string; size?: number }
 }
 
 export default function GanttChart() {
+  const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [] } = useAppData();
   const [zoom, setZoom] = useState<ZoomLevel>('week');
   const [viewStart, setViewStart] = useState(new Date('2026-02-09'));
   const [filterClient, setFilterClient] = useState('all');
@@ -240,7 +242,7 @@ export default function GanttChart() {
                 const e = parseISO(task.endDate);
                 const x = dayX(s);
                 const w = barWidth(s, e);
-                const color = getClientColor(task.clientId);
+                const color = getClientColor(task.clientId, CLIENTS);
                 const isHovered = hoveredTask === task.id;
                 const isBlocked = task.status !== 'done' && (task.dependencies || []).some(depId => {
                   const dep = displayTasks.find(t => t.id === depId);
@@ -263,7 +265,7 @@ export default function GanttChart() {
                       {task.isMilestone ? (
                         <Flag size={12} className="text-orange-500 flex-shrink-0" />
                       ) : (
-                        <Avatar assigneeId={task.assigneeId} size={20} />
+                        <Avatar assigneeId={task.assigneeId} size={20} teamMembers={TEAM_MEMBERS} />
                       )}
                       <span className={`text-xs leading-tight truncate ${task.isMilestone ? 'font-semibold text-orange-600 dark:text-orange-400' : 'text-gray-700 dark:text-gray-200'}`}>
                         {task.title}

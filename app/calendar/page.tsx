@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { TASKS, CLIENTS, TYPE_ICONS, Task } from '@/lib/data';
+import { TYPE_ICONS, Task } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 
@@ -30,6 +31,7 @@ const STATUS_OPACITY: Record<string, string> = {
 };
 
 function DayModal({ date, tasks, onClose }: { date: string; tasks: Task[]; onClose: () => void }) {
+  const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const d = new Date(date + 'T12:00:00');
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -93,6 +95,7 @@ function DayModal({ date, tasks, onClose }: { date: string; tasks: Task[]; onClo
 }
 
 export default function CalendarPage() {
+  const { TASKS = [], CLIENTS = [] } = useAppData();
   const today = new Date();
   const [year, setYear] = useState(2026);
   const [month, setMonth] = useState(2);

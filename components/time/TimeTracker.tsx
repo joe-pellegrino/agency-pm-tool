@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Play, Square, Plus, Clock } from 'lucide-react';
-import { TIME_ENTRIES, TEAM_MEMBERS, TimeEntry } from '@/lib/data';
+import { TimeEntry } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 
 interface TimeTrackerProps {
   taskId: string;
@@ -24,9 +25,11 @@ function formatTimer(seconds: number): string {
 }
 
 export default function TimeTracker({ taskId, clientId }: TimeTrackerProps) {
-  const [entries, setEntries] = useState<TimeEntry[]>(
-    TIME_ENTRIES.filter(e => e.taskId === taskId)
-  );
+  const { TIME_ENTRIES = [], TEAM_MEMBERS = [] } = useAppData();
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
+  useEffect(() => {
+    setEntries(TIME_ENTRIES.filter(e => e.taskId === taskId));
+  }, [TIME_ENTRIES, taskId]);
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [showManual, setShowManual] = useState(false);

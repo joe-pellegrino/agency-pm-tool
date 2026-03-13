@@ -2,10 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import {
-  CLIENTS, SERVICES, CLIENT_SERVICES, SERVICE_STRATEGIES, PROJECTS, TASKS,
-  Service, ClientService, ServiceCategory,
-} from '@/lib/data';
+import { Service, ClientService, ServiceCategory } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   LayoutGrid, List, Filter, Search, TrendingUp, Activity, AlertTriangle,
@@ -42,8 +40,8 @@ function getCellBorder(score: number | null, status: string): string {
   return 'border-red-200 dark:border-red-700/40';
 }
 
-function computeHealthScore(cs: ClientService): number | null {
-  const ss = SERVICE_STRATEGIES.find(s => s.clientServiceId === cs.id);
+function computeHealthScore(cs: ClientService, serviceStrategies: import('@/lib/data').ServiceStrategy[]): number | null {
+  const ss = serviceStrategies.find(s => s.clientServiceId === cs.id);
   if (!ss) return null;
   const scores = ss.kpis.map(kpi => {
     const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('cpc') || kpi.name.toLowerCase().includes('pos');
@@ -53,6 +51,7 @@ function computeHealthScore(cs: ClientService): number | null {
 }
 
 function MatrixCell({ cs }: { cs: ClientService | null; clientId: string; serviceId: string }) {
+  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], TASKS = [], PROJECTS = [] } = useAppData();
   if (!cs) {
     return (
       <div className="h-20 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/20 flex items-center justify-center">
@@ -61,7 +60,7 @@ function MatrixCell({ cs }: { cs: ClientService | null; clientId: string; servic
     );
   }
 
-  const health = computeHealthScore(cs);
+  const health = computeHealthScore(cs, SERVICE_STRATEGIES);
   const projs = PROJECTS.filter(p => cs.linkedProjects.includes(p.id));
   const tasks = projs.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
   const openTasks = tasks.filter(t => t.status !== 'done').length;
@@ -109,6 +108,7 @@ function MatrixCell({ cs }: { cs: ClientService | null; clientId: string; servic
 }
 
 function ListView({ filteredServices, clientFilter }: { filteredServices: Service[]; clientFilter: string }) {
+  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], TASKS = [], PROJECTS = [], CLIENTS = [] } = useAppData();
   return (
     <div className="space-y-4">
       {filteredServices.map(service => {
@@ -137,7 +137,7 @@ function ListView({ filteredServices, clientFilter }: { filteredServices: Servic
             <div className="divide-y divide-gray-50 dark:divide-gray-700/50">
               {activeCs.map(cs => {
                 const client = CLIENTS.find(c => c.id === cs.clientId)!;
-                const health = computeHealthScore(cs);
+                const health = computeHealthScore(cs, SERVICE_STRATEGIES);
                 const projs = PROJECTS.filter(p => cs.linkedProjects.includes(p.id));
                 const tasks = projs.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
                 const openTasks = tasks.filter(t => t.status !== 'done').length;
@@ -206,6 +206,7 @@ function ListView({ filteredServices, clientFilter }: { filteredServices: Servic
 }
 
 export default function ServicesPage() {
+  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [] } = useAppData();
   const [view, setView] = useState<'matrix' | 'list'>('matrix');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');

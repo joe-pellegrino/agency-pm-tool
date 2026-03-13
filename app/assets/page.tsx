@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ASSETS, CLIENTS, TEAM_MEMBERS, Asset } from '@/lib/data';
+import { Asset } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import { FolderOpen, Upload, Search, X, Download, Image, FileText, Video, Bookmark, History, ChevronDown } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 
@@ -27,6 +28,7 @@ const FILE_TYPE_LABELS: Record<Asset['fileType'], string> = {
 };
 
 function AssetDetailModal({ asset, onClose }: { asset: Asset; onClose: () => void }) {
+  const { TEAM_MEMBERS = [], CLIENTS = [] } = useAppData();
   const uploader = TEAM_MEMBERS.find(m => m.id === asset.uploadedBy);
   const client = CLIENTS.find(c => c.id === asset.clientId);
 
@@ -155,6 +157,7 @@ function AssetDetailModal({ asset, onClose }: { asset: Asset; onClose: () => voi
 }
 
 function AssetCard({ asset, onClick }: { asset: Asset; onClick: () => void }) {
+  const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === asset.clientId);
   const uploader = TEAM_MEMBERS.find(m => m.id === asset.uploadedBy);
 
@@ -215,6 +218,7 @@ function AssetCard({ asset, onClick }: { asset: Asset; onClick: () => void }) {
 }
 
 export default function AssetsPage() {
+  const { ASSETS = [], CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const [selectedClient, setSelectedClient] = useState('all');
   const [selectedType, setSelectedType] = useState<Asset['fileType'] | 'all'>('all');
   const [search, setSearch] = useState('');

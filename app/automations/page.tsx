@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { AUTOMATIONS, TASK_TEMPLATES, CLIENTS, TEAM_MEMBERS, Automation } from '@/lib/data';
+import { Automation } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import { Zap, Play, Pause, Plus, X, Calendar, Clock, CheckCircle2 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 
@@ -18,6 +19,7 @@ const FREQ_COLORS: Record<string, string> = {
 };
 
 function CreateAutomationModal({ onClose }: { onClose: () => void }) {
+  const { CLIENTS = [], TASK_TEMPLATES = [], TEAM_MEMBERS = [] } = useAppData();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ clientId: '', templateId: '', frequency: 'monthly', assigneeId: '' });
 
@@ -181,6 +183,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
 
 // Mobile card view for automation
 function AutomationCard({ automation, onToggle }: { automation: Automation; onToggle: () => void }) {
+  const { TASK_TEMPLATES = [], TEAM_MEMBERS = [], CLIENTS = [] } = useAppData();
   const template = TASK_TEMPLATES.find(t => t.id === automation.templateId)!;
   const assignee = TEAM_MEMBERS.find(m => m.id === automation.assigneeId)!;
 
@@ -225,6 +228,7 @@ function AutomationCard({ automation, onToggle }: { automation: Automation; onTo
 
 // Desktop row view
 function AutomationRow({ automation, onToggle }: { automation: Automation; onToggle: () => void }) {
+  const { TASK_TEMPLATES = [], TEAM_MEMBERS = [] } = useAppData();
   const template = TASK_TEMPLATES.find(t => t.id === automation.templateId)!;
   const assignee = TEAM_MEMBERS.find(m => m.id === automation.assigneeId)!;
 
@@ -262,6 +266,7 @@ function AutomationRow({ automation, onToggle }: { automation: Automation; onTog
 }
 
 export default function AutomationsPage() {
+  const { AUTOMATIONS = [], TASK_TEMPLATES = [], CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const [automations, setAutomations] = useState<Automation[]>(AUTOMATIONS);
   const [selectedClient, setSelectedClient] = useState('all');
   const [showCreate, setShowCreate] = useState(false);

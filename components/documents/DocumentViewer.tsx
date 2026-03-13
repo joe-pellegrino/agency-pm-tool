@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { DOCUMENTS, TEAM_MEMBERS, CLIENTS, Document, Comment } from '@/lib/data';
+import { Document, Comment } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import {
   FileText, MessageSquare, Clock, Users, ChevronRight, ChevronDown,
   Send, CornerDownRight, History, ArrowLeft
@@ -9,6 +10,7 @@ import {
 import { format, parseISO } from 'date-fns';
 
 function Avatar({ id, size = 24 }: { id: string; size?: number }) {
+  const { TEAM_MEMBERS = [] } = useAppData();
   const m = TEAM_MEMBERS.find(m => m.id === id);
   if (!m) return null;
   return (
@@ -23,6 +25,7 @@ function Avatar({ id, size = 24 }: { id: string; size?: number }) {
 }
 
 function CommentThread({ comment, depth = 0 }: { comment: Comment; depth?: number }) {
+  const { TEAM_MEMBERS = [] } = useAppData();
   const author = TEAM_MEMBERS.find(m => m.id === comment.authorId)!;
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -92,6 +95,7 @@ function CommentThread({ comment, depth = 0 }: { comment: Comment; depth?: numbe
 }
 
 function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) {
+  const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const [activeTab, setActiveTab] = useState<'comments' | 'history'>('comments');
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState(doc.comments);
@@ -297,6 +301,7 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
 }
 
 export default function DocumentViewer() {
+  const { DOCUMENTS = [], TEAM_MEMBERS = [], CLIENTS = [] } = useAppData();
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
 
   if (selectedDoc) {

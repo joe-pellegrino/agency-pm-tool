@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  STRATEGIES, CLIENTS, PROJECTS, CLIENT_SERVICES, SERVICE_STRATEGIES, SERVICES,
-  Strategy, StrategyPillar, KPI, ServiceStrategy,
-} from '@/lib/data';
+import { Strategy, StrategyPillar, KPI, ServiceStrategy } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   TrendingUp, Target, CheckCircle, Clock, AlertTriangle, ChevronDown, ChevronUp,
@@ -101,6 +99,7 @@ function KPIGauge({ kpi }: { kpi: KPI | { id: string; name: string; target: numb
 }
 
 function ServiceStrategyCard({ ss, clientColor }: { ss: ServiceStrategy; clientColor: string }) {
+  const { CLIENT_SERVICES = [], SERVICES = [], PROJECTS = [] } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const cs = CLIENT_SERVICES.find(x => x.id === ss.clientServiceId);
   const service = SERVICES.find(s => s.id === cs?.serviceId);
@@ -191,6 +190,7 @@ function ServiceStrategyCard({ ss, clientColor }: { ss: ServiceStrategy; clientC
 }
 
 function PillarCard({ pillar, clientColor }: { pillar: StrategyPillar; clientColor: string }) {
+  const { PROJECTS = [] } = useAppData();
   const projects = PROJECTS.filter(p => pillar.projectIds.includes(p.id));
   const health = getPillarHealth(pillar);
   const healthCfg = HEALTH_CONFIG[health];
@@ -235,6 +235,7 @@ function PillarCard({ pillar, clientColor }: { pillar: StrategyPillar; clientCol
 }
 
 function StrategyView({ strategy }: { strategy: Strategy }) {
+  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], CLIENTS = [], PROJECTS = [] } = useAppData();
   const client = CLIENTS.find(c => c.id === strategy.clientId)!;
   const statusCfg = STATUS_CONFIG[strategy.status];
   const allProjects = strategy.pillars.flatMap(p => PROJECTS.filter(proj => p.projectIds.includes(proj.id)));
@@ -347,7 +348,14 @@ function StrategyView({ strategy }: { strategy: Strategy }) {
 }
 
 export default function StrategyPage() {
-  const [selectedClientId, setSelectedClientId] = useState<string>(CLIENTS[0].id);
+  const { STRATEGIES = [], CLIENTS = [], PROJECTS = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], loading } = useAppData();
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  // Set initial client after data loads
+  useEffect(() => {
+    if (!selectedClientId && CLIENTS.length > 0) {
+      setSelectedClientId(CLIENTS[0].id);
+    }
+  }, [CLIENTS, selectedClientId]);
 
   const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === selectedClientId) || null, [selectedClientId]);
 

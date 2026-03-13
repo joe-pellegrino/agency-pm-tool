@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CLIENTS } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import { useSidebar } from './SidebarContext';
 import {
   LayoutDashboard,
@@ -63,6 +63,7 @@ const NAV_GROUPS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { mobileOpen, closeMobile } = useSidebar();
+  const { CLIENTS = [] } = useAppData();
 
   const sidebarContent = (
     <aside

@@ -3,10 +3,8 @@
 import { useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  CLIENTS, SERVICES, CLIENT_SERVICES, SERVICE_STRATEGIES, STRATEGIES,
-  PROJECTS, TASKS, ClientService, ServiceStrategy, Project, Task,
-} from '@/lib/data';
+import { ClientService, ServiceStrategy, Project, Task } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
@@ -56,6 +54,7 @@ function KPIBar({
 }
 
 function TaskRow({ task }: { task: Task }) {
+  const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const statusColors: Record<string, string> = {
     todo: 'bg-gray-100 text-gray-600',
     inprogress: 'bg-blue-100 text-blue-700',
@@ -89,6 +88,7 @@ function ServiceCard({
   linkedProjects: Project[];
   recentTasks: Task[];
 }) {
+  const { SERVICE_STRATEGIES = [], PROJECTS = [], TASKS = [], SERVICES = [] } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const service = SERVICES.find(s => s.id === clientService.serviceId)!;
   const statusCfg = STATUS_CONFIG[clientService.status];
@@ -266,6 +266,7 @@ function ServiceCard({
 }
 
 export default function ClientPage() {
+  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [] } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
   const client = CLIENTS.find(c => c.id === clientId);
 

@@ -1,8 +1,9 @@
 import TopBar from '@/components/layout/TopBar';
-import { TEAM_MEMBERS, CLIENTS } from '@/lib/data';
+import { getAllData } from '@/lib/supabase/queries';
 import { User, Building2, Bell, Shield, Palette } from 'lucide-react';
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const { TEAM_MEMBERS, CLIENTS } = await getAllData();
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Settings" subtitle="Manage your workspace preferences" />

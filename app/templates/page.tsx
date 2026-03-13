@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  TASK_TEMPLATES, TEAM_MEMBERS, PRIORITY_COLORS, PRIORITY_DOT, TaskTemplate,
-  WORKFLOW_TEMPLATES, CLIENTS, WorkflowTemplate, WorkflowStep,
-} from '@/lib/data';
+import { PRIORITY_COLORS, PRIORITY_DOT, TaskTemplate, WorkflowTemplate, WorkflowStep } from '@/lib/data';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import {
   LayoutTemplate, Clock, Users, Calendar, Tag, ChevronRight, Plus, Search, X,
   ArrowRight, Zap, GitBranch,
@@ -221,6 +219,7 @@ function WorkflowStepFlow({ steps }: { steps: WorkflowStep[] }) {
 }
 
 function UseTemplateModal({ template, onClose }: { template: WorkflowTemplate; onClose: () => void }) {
+  const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const [selectedClient, setSelectedClient] = useState('');
   const [startDate, setStartDate] = useState('');
 
@@ -475,6 +474,7 @@ function WorkflowTemplateCard({ template, onClick }: { template: WorkflowTemplat
 // =========================================================
 
 export default function TemplatesPage() {
+  const { TASK_TEMPLATES = [], TEAM_MEMBERS = [], WORKFLOW_TEMPLATES = [], CLIENTS = [] } = useAppData();
   const [activeTab, setActiveTab] = useState<'workflow' | 'task'>('workflow');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');

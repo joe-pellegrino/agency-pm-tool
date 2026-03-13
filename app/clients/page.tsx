@@ -1,18 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  CLIENTS, CLIENT_SERVICES, SERVICE_STRATEGIES, PROJECTS, TASKS, STRATEGIES,
-} from '@/lib/data';
 import TopBar from '@/components/layout/TopBar';
+import { useAppData } from '@/lib/contexts/AppDataContext';
+import type { ClientService, ServiceStrategy } from '@/lib/data';
 import {
   ChevronRight, Activity, FolderOpen, CheckCircle, Target, Zap,
 } from 'lucide-react';
 
-function getClientHealth(clientId: string): number {
-  const css = CLIENT_SERVICES.filter(cs => cs.clientId === clientId && cs.status === 'active');
+function getClientHealth(
+  clientId: string,
+  clientServices: ClientService[],
+  serviceStrategies: ServiceStrategy[],
+): number {
+  const css = clientServices.filter(cs => cs.clientId === clientId && cs.status === 'active');
   const scores = css.flatMap(cs => {
-    const ss = SERVICE_STRATEGIES.find(s => s.clientServiceId === cs.id);
+    const ss = serviceStrategies.find(s => s.clientServiceId === cs.id);
     if (!ss) return [];
     return ss.kpis.map(kpi => {
       const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('cpc') || kpi.name.toLowerCase().includes('pos');
@@ -37,6 +40,27 @@ function getHealthLabel(score: number): string {
 }
 
 export default function ClientsPage() {
+  const {
+    CLIENTS = [],
+    CLIENT_SERVICES = [],
+    SERVICE_STRATEGIES = [],
+    PROJECTS = [],
+    TASKS = [],
+    STRATEGIES = [],
+    loading,
+  } = useAppData();
+
+  if (loading) {
+    return (
+      <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
+        <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-gray-900">
       <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
@@ -44,7 +68,7 @@ export default function ClientsPage() {
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {CLIENTS.map(client => {
-            const health = getClientHealth(client.id);
+            const health = getClientHealth(client.id, CLIENT_SERVICES, SERVICE_STRATEGIES);
             const activeServices = CLIENT_SERVICES.filter(cs => cs.clientId === client.id && cs.status === 'active').length;
             const planningServices = CLIENT_SERVICES.filter(cs => cs.clientId === client.id && cs.status === 'planning').length;
             const activeProjects = PROJECTS.filter(p => p.clientId === client.id && p.status === 'active').length;
@@ -57,11 +81,8 @@ export default function ClientsPage() {
                 href={`/clients/${client.id}`}
                 className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-600 transition-all group"
               >
-                {/* Color bar */}
                 <div className="h-1.5" style={{ backgroundColor: client.color }} />
-
                 <div className="p-5">
-                  {/* Header */}
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
                       <div
@@ -82,7 +103,6 @@ export default function ClientsPage() {
                     </div>
                   </div>
 
-                  {/* Strategy */}
                   {strategy && (
                     <div
                       className="flex items-center gap-2 text-xs rounded-lg px-3 py-2 mb-4"
@@ -94,7 +114,6 @@ export default function ClientsPage() {
                     </div>
                   )}
 
-                  {/* Stats grid */}
                   <div className="grid grid-cols-4 gap-2 text-center">
                     {[
                       { label: 'Services', value: activeServices, icon: Zap },
@@ -109,7 +128,6 @@ export default function ClientsPage() {
                     ))}
                   </div>
 
-                  {/* Footer */}
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <span className="text-xs text-gray-400">View services & strategy</span>
                     <ChevronRight size={16} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
