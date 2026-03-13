@@ -92,11 +92,11 @@ export default function Sidebar() {
       }}
       className={`${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
     >
-      {/* Brand row inside sidebar (matches spec: logo + collapse) */}
+      {/* Mobile close button — only on mobile */}
       <div
+        className="lg:hidden"
         style={{
-          padding: '0 16px',
-          height: '56px',
+          padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -104,32 +104,9 @@ export default function Sidebar() {
           flexShrink: 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Delta/triangle logo mark */}
-          <div
-            style={{
-              width: '28px',
-              height: '28px',
-              backgroundColor: '#3B5BDB',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontSize: '14px',
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            ▲
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: 700, color: '#1E2A3A', letterSpacing: 0 }}>
-            RJ Media
-          </span>
-        </div>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#1E2A3A' }}>Menu</span>
         <button
           onClick={closeMobile}
-          className="lg:hidden"
           style={{ color: '#A0AAB8', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
           aria-label="Close menu"
         >
