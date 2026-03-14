@@ -84,7 +84,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   };
 
   const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
-  const labelClass = 'block text-sm font-medium text-gray-900 dark:text-white mb-1';
+  const selectClass = 'mt-1 block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500';
+  const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
 
   return (
     <Drawer
@@ -118,7 +119,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
         {!project && (
           <div>
             <label className={labelClass}>Client</label>
-            <select value={form.clientId} onChange={e => set('clientId', e.target.value)} className={inputClass}>
+            <select value={form.clientId} onChange={e => set('clientId', e.target.value)} className={selectClass}>
               {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
@@ -150,7 +151,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
         <div>
           <label className={labelClass}>Status</label>
-          <select value={form.status} onChange={e => set('status', e.target.value)} className={inputClass}>
+          <select value={form.status} onChange={e => set('status', e.target.value)} className={selectClass}>
             {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
@@ -174,7 +175,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
         <div>
           <label className={labelClass}>Workflow Template (optional)</label>
-          <select value={form.workflowTemplateId} onChange={e => set('workflowTemplateId', e.target.value)} className={inputClass}>
+          <select value={form.workflowTemplateId} onChange={e => set('workflowTemplateId', e.target.value)} className={selectClass}>
             <option value="">None</option>
             {WORKFLOW_TEMPLATES.map(wt => <option key={wt.id} value={wt.id}>{wt.name}</option>)}
           </select>
@@ -182,7 +183,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
         <div>
           <label className={labelClass}>Linked Strategy (optional)</label>
-          <select value={form.strategyId} onChange={e => set('strategyId', e.target.value)} className={inputClass}>
+          <select value={form.strategyId} onChange={e => set('strategyId', e.target.value)} className={selectClass}>
             <option value="">None</option>
             {STRATEGIES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>

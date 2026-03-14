@@ -112,7 +112,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
   };
 
   const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
-  const labelClass = 'block text-sm font-medium text-gray-900 dark:text-white mb-1';
+  const selectClass = 'mt-1 block w-full pl-3 pr-10 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500';
+  const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
 
   return (
     <Drawer
@@ -162,7 +163,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             <select
               value={form.clientId}
               onChange={e => set('clientId', e.target.value)}
-              className={`${inputClass} ${errors.clientId ? 'border-red-400' : ''}`}
+              className={`${selectClass} ${errors.clientId ? 'border-red-400' : ''}`}
             >
               {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -173,7 +174,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             <select
               value={form.assigneeId}
               onChange={e => set('assigneeId', e.target.value)}
-              className={`${inputClass} ${errors.assigneeId ? 'border-red-400' : ''}`}
+              className={`${selectClass} ${errors.assigneeId ? 'border-red-400' : ''}`}
             >
               {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
@@ -184,13 +185,13 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Status</label>
-            <select value={form.status} onChange={e => set('status', e.target.value)} className={inputClass}>
+            <select value={form.status} onChange={e => set('status', e.target.value)} className={selectClass}>
               {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
           <div>
             <label className={labelClass}>Priority</label>
-            <select value={form.priority} onChange={e => set('priority', e.target.value)} className={inputClass}>
+            <select value={form.priority} onChange={e => set('priority', e.target.value)} className={selectClass}>
               {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
@@ -219,7 +220,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
 
         <div>
           <label className={labelClass}>Type</label>
-          <select value={form.type} onChange={e => set('type', e.target.value)} className={inputClass}>
+          <select value={form.type} onChange={e => set('type', e.target.value)} className={selectClass}>
             {TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
           </select>
         </div>
@@ -227,7 +228,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
         {!task && (
           <div>
             <label className={labelClass}>Project (optional)</label>
-            <select value={form.projectId} onChange={e => set('projectId', e.target.value)} className={inputClass}>
+            <select value={form.projectId} onChange={e => set('projectId', e.target.value)} className={selectClass}>
               <option value="">No project</option>
               {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>

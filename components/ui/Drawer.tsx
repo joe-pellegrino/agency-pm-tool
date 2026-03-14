@@ -55,7 +55,7 @@ export default function Drawer({
       {/* Backdrop with smooth fade transition */}
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/30 transition-opacity ease-in-out data-[closed]:opacity-0 data-[enter]:duration-500 data-[leave]:duration-300"
+        className="fixed inset-0 bg-black/30 transition-opacity ease-in-out duration-500 sm:duration-700 data-[closed]:opacity-0"
         style={{ zIndex: 999 }}
       />
 
@@ -67,7 +67,7 @@ export default function Drawer({
             <DialogPanel
               ref={drawerRef}
               transition
-              className="pointer-events-auto relative ml-auto flex flex-col size-full max-w-md sm:max-w-lg bg-white dark:bg-gray-900 shadow-2xl shadow-black/20 transform transition-transform ease-in-out data-[closed]:translate-x-full data-[enter]:duration-500 data-[leave]:duration-300"
+              className="pointer-events-auto relative ml-auto flex flex-col size-full max-w-md sm:max-w-lg bg-white dark:bg-gray-900 shadow-2xl shadow-black/20 transform transition ease-in-out duration-500 sm:duration-700 data-[closed]:translate-x-full"
             >
               {/* Header - variant-dependent */}
               {isCreateVariant ? (

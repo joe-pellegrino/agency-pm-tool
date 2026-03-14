@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/forms";
 @variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 /* ─── AirControl Design System — Spec-Accurate Theme ─────────────────────── */
