@@ -635,7 +635,7 @@ function StrategyView({
       {/* Client Strategy Header */}
       <div
         className="rounded-xl p-4 sm:p-5 mb-6 border"
-        style={{ backgroundColor: client.color + '08', borderColor: client.color + '30' }}
+        style={{ backgroundColor: 'var(--color-white)', borderColor: 'var(--color-border)' }}
       >
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
