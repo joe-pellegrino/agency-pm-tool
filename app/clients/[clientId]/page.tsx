@@ -70,14 +70,14 @@ function TaskRow({ task }: { task: Task }) {
     todo: 'To Do', inprogress: 'In Progress', review: 'Review', done: 'Done',
   };
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+    <div className="flex items-center gap-3 py-2 px-3 rounded border border-gray-200 dark:border-gray-700 mb-1" style={{ backgroundColor: 'white' }}>
       <div className="flex-1 min-w-0">
         <span className="text-sm text-gray-700 dark:text-gray-300 truncate block">{task.title}</span>
       </div>
       <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${statusColors[task.status]}`}>
         {statusLabels[task.status]}
       </span>
-      <span className="text-[10px] text-gray-400 flex-shrink-0">{task.dueDate}</span>
+      <span className="text-[10px] text-gray-500 flex-shrink-0 whitespace-nowrap">{task.dueDate}</span>
     </div>
   );
 }
@@ -650,17 +650,9 @@ export default function ClientPage() {
         {/* Client header card */}
         <div
           className="rounded-2xl p-5 sm:p-6 mb-6 border"
-          style={{ backgroundColor: client.color + '08', borderColor: client.color + '30' }}
+          style={{ backgroundColor: 'white', borderColor: 'var(--color-border)' }}
         >
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-            {/* Logo */}
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
-              style={{ backgroundColor: client.color }}
-            >
-              {client.logo}
-            </div>
-
             {/* Info */}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{client.name}</h1>
@@ -703,7 +695,7 @@ export default function ClientPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t" style={{ borderColor: client.color + '20' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
             {[
               { label: 'Active Services', value: activeServices.filter(cs => cs.status === 'active').length, icon: Zap },
               { label: 'Active Projects', value: PROJECTS.filter(p => p.clientId === clientId && p.status === 'active').length, icon: FolderOpen },
@@ -762,6 +754,7 @@ export default function ClientPage() {
                     <div
                       key={proj.id}
                       className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                      style={{ backgroundColor: 'white' }}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
