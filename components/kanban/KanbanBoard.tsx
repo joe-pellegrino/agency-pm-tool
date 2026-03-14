@@ -435,7 +435,7 @@ function TaskDetailContent({
           {activeTab === 'comments' ? (
             <TaskComments taskId={task.id} />
           ) : (
-          <div className="space-y-5">
+            <div className="space-y-5">
           {/* Meta row */}
           <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: 'var(--color-text-muted)' }}>
             {/* Editable assignee */}
@@ -653,6 +653,7 @@ function TaskDetailContent({
               ) : (
                 <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>No time entries yet. Start the timer or add a manual entry.</p>
               )}
+            </div>
             </div>
             </div>
           )}
