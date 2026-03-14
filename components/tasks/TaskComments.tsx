@@ -147,45 +147,37 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
                 <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {group.comments.map(comment => {
                   const author = TEAM_MEMBERS.find(m => m.id === comment.author_id);
                   const initials = author?.initials || comment.author_id.slice(0, 2).toUpperCase();
-                  const color = author?.color || 'var(--color-primary)';
+                  const color = author?.color || '#000000';
                   const name = author?.name || comment.author_id;
 
                   return (
-                    <div key={comment.id} className="flex items-start gap-3">
+                    <div key={comment.id} className="flex space-x-3">
                       {/* Avatar */}
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ backgroundColor: color }}
-                      >
-                        {initials}
+                      <div className="shrink-0">
+                        <span
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-xs font-medium text-white"
+                          style={{ backgroundColor: color }}
+                        >
+                          {initials}
+                        </span>
                       </div>
-                      {/* Bubble */}
-                      <div
-                        className="flex-1 rounded-lg px-5 py-4"
-                        style={{
-                          backgroundColor: 'var(--color-white)',
-                          border: '1px solid var(--color-border)',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                        }}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                      {/* Content - Tailwind UI activity feed style */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                          <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
                             {name}
                           </span>
-                          <span
-                            className="text-[11px] uppercase font-medium"
-                            style={{ color: 'var(--color-text-muted)', letterSpacing: '0.5px' }}
-                          >
-                            {timeAgo(comment.created_at)}
-                          </span>
-                        </div>
-                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
-                          {comment.text}
                         </p>
+                        <div className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                          <p>{comment.text}</p>
+                        </div>
+                        <div className="mt-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                          {timeAgo(comment.created_at)}
+                        </div>
                       </div>
                     </div>
                   );
@@ -196,51 +188,63 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
         </div>
       )}
 
-      {/* Comment input */}
-      <form onSubmit={handleSubmit} className="flex items-start gap-3">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-          style={{ backgroundColor: currentColor }}
-        >
-          {currentInitials}
-        </div>
-        <div className="flex-1 flex items-center gap-2">
-          <input
-            type="text"
-            value={text}
-            onChange={e => setText(e.target.value)}
-            placeholder="Add a comment..."
-            className="flex-1"
-            style={{
-              height: '44px',
-              border: '1px solid #D0D6E0',
-              borderRadius: '8px',
-              backgroundColor: 'var(--color-white)',
-              fontSize: '14px',
-              color: 'var(--color-text-primary)',
-              padding: '0 14px',
-              outline: 'none',
-            }}
-            onFocus={e => {
-              e.currentTarget.style.borderColor = 'var(--color-primary)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)';
-            }}
-            onBlur={e => {
-              e.currentTarget.style.borderColor = '#D0D6E0';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-            disabled={submitting}
-          />
-          <button
-            type="submit"
-            disabled={!text.trim() || submitting}
-            className="flex items-center justify-center w-10 h-10 rounded-lg text-white transition-colors flex-shrink-0"
-            style={{ backgroundColor: text.trim() && !submitting ? 'var(--color-primary)' : '#D0D6E0' }}
+      {/* Comment input - Tailwind UI "with avatar and action" pattern */}
+      <div className="flex items-start space-x-4">
+        {/* Left: commenter avatar */}
+        <div className="shrink-0">
+          <span
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-xs font-medium text-white"
+            style={{ backgroundColor: currentColor }}
           >
-            {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-          </button>
+            {currentInitials}
+          </span>
         </div>
-      </form>
+        {/* Right: textarea + actions */}
+        <div className="min-w-0 flex-1">
+          <form onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="task-comment" className="sr-only">
+                Add your comment
+              </label>
+              <textarea
+                id="task-comment"
+                name="task-comment"
+                rows={3}
+                value={text}
+                onChange={e => setText(e.target.value)}
+                disabled={submitting}
+                placeholder="Add a comment..."
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: 'var(--color-white)',
+                  color: 'var(--color-text-primary)',
+                }}
+              />
+            </div>
+            <div className="mt-2 flex justify-between">
+              {/* Left side - optional action buttons (skipped for now) */}
+              <div />
+              {/* Right side - submit button */}
+              <div className="shrink-0">
+                <button
+                  type="submit"
+                  disabled={!text.trim() || submitting}
+                  className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin mr-2" />
+                      Posting...
+                    </>
+                  ) : (
+                    'Post'
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
