@@ -4,6 +4,8 @@ import { AlertCircle, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import DashboardView from './DashboardView';
 import ExecutiveDashboard from './ExecutiveDashboard';
+import TeamLoadCard from '@/components/dashboard/TeamLoadCard';
+import StatCardLink from '@/components/dashboard/StatCardLink';
 
 function DonutRing({ pct, color = 'var(--color-primary)' }: { pct: number; color?: string }) {
   const r = 18;
@@ -101,10 +103,18 @@ export default async function DashboardPage() {
     <>
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Tasks"   value={totalTasks}      sub="Across all clients"   pct={totalTasks > 0 ? Math.min(100, Math.round((totalTasks/50)*100)) : 0} donutColor="var(--color-primary)" />
-        <StatCard label="In Progress"   value={inProgressTasks} sub="Currently active"     pct={totalTasks > 0 ? Math.round((inProgressTasks/totalTasks)*100) : 0} donutColor="#F59F00" />
-        <StatCard label="Completed"     value={doneTasks}       sub={`${totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0}% completion rate`} pct={totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0} donutColor="#2BB673" />
-        <StatCard label="Urgent Items"  value={urgentTasks}     sub="Needs attention"      pct={totalTasks > 0 ? Math.round((urgentTasks/totalTasks)*100) : 0} donutColor="#E03131" />
+        <StatCardLink href="/kanban?status=todo,inprogress,review">
+          <StatCard label="Total Tasks"   value={totalTasks}      sub="Across all clients"   pct={totalTasks > 0 ? Math.min(100, Math.round((totalTasks/50)*100)) : 0} donutColor="var(--color-primary)" />
+        </StatCardLink>
+        <StatCardLink href="/kanban?status=inprogress">
+          <StatCard label="In Progress"   value={inProgressTasks} sub="Currently active"     pct={totalTasks > 0 ? Math.round((inProgressTasks/totalTasks)*100) : 0} donutColor="#F59F00" />
+        </StatCardLink>
+        <StatCardLink href="/kanban?status=done">
+          <StatCard label="Completed"     value={doneTasks}       sub={`${totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0}% completion rate`} pct={totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0} donutColor="#2BB673" />
+        </StatCardLink>
+        <StatCardLink href="/kanban?priority=Urgent">
+          <StatCard label="Urgent Items"  value={urgentTasks}     sub="Needs attention"      pct={totalTasks > 0 ? Math.round((urgentTasks/totalTasks)*100) : 0} donutColor="#E03131" />
+        </StatCardLink>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -162,58 +172,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Team Activity */}
-        <div
-          className="rounded-lg p-5 sm:p-6"
-          style={{
-            backgroundColor: 'var(--color-white)',
-            border: '1px solid var(--color-border)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
-          }}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-semibold text-lg flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-              <Users size={15} style={{ color: 'var(--color-primary)' }} />
-              Team Load
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {TEAM_MEMBERS.map(member => {
-              const memberTasks = TASKS.filter(
-                t => t.assigneeId === member.id && t.status !== 'done' && !t.isMilestone
-              );
-              const urgent = memberTasks.filter(t => t.priority === 'Urgent').length;
-              const maxTasks = 10;
-              const pct = Math.min(100, (memberTasks.length / maxTasks) * 100);
-              return (
-                <div key={member.id} className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: member.color }}
-                  >
-                    {member.initials}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{member.name.split(' ')[0]}</span>
-                      <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{memberTasks.length} tasks</span>
-                    </div>
-                    <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-donut-track)' }}>
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${pct}%`, backgroundColor: 'var(--color-primary)' }}
-                      />
-                    </div>
-                    {urgent > 0 && (
-                      <span className="inline-flex items-center gap-0.5 text-xs mt-0.5" style={{ color: '#DC2626' }}>
-                        <AlertCircle size={10} /> {urgent} urgent
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <TeamLoadCard teamMembers={TEAM_MEMBERS} tasks={TASKS} />
       </div>
 
       {/* Recent Tasks */}
