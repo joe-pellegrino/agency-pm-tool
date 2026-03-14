@@ -132,10 +132,35 @@ export async function upsertBudgetEntry(rowId: string, month: number, amount: nu
         row_id: rowId,
         month,
         amount: parseFloat(amount.toString()),
-        updated_at: new Date().toISOString(),
       },
-    ])
-    .select();
+    ]);
+
+  if (error) throw error;
+}
+
+/**
+ * Bulk upsert budget entries for multiple months
+ */
+export async function bulkUpsertBudgetEntries(
+  rowId: string,
+  fromMonth: number,
+  toMonth: number,
+  amount: number,
+): Promise<void> {
+  const supabase = createServerClient();
+
+  const entries = [];
+  for (let month = fromMonth; month <= toMonth; month++) {
+    entries.push({
+      row_id: rowId,
+      month,
+      amount: parseFloat(amount.toString()),
+    });
+  }
+
+  const { error } = await supabase
+    .from('budget_entries')
+    .upsert(entries);
 
   if (error) throw error;
 }

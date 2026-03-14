@@ -16,6 +16,7 @@ import {
   deleteBudgetRow,
   updateBudgetRowLabel,
   upsertBudgetEntry,
+  bulkUpsertBudgetEntries,
 } from '@/lib/actions-budget';
 
 const MONTHS = [
@@ -54,6 +55,8 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
   const [isPending, startTransition] = useTransition();
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
+  const [draftValues, setDraftValues] = useState<Record<string, string>>({});
+  const [focusedCell, setFocusedCell] = useState<{ rowId: string; month: number } | null>(null);
 
   // Load budget data
   const loadBudget = useCallback(async (selectedYear: number) => {
@@ -77,8 +80,17 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
   };
 
   const handleCellChange = (rowId: string, month: number, value: string) => {
-    if (!budget) return;
+    // Just update draft value, don't save yet
+    const key = `${rowId}-${month}`;
+    setDraftValues(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
+  const handleCellBlur = (rowId: string, month: number) => {
+    const key = `${rowId}-${month}`;
+    const value = draftValues[key] ?? '';
     const amount = parseFloat(value) || 0;
 
     startTransition(async () => {
@@ -89,6 +101,40 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
         toast.success('Budget updated');
       } catch (err) {
         toast.error('Failed to update: ' + (err as Error).message);
+      }
+    });
+  };
+
+  const handleApplyToFutureMonths = (rowId: string, currentMonth: number) => {
+    const key = `${rowId}-${currentMonth}`;
+    const value = draftValues[key] ?? '';
+    const amount = parseFloat(value) || 0;
+
+    if (amount === 0) {
+      toast.warning('Enter a value first');
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        // Apply from next month through December
+        const fromMonth = currentMonth + 1;
+        const toMonth = 12;
+        
+        if (fromMonth > 12) {
+          toast.warning('No future months to apply to');
+          return;
+        }
+
+        await bulkUpsertBudgetEntries(rowId, fromMonth, toMonth, amount);
+        // Also save the current month
+        await upsertBudgetEntry(rowId, currentMonth, amount);
+        // Reload the budget to reflect changes
+        await loadBudget(year);
+        toast.success(`Applied $${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} to months ${fromMonth}-12`);
+        setFocusedCell(null);
+      } catch (err) {
+        toast.error('Failed to apply: ' + (err as Error).message);
       }
     });
   };
@@ -264,19 +310,42 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
                 {MONTHS.map((_, monthIdx) => {
                   const month = monthIdx + 1;
                   const entry = row.entries.find(e => e.month === month);
+                  const key = `${row.id}-${month}`;
+                  const draftValue = draftValues[key];
+                  const displayValue = draftValue !== undefined ? draftValue : (entry?.amount?.toString() || '');
+                  const isFocused = focusedCell?.rowId === row.id && focusedCell?.month === month;
+                  const hasValue = parseFloat(displayValue) > 0;
+
                   return (
                     <td
-                      key={`${row.id}-${month}`}
-                      className="px-2 py-2 border-r border-gray-200 dark:border-gray-700 text-center"
+                      key={key}
+                      className="px-2 py-2 border-r border-gray-200 dark:border-gray-700 text-center relative"
                     >
-                      <input
-                        type="number"
-                        value={entry?.amount || ''}
-                        onChange={e => handleCellChange(row.id, month, e.target.value)}
-                        disabled={isPending}
-                        placeholder="0"
-                        className="w-full px-2 py-1 text-right text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                      />
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={displayValue}
+                          onChange={e => handleCellChange(row.id, month, e.target.value)}
+                          onBlur={() => {
+                            handleCellBlur(row.id, month);
+                            setFocusedCell(null);
+                          }}
+                          onFocus={() => setFocusedCell({ rowId: row.id, month })}
+                          disabled={isPending}
+                          placeholder="0"
+                          className="w-full px-2 py-1 text-right text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                        />
+                        {isFocused && hasValue && (
+                          <button
+                            onClick={() => handleApplyToFutureMonths(row.id, month)}
+                            disabled={isPending}
+                            className="absolute top-full left-0 right-0 mt-1 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white rounded whitespace-nowrap z-20 font-medium transition-colors"
+                            title="Apply this value to all remaining months"
+                          >
+                            Apply to future
+                          </button>
+                        )}
+                      </div>
                     </td>
                   );
                 })}
