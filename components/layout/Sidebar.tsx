@@ -397,6 +397,14 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
 
 export default function Sidebar() {
   const { isCollapsed, isMobileOpen, closeMobile } = useSidebar()
+  const pathname = usePathname()
+
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    if (isMobileOpen) {
+      closeMobile()
+    }
+  }, [pathname, isMobileOpen, closeMobile])
 
   return (
     <>
