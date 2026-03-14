@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ClientService, ServiceStrategy, Project, Task, Service } from '@/lib/data';
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { upsertClientService, removeClientService, updateClient } from '@/lib/actions';
+import { getBudgetProgress } from '@/lib/actions-budget';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Drawer from '@/components/ui/Drawer';
 import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
@@ -787,6 +788,27 @@ export default function ClientPage() {
   const [activeTab, setActiveTab] = useState<ClientTab>('overview');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isProjectDrawerOpen, setIsProjectDrawerOpen] = useState(false);
+  const [budgetProgress, setBudgetProgress] = useState<{ totalBudget: number; spentToDate: number; percentage: number } | null>(null);
+  const [budgetLoading, setBudgetLoading] = useState(false);
+
+  // Fetch budget progress on mount
+  useEffect(() => {
+    if (!clientId) return;
+    
+    const fetchBudget = async () => {
+      setBudgetLoading(true);
+      try {
+        const progress = await getBudgetProgress(clientId);
+        setBudgetProgress(progress);
+      } catch (err) {
+        console.error('Failed to fetch budget progress:', err);
+      } finally {
+        setBudgetLoading(false);
+      }
+    };
+
+    fetchBudget();
+  }, [clientId]);
 
   const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === clientId), [clientId, STRATEGIES]);
 
@@ -938,6 +960,38 @@ export default function ClientPage() {
               </div>
             ))}
           </div>
+
+          {/* Budget Progress Bar */}
+          {budgetProgress && (
+            <div className="mt-5 pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
+              <div className="mb-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <DollarSign size={14} className="text-[#3B5BDB]" />
+                    This Year's Budget
+                  </h3>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {budgetProgress.percentage}%
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  ${budgetProgress.spentToDate.toLocaleString('en-US', { maximumFractionDigits: 0 })} of ${budgetProgress.totalBudget.toLocaleString('en-US', { maximumFractionDigits: 0 })} budgeted
+                </p>
+              </div>
+              <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className={`h-2.5 rounded-full transition-all ${
+                    budgetProgress.percentage < 80
+                      ? 'bg-green-500'
+                      : budgetProgress.percentage < 100
+                      ? 'bg-amber-500'
+                      : 'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.min(budgetProgress.percentage, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tab Bar */}

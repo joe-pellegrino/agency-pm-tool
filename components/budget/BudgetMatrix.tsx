@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useTransition } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
   ChevronLeft,
@@ -52,7 +52,7 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [budget, setBudget] = useState<BudgetMatrix | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
@@ -88,24 +88,31 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
     }));
   };
 
-  const handleCellBlur = (rowId: string, month: number) => {
+  const handleCellBlur = async (rowId: string, month: number) => {
     const key = `${rowId}-${month}`;
     const value = draftValues[key] ?? '';
     const amount = parseFloat(value) || 0;
 
-    startTransition(async () => {
-      try {
-        await upsertBudgetEntry(rowId, month, amount);
-        // Reload the budget to reflect changes
-        await loadBudget(year);
-        toast.success('Budget updated');
-      } catch (err) {
-        toast.error('Failed to update: ' + (err as Error).message);
-      }
-    });
+    setIsSaving(true);
+    try {
+      await upsertBudgetEntry(rowId, month, amount);
+      // Clear draft value after successful save
+      setDraftValues(prev => {
+        const updated = { ...prev };
+        delete updated[key];
+        return updated;
+      });
+      // Reload the budget to reflect changes
+      await loadBudget(year);
+      toast.success('Budget updated');
+    } catch (err) {
+      toast.error('Failed to update: ' + (err as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleApplyToFutureMonths = (rowId: string, currentMonth: number) => {
+  const handleApplyToFutureMonths = async (rowId: string, currentMonth: number) => {
     const key = `${rowId}-${currentMonth}`;
     const value = draftValues[key] ?? '';
     const amount = parseFloat(value) || 0;
@@ -115,54 +122,64 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
       return;
     }
 
-    startTransition(async () => {
-      try {
-        // Apply from next month through December
-        const fromMonth = currentMonth + 1;
-        const toMonth = 12;
-        
-        if (fromMonth > 12) {
-          toast.warning('No future months to apply to');
-          return;
-        }
-
-        await bulkUpsertBudgetEntries(rowId, fromMonth, toMonth, amount);
-        // Also save the current month
-        await upsertBudgetEntry(rowId, currentMonth, amount);
-        // Reload the budget to reflect changes
-        await loadBudget(year);
-        toast.success(`Applied $${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} to months ${fromMonth}-12`);
-        setFocusedCell(null);
-      } catch (err) {
-        toast.error('Failed to apply: ' + (err as Error).message);
+    setIsSaving(true);
+    try {
+      // Apply from next month through December
+      const fromMonth = currentMonth + 1;
+      const toMonth = 12;
+      
+      if (fromMonth > 12) {
+        toast.warning('No future months to apply to');
+        setIsSaving(false);
+        return;
       }
-    });
+
+      await bulkUpsertBudgetEntries(rowId, fromMonth, toMonth, amount);
+      // Also save the current month
+      await upsertBudgetEntry(rowId, currentMonth, amount);
+      // Clear draft values after successful save
+      setDraftValues(prev => {
+        const updated = { ...prev };
+        delete updated[key];
+        return updated;
+      });
+      // Reload the budget to reflect changes
+      await loadBudget(year);
+      toast.success(`Applied $${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} to months ${fromMonth}-12`);
+      setFocusedCell(null);
+    } catch (err) {
+      toast.error('Failed to apply: ' + (err as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleAddRow = () => {
+  const handleAddRow = async () => {
     if (!budget) return;
 
-    startTransition(async () => {
-      try {
-        await addBudgetRow(budget.id, 'New Row');
-        await loadBudget(year);
-        toast.success('Row added');
-      } catch (err) {
-        toast.error('Failed to add row: ' + (err as Error).message);
-      }
-    });
+    setIsSaving(true);
+    try {
+      await addBudgetRow(budget.id, 'New Row');
+      await loadBudget(year);
+      toast.success('Row added');
+    } catch (err) {
+      toast.error('Failed to add row: ' + (err as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDeleteRow = (rowId: string) => {
-    startTransition(async () => {
-      try {
-        await deleteBudgetRow(rowId);
-        await loadBudget(year);
-        toast.success('Row deleted');
-      } catch (err) {
-        toast.error('Failed to delete row: ' + (err as Error).message);
-      }
-    });
+  const handleDeleteRow = async (rowId: string) => {
+    setIsSaving(true);
+    try {
+      await deleteBudgetRow(rowId);
+      await loadBudget(year);
+      toast.success('Row deleted');
+    } catch (err) {
+      toast.error('Failed to delete row: ' + (err as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleStartEditLabel = (rowId: string, currentLabel: string) => {
@@ -170,18 +187,19 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
     setEditingLabel(currentLabel);
   };
 
-  const handleSaveLabel = (rowId: string) => {
+  const handleSaveLabel = async (rowId: string) => {
     if (editingLabel.trim()) {
-      startTransition(async () => {
-        try {
-          await updateBudgetRowLabel(rowId, editingLabel.trim());
-          await loadBudget(year);
-          setEditingRowId(null);
-          toast.success('Row renamed');
-        } catch (err) {
-          toast.error('Failed to rename: ' + (err as Error).message);
-        }
-      });
+      setIsSaving(true);
+      try {
+        await updateBudgetRowLabel(rowId, editingLabel.trim());
+        await loadBudget(year);
+        setEditingRowId(null);
+        toast.success('Row renamed');
+      } catch (err) {
+        toast.error('Failed to rename: ' + (err as Error).message);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -297,7 +315,7 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
                     )}
                     <button
                       onClick={() => handleDeleteRow(row.id)}
-                      disabled={isPending}
+                      disabled={isSaving}
                       className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors flex-shrink-0"
                       title="Delete row"
                     >
@@ -331,14 +349,14 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
                             setFocusedCell(null);
                           }}
                           onFocus={() => setFocusedCell({ rowId: row.id, month })}
-                          disabled={isPending}
+                          disabled={isSaving}
                           placeholder="0"
                           className="w-full px-2 py-1 text-right text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                         />
                         {isFocused && hasValue && (
                           <button
                             onClick={() => handleApplyToFutureMonths(row.id, month)}
-                            disabled={isPending}
+                            disabled={isSaving}
                             className="absolute top-full left-0 right-0 mt-1 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white rounded whitespace-nowrap z-20 font-medium transition-colors"
                             title="Apply this value to all remaining months"
                           >
@@ -381,10 +399,10 @@ export default function BudgetMatrixComponent({ clientId }: { clientId: string }
       {/* Add Row Button */}
       <button
         onClick={handleAddRow}
-        disabled={isPending}
+        disabled={isSaving}
         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-lg font-medium transition-colors"
       >
-        {isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
         Add Row
       </button>
     </div>

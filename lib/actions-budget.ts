@@ -254,3 +254,64 @@ export async function updateBudgetRowLabel(rowId: string, label: string): Promis
     entries: row.budget_entries || [],
   };
 }
+
+/**
+ * Get budget progress for current year
+ * Returns total budgeted, spent so far (months 1 to current), and percentage
+ */
+export async function getBudgetProgress(clientId: string): Promise<{
+  totalBudget: number;
+  spentToDate: number;
+  percentage: number;
+  exists: boolean;
+} | null> {
+  const supabase = createServerClient();
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1; // 1-indexed
+
+  // Get budget for this year with all rows and entries
+  const { data: budget, error: budgetError } = await supabase
+    .from('client_budgets')
+    .select(`
+      id,
+      budget_rows(
+        id,
+        budget_entries(month, amount)
+      )
+    `)
+    .eq('client_id', clientId)
+    .eq('year', currentYear)
+    .maybeSingle();
+
+  if (budgetError && budgetError.code !== 'PGRST116') {
+    throw budgetError;
+  }
+
+  if (!budget) {
+    return null; // No budget exists for this year
+  }
+
+  // Calculate totals
+  const allEntries: Array<{ month: number; amount: number }> = [];
+  const budgetRows = (budget.budget_rows || []) as Array<{ budget_entries: Array<{ month: number; amount: number }> }>;
+  
+  budgetRows.forEach(row => {
+    (row.budget_entries || []).forEach(entry => {
+      allEntries.push(entry);
+    });
+  });
+
+  const totalBudget = allEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const spentToDate = allEntries
+    .filter(e => e.month <= currentMonth)
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const percentage = totalBudget > 0 ? Math.round((spentToDate / totalBudget) * 100) : 0;
+
+  return {
+    totalBudget,
+    spentToDate,
+    percentage,
+    exists: true,
+  };
+}
