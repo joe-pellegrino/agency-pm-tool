@@ -654,6 +654,7 @@ function TaskDetailContent({
                 <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>No time entries yet. Start the timer or add a manual entry.</p>
               )}
             </div>
+            </div>
           )}
         </div>
       </div>
