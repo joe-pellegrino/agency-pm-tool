@@ -9,13 +9,14 @@ import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, Zap, ArrowLeft,
-  X, Loader2, Megaphone, Edit2, Save,
+  X, Loader2, Megaphone, Edit2, Save, DollarSign,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { upsertClientService, removeClientService, updateClient } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Drawer from '@/components/ui/Drawer';
 import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
+import BudgetMatrix from '@/components/budget/BudgetMatrix';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -664,13 +665,14 @@ function ProjectDetailDrawer({
   );
 }
 
-type ClientTab = 'overview' | 'projects' | 'tasks' | 'paid-ads' | 'documents';
+type ClientTab = 'overview' | 'projects' | 'tasks' | 'paid-ads' | 'budget' | 'documents';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
   { id: 'overview', label: 'Overview', icon: Activity },
   { id: 'projects', label: 'Projects', icon: FolderOpen },
   { id: 'tasks', label: 'Tasks', icon: CheckCircle },
   { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
+  { id: 'budget', label: 'Budget', icon: DollarSign },
 ];
 
 // ── Client Info Editor ───────────────────────────────────────────────────────
@@ -961,6 +963,16 @@ export default function ClientPage() {
         </div>
 
         {/* Tab Content */}
+        {activeTab === 'budget' && (
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <DollarSign size={18} className="text-[#3B5BDB]" />
+              Budget Matrix
+            </h2>
+            <BudgetMatrix clientId={clientId} />
+          </div>
+        )}
+
         {activeTab === 'paid-ads' && (
           <PaidAdsDashboard clientId={clientId} clientName={client.name} />
         )}
