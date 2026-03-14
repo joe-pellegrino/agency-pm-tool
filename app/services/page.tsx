@@ -212,7 +212,7 @@ function MatrixCell({ cs, clientId, serviceId }: { cs: ClientService | null; cli
           onCancel={() => setShowRemoveConfirm(false)}
         />
       )}
-      <div className={`relative h-20 rounded-lg border flex flex-col justify-between p-2.5 transition-all group/cell ${getCellBg(health, cs.status)} ${getCellBorder(health, cs.status)}`}>
+      <div className={`relative h-20 rounded-lg border flex flex-col justify-between p-2.5 transition-all group/cell bg-white ${getCellBorder(health, cs.status)}`}>
         {/* Remove button on hover */}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowRemoveConfirm(true); }}
@@ -223,13 +223,13 @@ function MatrixCell({ cs, clientId, serviceId }: { cs: ClientService | null; cli
         </button>
         <Link href={`/clients/${cs.clientId}`} className="absolute inset-0 rounded-lg" />
         <div className="relative flex items-start justify-between pointer-events-none">
+          {health !== null && (
+            <span className={`text-xs font-bold ${getHealthColor(health)}`}>{health}%</span>
+          )}
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${statusCfg.color}`}>
             <span className={`w-1 h-1 rounded-full ${statusCfg.dot}`} />
             {statusCfg.label}
           </span>
-          {health !== null && (
-            <span className={`text-xs font-bold ${getHealthColor(health)}`}>{health}%</span>
-          )}
         </div>
         {cs.status !== 'cancelled' && (
           <div className="relative space-y-1 pointer-events-none">
