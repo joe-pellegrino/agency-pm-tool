@@ -97,7 +97,7 @@ function Tooltip({ text, children }: { text: string; children: React.ReactNode }
 }
 
 // Extract nav content into a shared component
-function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
+function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?: boolean; showLogo?: boolean }) {
   const pathname = usePathname()
   const { CLIENTS = [] } = useAppData()
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
@@ -128,19 +128,19 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
 
   const navItemStyle = (active: boolean) => active
     ? {
-        backgroundColor: 'var(--color-sidebar-active-bg)',
-        color: 'var(--color-sidebar-text-active)',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        color: '#FFFFFF',
         fontWeight: 500,
         borderRadius: '6px',
       }
     : {
-        color: 'var(--color-sidebar-text)',
+        color: '#9CA3AF',
         borderRadius: '6px',
       }
 
   const getIconColor = (active: boolean) => {
     if (active) {
-      return 'var(--color-sidebar-text-active)'
+      return '#FFFFFF'
     }
     return 'var(--color-text-muted)'
   }
@@ -149,8 +149,8 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo area - only show when expanded */}
-      {!isCollapsed && (
+      {/* Logo area - only show on mobile */}
+      {!isCollapsed && showLogo && (
         <div
           style={{
             padding: '20px 24px',
@@ -206,7 +206,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                 style={{
                   fontSize: '11px',
                   fontWeight: 600,
-                  color: 'var(--color-sidebar-section)',
+                  color: '#6B7280',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                   padding: '16px 24px 8px 24px',
@@ -240,14 +240,14 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                       }}
                       onMouseEnter={e => {
                         if (!active) {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)'
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'
                           ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
                         }
                       }}
                       onMouseLeave={e => {
                         if (!active) {
                           (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                          ;(e.currentTarget as HTMLElement).style.color = 'var(--color-sidebar-text)'
+                          ;(e.currentTarget as HTMLElement).style.color = '#9CA3AF'
                         }
                       }}
                     >
@@ -278,7 +278,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                 style={{
                   fontSize: '11px',
                   fontWeight: 600,
-                  color: 'var(--color-sidebar-section)',
+                  color: '#6B7280',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                   padding: '16px 24px 8px 24px',
@@ -287,7 +287,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                   gap: '6px',
                 }}
               >
-                <Building2 size={10} color="var(--color-sidebar-section)" />
+                <Building2 size={10} color="#6B7280" />
                 CLIENTS
               </div>
             )}
@@ -314,14 +314,14 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                       }}
                       onMouseEnter={e => {
                         if (!active) {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)'
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'
                           ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
                         }
                       }}
                       onMouseLeave={e => {
                         if (!active) {
                           (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                          ;(e.currentTarget as HTMLElement).style.color = 'var(--color-sidebar-text)'
+                          ;(e.currentTarget as HTMLElement).style.color = '#9CA3AF'
                         }
                       }}
                     >
@@ -336,8 +336,8 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
-                          backgroundColor: client.color + '30',
-                          color: client.color,
+                          backgroundColor: '#000000',
+                          color: '#FFFFFF',
                         }}
                       >
                         {client.logo}
@@ -419,11 +419,11 @@ export default function Sidebar() {
         }`}
         style={{
           top: '56px',
-          backgroundColor: 'var(--color-bg-sidebar)',
+          backgroundColor: '#111827',
           borderRight: '1px solid var(--color-sidebar-border)',
         }}
       >
-        <SidebarContent isCollapsed={isCollapsed} />
+        <SidebarContent isCollapsed={isCollapsed} showLogo={false} />
       </div>
 
       {/* ── MOBILE SIDEBAR ── Dialog overlay, only on < lg screens ── */}
@@ -446,7 +446,7 @@ export default function Sidebar() {
             style={{
               top: '56px',
               height: 'calc(100vh - 56px)',
-              backgroundColor: 'var(--color-bg-sidebar)',
+              backgroundColor: '#111827',
             }}
           >
             {/* Mobile close button */}
