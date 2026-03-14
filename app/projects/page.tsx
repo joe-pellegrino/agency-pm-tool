@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Project, Task, PRIORITY_COLORS } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
@@ -458,6 +459,7 @@ function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project
 }
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const { PROJECTS = [], CLIENTS = [], TASKS = [], STRATEGIES = [], WORKFLOW_TEMPLATES = [], TEAM_MEMBERS = [], CLIENT_SERVICES = [], SERVICES = [] } = useAppData();
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -669,7 +671,7 @@ export default function ProjectsPage() {
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map(project => (
-              <ProjectCard key={project.id} project={project} onClick={() => setSelectedProject(project)} onEdit={setEditProject} onArchive={setArchiveId} />
+              <ProjectCard key={project.id} project={project} onClick={() => router.push(`/projects/${project.id}`)} onEdit={setEditProject} onArchive={setArchiveId} />
             ))}
           </div>
         ) : (
