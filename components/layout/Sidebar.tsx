@@ -60,17 +60,17 @@ export default function Sidebar() {
 
   const navItemStyle = (active: boolean) => active
     ? {
-        backgroundColor: 'var(--color-primary-light)',
-        color: 'var(--color-primary)',
+        backgroundColor: 'var(--color-sidebar-active-bg)',
+        color: 'var(--color-sidebar-text-active)',
         fontWeight: 500,
         borderRadius: '6px',
       }
     : {
-        color: 'var(--color-text-secondary)',
+        color: 'var(--color-sidebar-text)',
         borderRadius: '6px',
       };
 
-  const iconColor = (active: boolean) => active ? 'var(--color-primary)' : 'var(--color-icon-muted)';
+  const iconColor = (active: boolean) => active ? '#FFFFFF' : '#8A94A6';
 
   const sidebarContent = (
     <aside
@@ -81,7 +81,7 @@ export default function Sidebar() {
         width: '240px',
         height: 'calc(100vh - 56px)',
         backgroundColor: 'var(--color-bg-sidebar)',
-        borderRight: '1px solid var(--color-border)',
+        borderRight: '1px solid var(--color-sidebar-border)',
         zIndex: 50,
         overflowY: 'auto',
         display: 'flex',
@@ -99,14 +99,14 @@ export default function Sidebar() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid var(--color-border)',
+          borderBottom: '1px solid var(--color-sidebar-border)',
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Menu</span>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Menu</span>
         <button
           onClick={closeMobile}
-          style={{ color: 'var(--color-icon-muted)', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
+          style={{ color: '#8A94A6', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
           aria-label="Close menu"
         >
           <X size={18} />
@@ -122,7 +122,7 @@ export default function Sidebar() {
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                color: 'var(--color-text-muted)',
+                color: 'var(--color-sidebar-section)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 padding: '20px 16px 8px 16px',
@@ -155,14 +155,14 @@ export default function Sidebar() {
                     }}
                     onMouseEnter={e => {
                       if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-hover-bg)';
-                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)';
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)';
+                        (e.currentTarget as HTMLElement).style.color = '#FFFFFF';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)';
+                        (e.currentTarget as HTMLElement).style.color = '#8A94A6';
                       }
                     }}
                   >
@@ -184,7 +184,7 @@ export default function Sidebar() {
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                color: 'var(--color-text-muted)',
+                color: 'var(--color-sidebar-section)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 padding: '20px 16px 8px 16px',
@@ -193,7 +193,7 @@ export default function Sidebar() {
                 gap: '6px',
               }}
             >
-              <Building2 size={10} color="var(--color-text-muted)" />
+              <Building2 size={10} color="var(--color-sidebar-section)" />
               CLIENTS
             </div>
             <div style={{ paddingLeft: '4px', paddingRight: '4px' }}>
@@ -219,14 +219,14 @@ export default function Sidebar() {
                     }}
                     onMouseEnter={e => {
                       if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-hover-bg)';
-                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)';
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)';
+                        (e.currentTarget as HTMLElement).style.color = '#FFFFFF';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)';
+                        (e.currentTarget as HTMLElement).style.color = '#8A94A6';
                       }
                     }}
                   >
@@ -250,7 +250,7 @@ export default function Sidebar() {
                     <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {client.name}
                     </span>
-                    <ChevronRight size={12} color="var(--color-icon-muted)" style={{ flexShrink: 0 }} />
+                    <ChevronRight size={12} color="#8A94A6" style={{ flexShrink: 0 }} />
                   </Link>
                 );
               })}
@@ -260,7 +260,7 @@ export default function Sidebar() {
       </nav>
 
       {/* User footer */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--color-border)', flexShrink: 0 }}>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--color-sidebar-border)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
@@ -271,7 +271,7 @@ export default function Sidebar() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--color-white)',
+              color: '#FFFFFF',
               fontSize: '12px',
               fontWeight: 700,
               flexShrink: 0,
@@ -280,10 +280,10 @@ export default function Sidebar() {
             JP
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Joe Pellegrino
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Owner</div>
+            <div style={{ fontSize: '11px', color: '#8A94A6' }}>Owner</div>
           </div>
         </div>
       </div>

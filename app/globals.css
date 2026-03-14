@@ -12,7 +12,13 @@
   --color-primary-light: #E8EDFF;
   --color-white: #FFFFFF;
   --color-bg-page: #EDF0F5;
-  --color-bg-sidebar: #FFFFFF;
+  --color-bg-sidebar: #1E2A3A;
+  --color-sidebar-text: #8A94A6;
+  --color-sidebar-text-active: #FFFFFF;
+  --color-sidebar-section: #5A6478;
+  --color-sidebar-border: #2A3750;
+  --color-sidebar-hover-bg: rgba(255, 255, 255, 0.07);
+  --color-sidebar-active-bg: rgba(255, 255, 255, 0.12);
   --color-border: #E2E6EE;
   --color-border-input-focus: #3B5BDB;
   --color-text-primary: #1E2A3A;
@@ -51,7 +57,7 @@
   --shadow-card-hover: 0 4px 12px rgba(30, 42, 58, 0.1);
   --shadow-modal: 0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08);
   --shadow-dropdown: 0 8px 24px rgba(30, 42, 58, 0.12);
-  --shadow-sidebar: 1px 0 0 #E2E6EE;
+  --shadow-sidebar: 1px 0 0 #2A3750;
 
   /* Border radius */
   --radius-sm: 4px;
@@ -78,7 +84,10 @@
   --color-primary-light: #1e2d6b;
   --color-white: #1E293B;
   --color-bg-page: #0F172A;
-  --color-bg-sidebar: #1E293B;
+  --color-bg-sidebar: #1E2A3A;
+  --color-sidebar-border: #2A3750;
+  --color-sidebar-hover-bg: rgba(255, 255, 255, 0.07);
+  --color-sidebar-active-bg: rgba(255, 255, 255, 0.12);
   --color-border: #334155;
   --color-border-input-focus: #4F72E8;
   --color-text-primary: #F1F5F9;
@@ -92,7 +101,7 @@
   --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-sidebar: 1px 0 0 #334155;
+  --shadow-sidebar: 1px 0 0 #2A3750;
   --color-donut-track: #334155;
   --color-stat-up: #2BB673;
   --color-input-bg: #0F172A;
