@@ -145,7 +145,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
     return 'var(--color-text-muted)'
   }
 
-  const getHoverTextColor = () => 'var(--color-text-primary)'
+  const getHoverTextColor = () => '#FFFFFF'
 
   return (
     <div className="flex flex-col h-full">

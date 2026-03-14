@@ -883,8 +883,8 @@ export default function ClientPage() {
 
       <div style={{ padding: '24px 32px' }}>
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{client.name}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{client.industry} · {client.location}</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{client.name}</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{client.industry} · {client.location}</p>
         </div>
         {/* Back nav */}
         <Link
@@ -897,8 +897,8 @@ export default function ClientPage() {
 
         {/* Client header card */}
         <div
-          className="rounded-2xl p-5 sm:p-6 mb-6 border"
-          style={{ backgroundColor: 'white', borderColor: 'var(--color-border)' }}
+          className="rounded-lg p-6 mb-6 border"
+          style={{ backgroundColor: 'var(--color-white)', borderColor: 'var(--color-border)', boxShadow: 'var(--shadow-card)' }}
         >
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             {/* Info */}
@@ -999,32 +999,47 @@ export default function ClientPage() {
         </div>
 
         {/* Tab Bar */}
-        <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
-          {TAB_CONFIG.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-all -mb-px ${
-                  isActive
-                    ? 'border-[#3B5BDB] text-[#3B5BDB]'
-                    : 'border-transparent text-[#5A6A7E] hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                <Icon size={14} className={isActive ? 'text-[#3B5BDB]' : 'text-current'} />
-                {tab.label}
-              </button>
-            );
-          })}
+        <div style={{ borderBottom: '1px solid var(--color-border)', marginBottom: '24px' }}>
+          <div className="flex items-center gap-0">
+            {TAB_CONFIG.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="flex items-center gap-1.5 px-4 text-sm font-medium transition-all"
+                  style={{
+                    paddingBottom: '12px',
+                    paddingTop: '12px',
+                    borderBottom: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
+                    color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)';
+                    }
+                  }}
+                >
+                  <Icon size={14} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'budget' && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <DollarSign size={18} className="text-[#3B5BDB]" />
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <DollarSign size={18} style={{ color: 'var(--color-primary)' }} />
               Budget Matrix
             </h2>
             <BudgetMatrix clientId={clientId} />
@@ -1037,8 +1052,8 @@ export default function ClientPage() {
 
         {activeTab === 'projects' && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <FolderOpen size={18} className="text-[#3B5BDB]" />
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <FolderOpen size={18} style={{ color: 'var(--color-primary)' }} />
               Projects
             </h2>
             {(() => {
@@ -1082,8 +1097,8 @@ export default function ClientPage() {
 
         {activeTab === 'tasks' && (
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <CheckCircle size={18} className="text-[#3B5BDB]" />
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <CheckCircle size={18} style={{ color: 'var(--color-primary)' }} />
               Tasks
             </h2>
             {(() => {
@@ -1106,11 +1121,11 @@ export default function ClientPage() {
           <>
             {/* All Services Grid — active + unassigned */}
             <div className="mb-8">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                <Activity size={18} className="text-[#3B5BDB]" />
+              <h2 className="text-lg font-semibold mb-1 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <Activity size={18} style={{ color: 'var(--color-primary)' }} />
                 Services
               </h2>
-              <p className="text-sm text-gray-400 mb-4">Active services are filled. Click any empty slot to assign a service.</p>
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>Active services are filled. Click any empty slot to assign a service.</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
                 {SERVICES.map(svc => (
                   <ServiceTile
@@ -1127,8 +1142,8 @@ export default function ClientPage() {
             {/* Expanded service details for active services */}
             {activeServices.length > 0 && (
               <div className="mb-8">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <BarChart3 size={18} className="text-[#3B5BDB]" />
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <BarChart3 size={18} style={{ color: 'var(--color-primary)' }} />
                   Service Details
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

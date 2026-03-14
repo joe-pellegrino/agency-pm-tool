@@ -324,8 +324,8 @@ export default async function DashboardPage() {
       <TopBar />
       <div style={{ padding: '24px 32px', maxWidth: '1400px' }}>
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back, Joe</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Dashboard</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Welcome back, Joe</p>
         </div>
         <DashboardView standardView={standardView} executiveView={executiveView} />
       </div>

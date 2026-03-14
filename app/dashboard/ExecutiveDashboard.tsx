@@ -78,12 +78,12 @@ function PressingItems({ tasks, clients, teamMembers }: Props) {
     .slice(0, 5);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+    <div style={{ backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '20px 24px', boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
           <Flame size={14} className="text-red-600 dark:text-red-400" />
         </div>
-        <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Most Pressing</h2>
+        <h2 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>Most Pressing</h2>
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-gray-400">No open tasks</p>
@@ -180,12 +180,12 @@ function UnhealthyClients({ tasks, clients }: Pick<Props, 'tasks' | 'clients'>) 
   const unhealthy = healthData.filter(h => h.score < 70 || h.overdue >= 2);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+    <div style={{ backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '20px 24px', boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
           <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />
         </div>
-        <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Client Health</h2>
+        <h2 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>Client Health</h2>
       </div>
       {unhealthy.length === 0 ? (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
@@ -243,12 +243,12 @@ function RecentCompletions({ tasks, clients, teamMembers }: Props) {
     .slice(0, 5);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+    <div style={{ backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '20px 24px', boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
           <CheckCircle2 size={14} className="text-green-600 dark:text-green-400" />
         </div>
-        <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Recent Completions</h2>
+        <h2 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>Recent Completions</h2>
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-gray-400">No completed tasks yet</p>
@@ -307,12 +307,12 @@ function PipelineItems({ tasks, clients, teamMembers }: Props) {
     .slice(0, 5);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+    <div style={{ backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '20px 24px', boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 rounded-lg bg-[#E0E7FF] dark:bg-indigo-900/30 flex items-center justify-center">
           <Inbox size={14} className="text-[#3B5BDB] dark:text-indigo-400" />
         </div>
-        <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Pipeline</h2>
+        <h2 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>Pipeline</h2>
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-gray-400">Pipeline is empty</p>
@@ -385,12 +385,12 @@ function TeamCapacity({ tasks, teamMembers }: Pick<Props, 'tasks' | 'teamMembers
   });
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+    <div style={{ backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '20px 24px', boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
           <Users size={14} className="text-purple-600 dark:text-purple-400" />
         </div>
-        <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Team Capacity</h2>
+        <h2 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>Team Capacity</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {data.map(({ member, count, urgentHigh, capacityColor, capacityLabel }) => (

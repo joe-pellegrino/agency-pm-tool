@@ -123,23 +123,23 @@ export default function ClientsPage() {
       <TopBar />
 
       <div style={{ padding: '24px 32px' }}>
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Clients</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">All client accounts and service subscriptions</p>
-        </div>
-        <div className="flex justify-end mb-5">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Clients</h1>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>All client accounts and service subscriptions</p>
+          </div>
           <button
             onClick={() => setShowNewClient(true)}
-            className="flex items-center gap-2 px-5 py-2.5 text-white rounded-md text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-white rounded-md text-sm font-medium transition-colors"
             style={{ backgroundColor: 'var(--color-primary)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-hover)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
           >
             <Plus size={14} />
             New Client
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {CLIENTS.map(client => {
             const health = getClientHealth(client.id, CLIENT_SERVICES, SERVICE_STRATEGIES);
             const activeServices = CLIENT_SERVICES.filter(cs => cs.clientId === client.id && cs.status === 'active').length;
@@ -157,14 +157,14 @@ export default function ClientsPage() {
                 style={{
                   backgroundColor: 'var(--color-white)',
                   border: '1px solid var(--color-border)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
+                  boxShadow: 'var(--shadow-card)',
                 }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)';
-                  (e.currentTarget as HTMLElement).style.borderColor = '#D0D6E0';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)';
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)';
                   (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
                 }}
               >
