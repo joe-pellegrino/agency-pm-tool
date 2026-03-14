@@ -563,10 +563,17 @@ body {
 }
 
 /* ─── Mobile Sidebar Fix ──────────────────────────────────────────────────── */
-/* Ensure desktop sidebar is absolutely hidden on mobile */
-@media (max-width: 1023px) {
-  .hidden.lg\:flex {
-    display: none !important;
+/* CRITICAL: Force sidebar visibility to respect mobile/desktop breakpoint */
+/* Target the desktop sidebar aside element specifically */
+aside[style*="position: fixed"][style*="left: 0"] {
+  /* Default: hide on all screens until we explicitly show it */
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  /* Show desktop sidebar only on lg+ screens */
+  aside[style*="position: fixed"][style*="left: 0"] {
+    display: flex !important;
   }
 }
 

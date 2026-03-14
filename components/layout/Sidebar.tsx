@@ -154,12 +154,12 @@ export default function Sidebar() {
         borderRight: '1px solid var(--color-sidebar-border)',
         zIndex: 50,
         overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
         transition: 'width 0.2s ease',
+        // CRITICAL: DO NOT set display, flexDirection inline
+        // These must come from Tailwind classes only
       }}
-      className="hidden lg:flex"
-      // Explicit media query to ensure mobile hides this completely
+      className="!hidden lg:!flex"
+      suppressHydrationWarning
     >
       {/* Logo area - only show when expanded */}
       {!collapsed && (

@@ -4,20 +4,31 @@ import { useSidebar } from '@/components/layout/SidebarContext';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
-  const marginLeft = collapsed ? 60 : 240;
+  const desktopMargin = collapsed ? 60 : 240;
 
   return (
     <main
-      className="hidden lg:block"
       style={{
-        marginLeft: `${marginLeft}px`,
         marginTop: '56px',
         minHeight: 'calc(100vh - 56px)',
         backgroundColor: 'var(--color-bg-page)',
-        transition: 'margin-left 0.2s ease',
       }}
     >
-      {children}
+      {/* Mobile: no margin, no sidebar space */}
+      <div className="lg:hidden" style={{ marginTop: 0 }}>
+        {children}
+      </div>
+
+      {/* Desktop: add margin for sidebar, adjust for collapsed state */}
+      <div
+        className="hidden lg:block"
+        style={{
+          marginLeft: `${desktopMargin}px`,
+          transition: 'margin-left 0.2s ease',
+        }}
+      >
+        {children}
+      </div>
     </main>
   );
 }
