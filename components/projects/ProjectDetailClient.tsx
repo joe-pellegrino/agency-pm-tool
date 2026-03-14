@@ -460,7 +460,7 @@ function OverviewTab({
   return (
     <div>
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
         <StatCard label="Total Budget" value={formatCurrency(totalBudget)} percentage={100} />
         <StatCard label="Budget Remaining" value={formatCurrency(Math.max(0, budgetRemaining))} percentage={remainingPct} color="#2BB673" />
         <StatCard label="Money Spent" value={formatCurrency(totalSpent)} percentage={budgetPct} color="#E03131" />
@@ -594,7 +594,7 @@ function TeamTab({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
         {members.map(m => (
           <div key={m.id} className="bg-white rounded-lg border border-[var(--color-border)] p-5 flex items-center gap-4"
             style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
@@ -768,7 +768,7 @@ function BudgetTab({
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
         <StatCard label="Total Budget" value={formatCurrency(totalBudget)} percentage={100} />
         <StatCard label="Budget Remaining" value={formatCurrency(Math.max(0, budgetRemaining))} percentage={remainingPct} color="#2BB673" />
         <StatCard label="Money Spent" value={formatCurrency(totalSpent)} percentage={spentPct} color="#E03131" />
@@ -792,7 +792,7 @@ function BudgetTab({
         {/* Add expense form */}
         {showAddExpense && (
           <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[#F8F9FF]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               <div className="col-span-1 sm:col-span-2">
                 <label className="block text-xs font-semibold text-[#1E2A3A] mb-1.5">Description *</label>
                 <input
@@ -1094,7 +1094,7 @@ function TasksTab({
           </table>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           {columns.map(col => {
             const colTasks = tasks.filter(t => t.status === col);
             return (
@@ -1210,7 +1210,7 @@ function FilesTab({
           <p className="text-sm mt-1">Upload your first file to get started</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full">
           {assets.map(a => (
             <div key={a.id} className="bg-white rounded-lg border border-[var(--color-border)] overflow-hidden"
               style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
