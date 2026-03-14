@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useRef, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { X } from 'lucide-react';
 
@@ -14,114 +14,74 @@ interface DrawerProps {
   variant?: 'create' | 'details';
 }
 
-export default function Drawer({ 
-  isOpen, 
-  onClose, 
-  title, 
+export default function Drawer({
+  isOpen,
+  onClose,
+  title,
   subtitle,
-  children, 
+  children,
   footer,
-  variant = 'details'
+  variant = 'details',
 }: DrawerProps) {
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Save the currently focused element so we can restore it when drawer closes
-    previousActiveElement.current = document.activeElement as HTMLElement;
-
-    // Prevent body scroll when drawer is open
-    document.body.style.overflow = 'hidden';
-
-    // Auto-focus the close button
-    setTimeout(() => {
-      const closeButton = drawerRef.current?.querySelector('button[data-drawer-close]') as HTMLButtonElement;
-      closeButton?.focus();
-    }, 0);
-
-    return () => {
-      document.body.style.overflow = 'auto';
-      // Restore focus to the element that was focused before the drawer opened
-      previousActiveElement.current?.focus();
-    };
-  }, [isOpen]);
-
-  const isCreateVariant = variant === 'create';
+  const isCreate = variant === 'create';
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative" style={{ zIndex: 1000 }}>
-      {/* Backdrop with smooth fade transition */}
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      {/* Backdrop — fades in/out */}
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/30 transition-opacity ease-in-out duration-500 sm:duration-700 data-[closed]:opacity-0"
-        style={{ zIndex: 999 }}
+        className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-[closed]:opacity-0"
       />
 
-      {/* Drawer positioning container */}
-      <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 1001 }}>
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
-            {/* Panel with slide-in animation */}
-            <DialogPanel
-              ref={drawerRef}
-              transition
-              className="pointer-events-auto relative ml-auto flex flex-col size-full max-w-md sm:max-w-lg bg-white dark:bg-gray-900 shadow-2xl shadow-black/20 transform transition ease-in-out duration-500 sm:duration-700 data-[closed]:translate-x-full"
-            >
-              {/* Header - variant-dependent */}
-              {isCreateVariant ? (
-                <div className="py-6 px-6 bg-indigo-700 flex-shrink-0">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-medium text-white">
-                      {title}
-                    </h2>
-                    <button
-                      onClick={onClose}
-                      data-drawer-close
-                      className="bg-indigo-700 rounded-md text-indigo-200 hover:text-white transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-white"
-                      aria-label="Close drawer"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
+      <div className="fixed inset-0 overflow-hidden">
+        <div className="absolute inset-0 pl-10 sm:pl-16">
+          {/* Slide-over panel */}
+          <DialogPanel
+            transition
+            className="group/panel relative ml-auto block size-full max-w-md transform transition duration-500 ease-in-out data-[closed]:translate-x-full sm:duration-700 sm:max-w-lg"
+          >
+            {/* Floating close button — sits outside the panel, fades with it */}
+            <div className="absolute top-0 left-0 -ml-8 flex pt-4 pr-2 duration-500 ease-in-out group-data-[closed]/panel:opacity-0 sm:-ml-10 sm:pr-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="relative rounded-md text-gray-300 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                <span className="sr-only">Close panel</span>
+                <X size={24} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* Panel body */}
+            <div className="flex h-full flex-col bg-white dark:bg-gray-900 shadow-xl overflow-hidden">
+
+              {/* Header */}
+              {isCreate ? (
+                <div className="flex-shrink-0 bg-indigo-700 px-4 py-6 sm:px-6">
+                  <h2 className="text-base font-semibold text-white">{title}</h2>
                   {subtitle && (
-                    <div className="mt-1">
-                      <p className="text-sm text-indigo-300">
-                        {subtitle}
-                      </p>
-                    </div>
+                    <p className="mt-1 text-sm text-indigo-300">{subtitle}</p>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {title}
-                  </h2>
-                  <button
-                    onClick={onClose}
-                    data-drawer-close
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                    aria-label="Close drawer"
-                  >
-                    <X size={20} />
-                  </button>
+                <div className="flex-shrink-0 px-4 py-6 sm:px-6" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
                 </div>
               )}
 
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto px-6 py-5">
+              {/* Scrollable content */}
+              <div className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6">
                 {children}
               </div>
 
-              {/* Footer - only shown if provided */}
+              {/* Optional sticky footer */}
               {footer && (
                 <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700">
                   {footer}
                 </div>
               )}
-            </DialogPanel>
-          </div>
+            </div>
+          </DialogPanel>
         </div>
       </div>
     </Dialog>
