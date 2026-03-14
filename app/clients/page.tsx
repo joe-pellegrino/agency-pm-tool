@@ -158,22 +158,18 @@ export default function ClientsPage() {
                   (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
                 }}
               >
-                {/* Client color accent bar */}
-                <div className="h-1.5" style={{ backgroundColor: client.color }} />
+                {/* Status color accent bar */}
+                {(() => {
+                  const health = getClientHealth(client.id, CLIENT_SERVICES, SERVICE_STRATEGIES);
+                  const statusColor = getHealthBarColor(health);
+                  return <div className="h-1.5" style={{ backgroundColor: statusColor }} />;
+                })()}
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0"
-                        style={{ backgroundColor: client.color }}
-                      >
-                        {client.logo}
-                      </div>
-                      <div>
-                        <h3 className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{client.name}</h3>
-                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{client.industry}</p>
-                        <p className="text-xs" style={{ color: 'var(--color-icon-muted)' }}>{client.location}</p>
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{client.name}</h3>
+                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{client.industry}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-icon-muted)' }}>{client.location}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="text-2xl font-bold" style={healthStyle}>{health}%</div>
