@@ -27,7 +27,7 @@ export default function ConfirmDialog({
       {/* Backdrop with fade transition */}
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/40 transition duration-300 ease-in-out data-closed:opacity-0"
+        className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
       />
 
       {/* Dialog positioning container */}
@@ -35,7 +35,7 @@ export default function ConfirmDialog({
         {/* Panel with scale + fade animation */}
         <DialogPanel
           transition
-          className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden transform transition duration-300 ease-out data-closed:opacity-0 data-closed:scale-95"
+          className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-sm data-closed:sm:translate-y-0 data-closed:sm:scale-95"
         >
           <div className="px-6 py-5">
             <div className="flex items-start gap-3 mb-4">

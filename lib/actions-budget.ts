@@ -140,6 +140,7 @@ export async function upsertBudgetEntry(rowId: string, month: number, amount: nu
 
 /**
  * Bulk upsert budget entries for multiple months
+ * Uses update-or-insert pattern instead of upsert to avoid REST API conflicts
  */
 export async function bulkUpsertBudgetEntries(
   rowId: string,
@@ -148,21 +149,60 @@ export async function bulkUpsertBudgetEntries(
   amount: number,
 ): Promise<void> {
   const supabase = createServerClient();
+  const parsedAmount = parseFloat(amount.toString());
 
-  const entries = [];
+  // Get existing entries for this row
+  const { data: existing, error: fetchError } = await supabase
+    .from('budget_entries')
+    .select('month')
+    .eq('row_id', rowId)
+    .gte('month', fromMonth)
+    .lte('month', toMonth);
+
+  if (fetchError) throw fetchError;
+
+  const existingMonths = new Set((existing || []).map(e => e.month));
+
+  // Separate entries into updates and inserts
+  const updates: Array<{
+    month: number;
+    amount: number;
+  }> = [];
+  const inserts: Array<{
+    row_id: string;
+    month: number;
+    amount: number;
+  }> = [];
+
   for (let month = fromMonth; month <= toMonth; month++) {
-    entries.push({
-      row_id: rowId,
-      month,
-      amount: parseFloat(amount.toString()),
-    });
+    if (existingMonths.has(month)) {
+      updates.push({ month, amount: parsedAmount });
+    } else {
+      inserts.push({ row_id: rowId, month, amount: parsedAmount });
+    }
   }
 
-  const { error } = await supabase
-    .from('budget_entries')
-    .upsert(entries);
+  // Update existing entries
+  if (updates.length > 0) {
+    for (const update of updates) {
+      const { error: updateError } = await supabase
+        .from('budget_entries')
+        .update({ amount: update.amount })
+        .eq('row_id', rowId)
+        .eq('month', update.month);
 
-  if (error) throw error;
+      if (updateError) throw updateError;
+    }
+  }
+
+  // Insert new entries
+  if (inserts.length > 0) {
+    const { error: insertError } = await supabase
+      .from('budget_entries')
+      .insert(inserts);
+
+    if (insertError) throw insertError;
+  }
 }
 
 /**

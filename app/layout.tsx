@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/components/layout/SidebarContext';
 import { ClientProviders } from './ClientProviders';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Toaster } from 'sonner';
+import MainLayout from './MainLayout';
 
 export const metadata: Metadata = {
   title: 'RJ Media — Agency PM',
@@ -19,9 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ClientProviders>
             <SidebarProvider>
               <Sidebar />
-              <main className="lg:ml-60" style={{ marginTop: '56px', minHeight: 'calc(100vh - 56px)', backgroundColor: 'var(--color-bg-page)' }}>
+              <MainLayout>
                 {children}
-              </main>
+              </MainLayout>
             </SidebarProvider>
           </ClientProviders>
         </ThemeProvider>

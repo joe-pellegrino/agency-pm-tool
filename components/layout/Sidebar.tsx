@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { useSidebar } from './SidebarContext';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase/client';
 import {
   LayoutDashboard,
   Kanban,
@@ -54,10 +56,77 @@ const NAV_GROUPS = [
   },
 ];
 
+// Tooltip component for collapsed state
+function Tooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      {children && (
+        <>
+          {children}
+          {show && (
+            <div
+              style={{
+                position: 'absolute',
+                left: '100%',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                marginLeft: '8px',
+                backgroundColor: '#1F2937',
+                color: '#FFFFFF',
+                padding: '6px 10px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                whiteSpace: 'nowrap',
+                zIndex: 1000,
+                pointerEvents: 'none',
+              }}
+            >
+              {text}
+            </div>
+          )}
+        </>
+      )}
+      <div
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+    </div>
+  );
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
-  const { mobileOpen, closeMobile } = useSidebar();
+  const { mobileOpen, closeMobile, collapsed } = useSidebar();
   const { CLIENTS = [] } = useAppData();
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch logo from Supabase
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('agency_settings')
+          .select('value')
+          .eq('key', 'logo_url')
+          .single();
+
+        if (!error && data?.value) {
+          setLogoUrl(data.value);
+        }
+      } catch (err) {
+        console.error('Failed to fetch logo:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogo();
+  }, []);
+
+  const sidebarWidth = collapsed ? 60 : 240;
 
   const navItemStyle = (active: boolean) => active
     ? {
@@ -79,7 +148,7 @@ export default function Sidebar() {
         position: 'fixed',
         left: 0,
         top: '56px',
-        width: '240px',
+        width: `${sidebarWidth}px`,
         height: 'calc(100vh - 56px)',
         backgroundColor: 'var(--color-bg-sidebar)',
         borderRight: '1px solid var(--color-sidebar-border)',
@@ -87,89 +156,127 @@ export default function Sidebar() {
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
+        transition: 'width 0.2s ease',
       }}
       className="hidden lg:flex"
     >
-      {/* Mobile close button — only on mobile */}
-      <div
-        className="lg:hidden"
-        style={{
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid var(--color-sidebar-border)',
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Menu</span>
-        <button
-          onClick={closeMobile}
-          style={{ color: '#8A94A6', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
-          aria-label="Close menu"
+      {/* Logo area - only show when expanded */}
+      {!collapsed && (
+        <div
+          style={{
+            padding: '16px',
+            borderBottom: '1px solid var(--color-sidebar-border)',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
         >
-          <X size={18} />
-        </button>
-      </div>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt="Agency Logo"
+              style={{
+                height: '32px',
+                maxWidth: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          ) : (
+            <>
+              <div
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  backgroundColor: 'var(--color-primary)',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-white)',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                ▲
+              </div>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>RJ Media</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            {/* Section label */}
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: 'var(--color-sidebar-section)',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                padding: '20px 16px 8px 16px',
-              }}
-            >
-              {group.label}
-            </div>
+            {/* Section label - hidden when collapsed */}
+            {!collapsed && (
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--color-sidebar-section)',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  padding: '20px 16px 8px 16px',
+                }}
+              >
+                {group.label}
+              </div>
+            )}
 
             {/* Nav items */}
-            <div style={{ paddingLeft: '4px', paddingRight: '4px' }}>
+            <div style={{ paddingLeft: collapsed ? '0px' : '4px', paddingRight: collapsed ? '0px' : '4px' }}>
               {group.items.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
                 return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={closeMobile}
-                    className="flex items-center gap-3"
-                    style={{
-                      ...navItemStyle(active),
-                      height: '40px',
-                      padding: '0 12px',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      textDecoration: 'none',
-                      marginBottom: '2px',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)';
-                        (e.currentTarget as HTMLElement).style.color = '#FFFFFF';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = '#8A94A6';
-                      }
-                    }}
-                  >
-                    <Icon size={18} color={iconColor(active)} strokeWidth={1.5} style={{ flexShrink: 0 }} />
-                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {label}
-                    </span>
-                  </Link>
+                  <div key={href} style={{ position: 'relative' }}>
+                    <Link
+                      href={href}
+                      className="flex items-center"
+                      style={{
+                        ...navItemStyle(active),
+                        height: '40px',
+                        padding: collapsed ? '0 8px' : '0 12px',
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: collapsed ? '0' : '12px',
+                        textDecoration: 'none',
+                        marginBottom: '2px',
+                        marginLeft: collapsed ? '8px' : '0',
+                        marginRight: collapsed ? '8px' : '0',
+                        transition: 'all 0.15s ease',
+                        justifyContent: collapsed ? 'center' : 'flex-start',
+                      }}
+                      onMouseEnter={e => {
+                        if (!active) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)';
+                          (e.currentTarget as HTMLElement).style.color = '#FFFFFF';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!active) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                          (e.currentTarget as HTMLElement).style.color = '#8A94A6';
+                        }
+                      }}
+                    >
+                      <Icon size={18} color={iconColor(active)} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                      {!collapsed && (
+                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {label}
+                        </span>
+                      )}
+                    </Link>
+                    {collapsed && (
+                      <Tooltip text={label}>
+                        <div />
+                      </Tooltip>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -179,78 +286,92 @@ export default function Sidebar() {
         {/* Clients section */}
         {CLIENTS.length > 0 && (
           <div>
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: 'var(--color-sidebar-section)',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                padding: '20px 16px 8px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <Building2 size={10} color="var(--color-sidebar-section)" />
-              CLIENTS
-            </div>
-            <div style={{ paddingLeft: '4px', paddingRight: '4px' }}>
+            {!collapsed && (
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--color-sidebar-section)',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  padding: '20px 16px 8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Building2 size={10} color="var(--color-sidebar-section)" />
+                CLIENTS
+              </div>
+            )}
+            <div style={{ paddingLeft: collapsed ? '0px' : '4px', paddingRight: collapsed ? '0px' : '4px' }}>
               {CLIENTS.map((client) => {
                 const href = `/clients/${client.id}`;
                 const active = pathname === href || pathname.startsWith(href + '/');
                 return (
-                  <Link
-                    key={client.id}
-                    href={href}
-                    onClick={closeMobile}
-                    style={{
-                      ...navItemStyle(active),
-                      height: '40px',
-                      padding: '0 12px',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      textDecoration: 'none',
-                      marginBottom: '2px',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)';
-                        (e.currentTarget as HTMLElement).style.color = '#FFFFFF';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = '#8A94A6';
-                      }
-                    }}
-                  >
-                    <span
+                  <div key={client.id} style={{ position: 'relative' }}>
+                    <Link
+                      href={href}
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: 700,
+                        ...navItemStyle(active),
+                        height: '40px',
+                        padding: collapsed ? '0 8px' : '0 12px',
+                        fontSize: '14px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        backgroundColor: client.color + '30',
-                        color: client.color,
+                        gap: collapsed ? '0' : '12px',
+                        textDecoration: 'none',
+                        marginBottom: '2px',
+                        marginLeft: collapsed ? '8px' : '0',
+                        marginRight: collapsed ? '8px' : '0',
+                        transition: 'all 0.15s ease',
+                        justifyContent: collapsed ? 'center' : 'flex-start',
+                      }}
+                      onMouseEnter={e => {
+                        if (!active) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)';
+                          (e.currentTarget as HTMLElement).style.color = '#FFFFFF';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!active) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                          (e.currentTarget as HTMLElement).style.color = '#8A94A6';
+                        }
                       }}
                     >
-                      {client.logo}
-                    </span>
-                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {client.name}
-                    </span>
-                    <ChevronRight size={12} color="#8A94A6" style={{ flexShrink: 0 }} />
-                  </Link>
+                      <span
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          backgroundColor: client.color + '30',
+                          color: client.color,
+                        }}
+                      >
+                        {client.logo}
+                      </span>
+                      {!collapsed && (
+                        <>
+                          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {client.name}
+                          </span>
+                          <ChevronRight size={12} color="#8A94A6" style={{ flexShrink: 0 }} />
+                        </>
+                      )}
+                    </Link>
+                    {collapsed && (
+                      <Tooltip text={client.name}>
+                        <div />
+                      </Tooltip>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -258,34 +379,36 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* User footer */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--color-sidebar-border)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--color-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontSize: '12px',
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            JP
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              Joe Pellegrino
+      {/* User footer - only show when expanded */}
+      {!collapsed && (
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--color-sidebar-border)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--color-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              JP
             </div>
-            <div style={{ fontSize: '11px', color: '#8A94A6' }}>Owner</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Joe Pellegrino
+              </div>
+              <div style={{ fontSize: '11px', color: '#8A94A6' }}>Owner</div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 

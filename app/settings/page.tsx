@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import TopBar from '@/components/layout/TopBar';
-import { User, Building2, Bell, Shield, Palette, Plus, Pencil, Archive } from 'lucide-react';
+import { User, Building2, Bell, Shield, Palette, Plus, Pencil, Archive, Image } from 'lucide-react';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { toast } from 'sonner';
 import TeamMemberModal from '@/components/team/TeamMemberModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { archiveTeamMember } from '@/lib/actions';
+import { supabase } from '@/lib/supabase/client';
 import type { TeamMember } from '@/lib/data';
 
 export default function SettingsPage() {
@@ -15,7 +16,30 @@ export default function SettingsPage() {
   const [showNewMember, setShowNewMember] = useState(false);
   const [editMember, setEditMember] = useState<TeamMember | null>(null);
   const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [saving, setSaving] = useState(false);
   const [, startTransition] = useTransition();
+
+  // Fetch current logo URL
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('agency_settings')
+          .select('value')
+          .eq('key', 'logo_url')
+          .single();
+
+        if (!error && data?.value) {
+          setLogoUrl(data.value);
+        }
+      } catch (err) {
+        console.error('Failed to fetch logo:', err);
+      }
+    };
+
+    fetchLogo();
+  }, []);
 
   const handleArchive = () => {
     if (!archiveId) return;
@@ -30,6 +54,37 @@ export default function SettingsPage() {
         toast.error('Failed: ' + (err as Error).message);
       }
     });
+  };
+
+  const handleSaveLogo = async () => {
+    if (!logoUrl.trim()) {
+      toast.error('Please enter a logo URL');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Upsert the logo URL
+      const { error } = await supabase
+        .from('agency_settings')
+        .upsert({
+          key: 'logo_url',
+          value: logoUrl,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'key'
+        });
+
+      if (error) throw error;
+
+      toast.success('Logo saved successfully');
+      // Reload the page to reflect changes in sidebar
+      window.location.reload();
+    } catch (err) {
+      toast.error('Failed to save logo: ' + (err as Error).message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -140,6 +195,38 @@ export default function SettingsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Branding section */}
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Image size={16} className="text-[#3B5BDB]" />
+              Branding
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Agency Logo URL
+                </label>
+                <input
+                  type="text"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] focus:border-transparent"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Enter a URL to your agency logo. It will appear in the sidebar (expanded state only).
+                </p>
+              </div>
+              <button
+                onClick={handleSaveLogo}
+                disabled={saving}
+                className="w-full px-4 py-2 bg-[#3B5BDB] text-white font-medium rounded-lg hover:bg-[#2D42A8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {saving ? 'Saving...' : 'Save Logo'}
+              </button>
             </div>
           </div>
 

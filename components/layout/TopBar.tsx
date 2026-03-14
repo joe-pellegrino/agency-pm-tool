@@ -4,6 +4,7 @@ import { Bell, Search, Menu, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
 import { useSidebar } from './SidebarContext';
 import { useTheme } from '@/components/ThemeProvider';
+import { useEffect } from 'react';
 
 interface TopBarProps {
   title: string;
@@ -21,9 +22,10 @@ const NOTIFICATIONS = [
 
 export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
-  const { toggleMobile } = useSidebar();
+  const { toggleMobile, toggleCollapsed, collapsed } = useSidebar();
   const { theme, toggle } = useTheme();
   const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
+  const logoWidth = collapsed ? 60 : 240;
 
   return (
     <header
@@ -51,26 +53,40 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
         <Menu size={20} />
       </button>
 
+      {/* Hamburger — desktop (for collapse toggle) */}
+      <button
+        onClick={toggleCollapsed}
+        className="hidden lg:flex icon-btn"
+        aria-label="Toggle sidebar"
+        title="Toggle sidebar"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Logo area — desktop */}
-      <div className="hidden lg:flex items-center" style={{ width: '240px', flexShrink: 0, gap: '8px', paddingLeft: '0' }}>
-        <div
-          style={{
-            width: '28px',
-            height: '28px',
-            backgroundColor: 'var(--color-primary)',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-white)',
-            fontSize: '14px',
-            fontWeight: 700,
-            flexShrink: 0,
-          }}
-        >
-          ▲
-        </div>
-        <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>RJ Media</span>
+      <div className="hidden lg:flex items-center" style={{ width: `${logoWidth}px`, flexShrink: 0, gap: '8px', paddingLeft: '0', transition: 'width 0.2s ease', justifyContent: collapsed ? 'center' : 'flex-start', paddingRight: collapsed ? '0' : '16px' }}>
+        {!collapsed && (
+          <>
+            <div
+              style={{
+                width: '28px',
+                height: '28px',
+                backgroundColor: 'var(--color-primary)',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--color-white)',
+                fontSize: '14px',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              ▲
+            </div>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>RJ Media</span>
+          </>
+        )}
       </div>
 
       {/* Breadcrumb / Title */}
