@@ -516,7 +516,7 @@ function OverviewTab({
   return (
     <div>
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard label="Total Budget" value={formatCurrency(totalBudget)} percentage={100} />
         <StatCard label="Budget Remaining" value={formatCurrency(Math.max(0, budgetRemaining))} percentage={remainingPct} color="#2BB673" />
         <StatCard label="Money Spent" value={formatCurrency(totalSpent)} percentage={budgetPct} color="#E03131" />
@@ -524,9 +524,9 @@ function OverviewTab({
       </div>
 
       {/* Two column layout */}
-      <div className="grid gap-6" style={{ gridTemplateColumns: '60% 1fr' }}>
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
         {/* Left */}
-        <div className="space-y-6">
+        <div className="space-y-6 md:col-span-2">
           <div className="bg-white rounded-lg border border-[var(--color-border)] p-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
             <h2 className="text-base font-semibold text-[#1E2A3A] mb-3">Project Details</h2>
             <p className="text-[14px] text-[#5A6A7E] leading-relaxed">{project.description || 'No description provided.'}</p>
