@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect, useTransition } from 'react';
+import { useState, useMemo, useEffect, useTransition, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Strategy, StrategyPillar, KPI, ServiceStrategy } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
@@ -881,7 +882,8 @@ function StrategyModal({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function StrategyPage() {
+function StrategyPageContent() {
+  const searchParams = useSearchParams();
   const { STRATEGIES = [], CLIENTS = [], loading, refresh } = useAppData();
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [showStrategyModal, setShowStrategyModal] = useState(false);
@@ -889,10 +891,14 @@ export default function StrategyPage() {
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    if (!selectedClientId && CLIENTS.length > 0) {
+    // First, check if clientId is passed via query params (from client detail page)
+    const clientIdFromParams = searchParams.get('clientId');
+    if (clientIdFromParams && CLIENTS.some(c => c.id === clientIdFromParams)) {
+      setSelectedClientId(clientIdFromParams);
+    } else if (!selectedClientId && CLIENTS.length > 0) {
       setSelectedClientId(CLIENTS[0].id);
     }
-  }, [CLIENTS, selectedClientId]);
+  }, [CLIENTS, selectedClientId, searchParams]);
 
   const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === selectedClientId) || null, [selectedClientId, STRATEGIES]);
 
@@ -1015,5 +1021,13 @@ export default function StrategyPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function StrategyPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-center"><div className="animate-spin w-8 h-8 border-4 border-[#3B5BDB] border-t-transparent rounded-full mx-auto" /><p className="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading...</p></div></div>}>
+      <StrategyPageContent />
+    </Suspense>
   );
 }
