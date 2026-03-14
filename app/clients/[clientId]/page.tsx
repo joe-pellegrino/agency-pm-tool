@@ -9,11 +9,12 @@ import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, Zap, ArrowLeft,
-  X, Loader2,
+  X, Loader2, Megaphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { upsertClientService, removeClientService } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -567,10 +568,20 @@ function ServiceCard({
   );
 }
 
+type ClientTab = 'overview' | 'projects' | 'tasks' | 'paid-ads' | 'documents';
+
+const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
+  { id: 'overview', label: 'Overview', icon: Activity },
+  { id: 'projects', label: 'Projects', icon: FolderOpen },
+  { id: 'tasks', label: 'Tasks', icon: CheckCircle },
+  { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
+];
+
 export default function ClientPage() {
   const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [] } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
   const client = CLIENTS.find(c => c.id === clientId);
+  const [activeTab, setActiveTab] = useState<ClientTab>('overview');
 
   const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === clientId), [clientId, STRATEGIES]);
 
@@ -582,7 +593,6 @@ export default function ClientPage() {
   // For the new grid: get the best (most active) client_service entry per service
   const serviceMap = useMemo(() => {
     const map: Record<string, ClientService | undefined> = {};
-    // Priority: active > planning > paused > cancelled
     const priority: Record<string, number> = { active: 4, planning: 3, paused: 2, cancelled: 1 };
     clientServices.forEach(cs => {
       const existing = map[cs.serviceId];
@@ -594,7 +604,6 @@ export default function ClientPage() {
   }, [clientServices]);
 
   const activeServices = clientServices.filter(cs => cs.status === 'active' || cs.status === 'planning');
-  const inactiveServices = clientServices.filter(cs => cs.status === 'cancelled' || cs.status === 'paused');
 
   // Agency-wide health score
   const overallHealth = useMemo(() => {
@@ -709,50 +718,81 @@ export default function ClientPage() {
           </div>
         </div>
 
-        {/* All Services Grid — active + unassigned */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-            <Activity size={18} className="text-[#3B5BDB]" />
-            Services
-          </h2>
-          <p className="text-sm text-gray-400 mb-4">Active services are filled. Click any empty slot to assign a service.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
-            {SERVICES.map(svc => (
-              <ServiceTile
-                key={svc.id}
-                service={svc}
-                clientService={serviceMap[svc.id]}
-                clientName={client.name}
-                clientId={clientId}
-              />
-            ))}
-          </div>
+        {/* Tab Bar */}
+        <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
+          {TAB_CONFIG.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-all -mb-px ${
+                  isActive
+                    ? 'border-[#3B5BDB] text-[#3B5BDB]'
+                    : 'border-transparent text-[#5A6A7E] hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <Icon size={14} className={isActive ? 'text-[#3B5BDB]' : 'text-current'} />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Expanded service details for active services */}
-        {activeServices.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <BarChart3 size={18} className="text-[#3B5BDB]" />
-              Service Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {activeServices.map(cs => {
-                const ss = SERVICE_STRATEGIES.find(s => s.clientServiceId === cs.id);
-                const projs = PROJECTS.filter(p => cs.linkedProjects.includes(p.id));
-                const tasks = projs.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
-                return (
-                  <ServiceCard
-                    key={cs.id}
-                    clientService={cs}
-                    serviceStrategy={ss}
-                    linkedProjects={projs}
-                    recentTasks={tasks}
+        {/* Tab Content */}
+        {activeTab === 'paid-ads' && (
+          <PaidAdsDashboard clientId={clientId} clientName={client.name} />
+        )}
+
+        {(activeTab === 'overview' || activeTab === 'projects' || activeTab === 'tasks') && (
+          <>
+            {/* All Services Grid — active + unassigned */}
+            <div className="mb-8">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                <Activity size={18} className="text-[#3B5BDB]" />
+                Services
+              </h2>
+              <p className="text-sm text-gray-400 mb-4">Active services are filled. Click any empty slot to assign a service.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+                {SERVICES.map(svc => (
+                  <ServiceTile
+                    key={svc.id}
+                    service={svc}
+                    clientService={serviceMap[svc.id]}
+                    clientName={client.name}
+                    clientId={clientId}
                   />
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+
+            {/* Expanded service details for active services */}
+            {activeServices.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <BarChart3 size={18} className="text-[#3B5BDB]" />
+                  Service Details
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {activeServices.map(cs => {
+                    const ss = SERVICE_STRATEGIES.find(s => s.clientServiceId === cs.id);
+                    const projs = PROJECTS.filter(p => cs.linkedProjects.includes(p.id));
+                    const tasks = projs.flatMap(p => TASKS.filter(t => p.taskIds.includes(t.id)));
+                    return (
+                      <ServiceCard
+                        key={cs.id}
+                        clientService={cs}
+                        serviceStrategy={ss}
+                        linkedProjects={projs}
+                        recentTasks={tasks}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
