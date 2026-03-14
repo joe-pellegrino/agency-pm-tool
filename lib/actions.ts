@@ -1070,6 +1070,24 @@ export async function getTaskComments(taskId: string) {
   return data ?? [];
 }
 
+export async function updateTaskComment(data: { id: string; text: string }) {
+  const { error } = await db()
+    .from('comments')
+    .update({ text: data.text })
+    .eq('id', data.id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/kanban');
+}
+
+export async function deleteTaskComment(id: string) {
+  const { error } = await db()
+    .from('comments')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/kanban');
+}
+
 // ─── KNOWLEDGE BASE ───────────────────────────────────────────────────────────
 
 export async function createKBCategory(data: { name: string; description?: string }) {

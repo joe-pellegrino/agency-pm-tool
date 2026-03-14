@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createTaskComment, getTaskComments } from '@/lib/actions';
+import { createTaskComment, getTaskComments, updateTaskComment, deleteTaskComment } from '@/lib/actions';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 
 interface CommentRow {
@@ -58,6 +58,8 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   const [text, setText] = useState('');
   const [, startTransition] = useTransition();
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -159,25 +161,101 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
                       {/* Avatar */}
                       <div className="shrink-0">
                         <span
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-xs font-medium text-white"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium text-white"
                           style={{ backgroundColor: color }}
                         >
                           {initials}
                         </span>
                       </div>
-                      {/* Content - Tailwind UI activity feed style */}
+                      {/* Content */}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                          <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
                             {name}
+                          </p>
+                          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                            {timeAgo(comment.created_at)}
                           </span>
-                        </p>
-                        <div className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                          <p>{comment.text}</p>
                         </div>
-                        <div className="mt-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                          {timeAgo(comment.created_at)}
-                        </div>
+
+                        {editingId === comment.id ? (
+                          /* Edit mode */
+                          <div className="mt-1">
+                            <textarea
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              rows={2}
+                              className="block w-full rounded-md border-0 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-gray-800 dark:text-white dark:ring-gray-600"
+                              style={{
+                                color: 'var(--color-text-primary)',
+                                backgroundColor: 'var(--color-white)',
+                              }}
+                            />
+                            <div className="mt-2 flex gap-2">
+                              <button
+                                onClick={async () => {
+                                  if (!editText.trim()) return;
+                                  try {
+                                    await updateTaskComment({ id: comment.id, text: editText.trim() });
+                                    setComments(prev => prev.map(c => c.id === comment.id ? { ...c, text: editText.trim() } : c));
+                                    setEditingId(null);
+                                    toast.success('Comment updated');
+                                  } catch (err) {
+                                    toast.error('Failed to update comment: ' + (err as Error).message);
+                                  }
+                                }}
+                                className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="text-xs font-medium"
+                                style={{ color: 'var(--color-text-muted)' }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* View mode */
+                          <div className="mt-1">
+                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                              {comment.text}
+                            </p>
+                            {comment.author_id === CURRENT_USER_ID && (
+                              <div className="mt-1 flex gap-3">
+                                <button
+                                  onClick={() => { setEditingId(comment.id); setEditText(comment.text); }}
+                                  className="text-xs"
+                                  style={{ color: 'var(--color-text-muted)', cursor: 'pointer' }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-primary)')}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-muted)')}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      setComments(prev => prev.filter(c => c.id !== comment.id));
+                                      await deleteTaskComment(comment.id);
+                                      toast.success('Comment deleted');
+                                    } catch (err) {
+                                      toast.error('Failed to delete comment: ' + (err as Error).message);
+                                      setComments(prev => [...prev, comment]);
+                                    }
+                                  }}
+                                  className="text-xs"
+                                  style={{ color: 'var(--color-text-muted)', cursor: 'pointer' }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = '#dc2626')}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-muted)')}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
