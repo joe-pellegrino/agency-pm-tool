@@ -28,6 +28,7 @@ import { updateTaskStatus, updateTask, archiveTask, createTimeEntry } from '@/li
 import TaskModal from '@/components/tasks/TaskModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import TaskComments from '@/components/tasks/TaskComments';
+import Drawer from '@/components/ui/Drawer';
 
 const COLUMNS: { id: Status; label: string; accentColor: string }[] = [
   { id: 'todo', label: 'Pending', accentColor: 'var(--color-primary)' },
@@ -200,20 +201,20 @@ function ApprovalModal({
   );
 }
 
-function TaskDetailModal({
+function TaskDetailContent({
   task,
-  onClose,
   onOpenApproval,
   onEdit,
   onArchive,
   onStatusChange,
+  onClose,
 }: {
   task: Task;
-  onClose: () => void;
   onOpenApproval: (task: Task) => void;
   onEdit?: (task: Task) => void;
   onArchive?: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: string) => void;
+  onClose: () => void;
 }) {
   const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [], TIME_ENTRIES = [], refresh } = useAppData();
   // Use fallbacks for unknown client/assignee so modal always renders
@@ -358,71 +359,62 @@ function TaskDetailModal({
   const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
-        style={{ backgroundColor: 'var(--color-white)', borderRadius: '8px', boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="px-6 py-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <div className="flex-1 pr-4">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span
-                className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: (client.color || 'var(--color-primary)') + '18', color: client.color || 'var(--color-primary)' }}
-              >
-                {client.name}
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-start justify-between flex-shrink-0 pb-5 border-b border-gray-200 dark:border-gray-700 mb-5">
+        <div className="flex-1 pr-4">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span
+              className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+              style={{ backgroundColor: (client.color || 'var(--color-primary)') + '18', color: client.color || 'var(--color-primary)' }}
+            >
+              {client.name}
+            </span>
+            <span
+              className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
+              style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
+            >
+              {task.priority}
+            </span>
+            {overdue && (
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}>
+                Overdue
               </span>
-              <span
-                className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
-                style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
-              >
-                {task.priority}
-              </span>
-              {overdue && (
-                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}>
-                  Overdue
-                </span>
-              )}
-            </div>
-            <h2 className="font-semibold text-lg leading-snug" style={{ color: 'var(--color-text-primary)' }}>{task.title}</h2>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {onEdit && (
-              <button
-                onClick={() => onEdit(task)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                style={{ color: 'var(--color-primary)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-donut-track)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
-                title="Edit task"
-              >
-                <Pencil size={13} />
-                Edit
-              </button>
             )}
-            {onArchive && (
-              <button
-                onClick={() => onArchive(task.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                style={{ color: '#DC2626' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FEE2E2'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
-                title="Archive task"
-              >
-                <Archive size={13} />
-                Archive
-              </button>
-            )}
-            <button onClick={onClose} className="transition-colors ml-1" style={{ color: 'var(--color-text-muted)' }}>
-              <X size={18} />
-            </button>
           </div>
         </div>
+        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+          {onEdit && (
+            <button
+              onClick={() => onEdit(task)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+              style={{ color: 'var(--color-primary)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-donut-track)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+              title="Edit task"
+            >
+              <Pencil size={13} />
+              Edit
+            </button>
+          )}
+          {onArchive && (
+            <button
+              onClick={() => onArchive(task.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+              style={{ color: '#DC2626' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FEE2E2'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+              title="Archive task"
+            >
+              <Archive size={13} />
+              Archive
+            </button>
+          )}
+        </div>
+      </div>
 
         {/* Tabs */}
-        <div className="flex px-6 gap-1" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        <div className="flex gap-1 mb-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
           {(['details', 'comments'] as const).map(tab => (
             <button
               key={tab}
@@ -439,7 +431,7 @@ function TaskDetailModal({
           ))}
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 py-5">
+        <div className="flex-1 overflow-y-auto">
           {activeTab === 'comments' ? (
             <TaskComments taskId={task.id} />
           ) : (
@@ -663,8 +655,6 @@ function TaskDetailModal({
               )}
             </div>
           </div>
-          </div>
-          )}
         </div>
       </div>
     </div>
@@ -1088,18 +1078,24 @@ export default function KanbanBoard() {
         />
       )}
 
-      {/* Task Detail Modal */}
+      {/* Task Detail Drawer */}
       {detailTask && !editTask && !archiveTaskId && (
-        <TaskDetailModal
-          task={detailTask}
+        <Drawer
+          isOpen={!!detailTask}
           onClose={() => setDetailTask(null)}
-          onOpenApproval={(task) => { setDetailTask(null); openApproval(task); }}
-          onEdit={(task) => { setEditTask(task); }}
-          onArchive={(taskId) => handleArchiveTask(taskId)}
-          onStatusChange={(taskId, status) => {
-            setTaskState(prev => prev.map(t => t.id === taskId ? { ...t, status: status as Task['status'] } : t));
-          }}
-        />
+          title={detailTask.title}
+        >
+          <TaskDetailContent
+            task={detailTask}
+            onClose={() => setDetailTask(null)}
+            onOpenApproval={(task) => { setDetailTask(null); openApproval(task); }}
+            onEdit={(task) => { setEditTask(task); }}
+            onArchive={(taskId) => handleArchiveTask(taskId)}
+            onStatusChange={(taskId, status) => {
+              setTaskState(prev => prev.map(t => t.id === taskId ? { ...t, status: status as Task['status'] } : t));
+            }}
+          />
+        </Drawer>
       )}
 
       {/* Approval Modal */}

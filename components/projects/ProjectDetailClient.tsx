@@ -352,22 +352,24 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex items-center gap-0 mt-5 border-b-2 border-[var(--color-border)]">
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => handleTabChange(t.id)}
-                className="px-0 py-3 mr-7 text-sm transition-colors border-b-2 -mb-0.5 whitespace-nowrap"
-                style={{
-                  color: activeTab === t.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  borderBottomColor: activeTab === t.id ? 'var(--color-primary)' : 'transparent',
-                  fontWeight: activeTab === t.id ? 600 : 500,
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
+          {/* Tabs - Scrollable on mobile */}
+          <div className="overflow-x-auto -mx-4 px-4 mt-5" style={{ scrollBehavior: 'smooth' }}>
+            <div className="flex items-center gap-0 border-b-2 border-[var(--color-border)] min-w-min">
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => handleTabChange(t.id)}
+                  className="px-0 py-3 mr-7 text-sm transition-colors border-b-2 -mb-0.5 whitespace-nowrap"
+                  style={{
+                    color: activeTab === t.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                    borderBottomColor: activeTab === t.id ? 'var(--color-primary)' : 'transparent',
+                    fontWeight: activeTab === t.id ? 600 : 500,
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -516,15 +518,15 @@ function OverviewTab({
   return (
     <div>
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
         <StatCard label="Total Budget" value={formatCurrency(totalBudget)} percentage={100} />
         <StatCard label="Budget Remaining" value={formatCurrency(Math.max(0, budgetRemaining))} percentage={remainingPct} color="#2BB673" />
         <StatCard label="Money Spent" value={formatCurrency(totalSpent)} percentage={budgetPct} color="#E03131" />
         <StatCard label="Revenue" value="$0" percentage={0} note="Coming soon" color="#F59F00" />
       </div>
 
-      {/* Two column layout */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+      {/* Two column layout - responsive */}
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-3 w-full">
         {/* Left */}
         <div className="space-y-6 md:col-span-2">
           <div className="bg-white rounded-lg border border-[var(--color-border)] p-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
@@ -650,7 +652,7 @@ function TeamTab({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
         {members.map(m => (
           <div key={m.id} className="bg-white rounded-lg border border-[var(--color-border)] p-5 flex items-center gap-4"
             style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
@@ -824,7 +826,7 @@ function BudgetTab({
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
         <StatCard label="Total Budget" value={formatCurrency(totalBudget)} percentage={100} />
         <StatCard label="Budget Remaining" value={formatCurrency(Math.max(0, budgetRemaining))} percentage={remainingPct} color="#2BB673" />
         <StatCard label="Money Spent" value={formatCurrency(totalSpent)} percentage={spentPct} color="#E03131" />
@@ -848,8 +850,8 @@ function BudgetTab({
         {/* Add expense form */}
         {showAddExpense && (
           <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[#F8F9FF]">
-            <div className="grid grid-cols-4 gap-3 mb-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+              <div className="col-span-1 sm:col-span-2">
                 <label className="block text-xs font-semibold text-[#1E2A3A] mb-1.5">Description *</label>
                 <input
                   value={expForm.description}
@@ -858,7 +860,7 @@ function BudgetTab({
                   className="w-full h-10 px-3 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB]"
                 />
               </div>
-              <div>
+              <div className="col-span-1">
                 <label className="block text-xs font-semibold text-[#1E2A3A] mb-1.5">Amount *</label>
                 <input
                   type="number"
@@ -868,7 +870,7 @@ function BudgetTab({
                   className="w-full h-10 px-3 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB]"
                 />
               </div>
-              <div>
+              <div className="col-span-1">
                 <label className="block text-xs font-semibold text-[#1E2A3A] mb-1.5">Category</label>
                 <select
                   value={expForm.category}
@@ -1150,7 +1152,7 @@ function TasksTab({
           </table>
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           {columns.map(col => {
             const colTasks = tasks.filter(t => t.status === col);
             return (
@@ -1266,7 +1268,7 @@ function FilesTab({
           <p className="text-sm mt-1">Upload your first file to get started</p>
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full">
           {assets.map(a => (
             <div key={a.id} className="bg-white rounded-lg border border-[var(--color-border)] overflow-hidden"
               style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
