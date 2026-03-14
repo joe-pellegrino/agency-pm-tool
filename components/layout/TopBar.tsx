@@ -1,16 +1,15 @@
-'use client';
+'use client'
 
-import { Bell, Search, Menu, Sun, Moon } from 'lucide-react';
-import { useState } from 'react';
-import { useSidebar } from './SidebarContext';
-import { useTheme } from '@/components/ThemeProvider';
-import { useEffect } from 'react';
+import { Bell, Search, Menu, Sun, Moon } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSidebar } from './SidebarContext'
+import { useTheme } from '@/components/ThemeProvider'
 
 interface TopBarProps {
-  title: string;
-  subtitle?: string;
-  breadcrumb?: string[];
-  actions?: React.ReactNode;
+  title: string
+  subtitle?: string
+  breadcrumb?: string[]
+  actions?: React.ReactNode
 }
 
 const NOTIFICATIONS = [
@@ -18,14 +17,23 @@ const NOTIFICATIONS = [
   { id: 2, text: 'Sarah uploaded new content calendar', time: '1h ago', unread: true },
   { id: 3, text: 'The Refuge Grand Opening campaign is live', time: '3h ago', unread: false },
   { id: 4, text: 'Monthly analytics report ready for review', time: '1d ago', unread: false },
-];
+]
 
 export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarProps) {
-  const [notifOpen, setNotifOpen] = useState(false);
-  const { toggleMobile, toggleCollapsed, collapsed } = useSidebar();
-  const { theme, toggle } = useTheme();
-  const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
-  const logoWidth = collapsed ? 60 : 240;
+  const [notifOpen, setNotifOpen] = useState(false)
+  const { toggleCollapsed, openMobile, isCollapsed } = useSidebar()
+  const { theme, toggle } = useTheme()
+  const [isMobile, setIsMobile] = useState(false)
+  const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  const logoWidth = isCollapsed ? 60 : 240
 
   return (
     <header
@@ -46,13 +54,7 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
     >
       {/* Hamburger — single button that works for both mobile and desktop */}
       <button
-        onClick={() => {
-          if (typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches) {
-            toggleCollapsed();
-          } else {
-            toggleMobile();
-          }
-        }}
+        onClick={() => (isMobile ? openMobile() : toggleCollapsed())}
         className="icon-btn"
         style={{
           display: 'flex',
@@ -67,8 +69,19 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
       </button>
 
       {/* Logo area — desktop */}
-      <div className="hidden lg:flex items-center" style={{ width: `${logoWidth}px`, flexShrink: 0, gap: '8px', paddingLeft: '0', transition: 'width 0.2s ease', justifyContent: collapsed ? 'center' : 'flex-start', paddingRight: collapsed ? '0' : '16px' }}>
-        {!collapsed && (
+      <div
+        className="hidden lg:flex items-center"
+        style={{
+          width: `${logoWidth}px`,
+          flexShrink: 0,
+          gap: '8px',
+          paddingLeft: '0',
+          transition: 'width 0.2s ease',
+          justifyContent: isCollapsed ? 'center' : 'flex-start',
+          paddingRight: isCollapsed ? '0' : '16px',
+        }}
+      >
+        {!isCollapsed && (
           <>
             <div
               style={{
@@ -110,7 +123,9 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
           )}
         </div>
         {subtitle && (
-          <p className="hidden md:block" style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.4 }}>{subtitle}</p>
+          <p className="hidden md:block" style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.4 }}>
+            {subtitle}
+          </p>
         )}
       </div>
 
@@ -138,12 +153,12 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
             transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
           }}
           onFocus={e => {
-            e.target.style.borderColor = 'var(--color-border-input-focus)';
-            e.target.style.boxShadow = '0 0 0 3px rgba(59, 91, 219, 0.12)';
+            e.target.style.borderColor = 'var(--color-border-input-focus)'
+            e.target.style.boxShadow = '0 0 0 3px rgba(59, 91, 219, 0.12)'
           }}
           onBlur={e => {
-            e.target.style.borderColor = 'var(--color-border)';
-            e.target.style.boxShadow = 'none';
+            e.target.style.borderColor = 'var(--color-border)'
+            e.target.style.boxShadow = 'none'
           }}
         />
       </div>
@@ -234,8 +249,12 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
                       borderBottom: '1px solid var(--color-border)',
                       transition: 'background 0.15s ease',
                     }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-hover-bg)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = n.unread ? 'var(--color-notif-unread-bg)' : 'transparent'; }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-hover-bg)'
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = n.unread ? 'var(--color-notif-unread-bg)' : 'transparent'
+                    }}
                   >
                     <div
                       style={{
@@ -279,5 +298,5 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
         </div>
       </div>
     </header>
-  );
+  )
 }

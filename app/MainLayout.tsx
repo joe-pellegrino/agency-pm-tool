@@ -1,10 +1,9 @@
-'use client';
+'use client'
 
-import { useSidebar } from '@/components/layout/SidebarContext';
+import { useSidebar } from '@/components/layout/SidebarContext'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { collapsed } = useSidebar();
-  const desktopMargin = collapsed ? 60 : 240;
+  const { isCollapsed } = useSidebar()
 
   return (
     <main
@@ -14,21 +13,17 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         backgroundColor: 'var(--color-bg-page)',
       }}
     >
-      {/* Mobile: no margin, no sidebar space */}
-      <div className="lg:hidden" style={{ marginTop: 0 }}>
-        {children}
-      </div>
+      {/* Mobile: no padding, no sidebar space */}
+      <div className="lg:hidden">{children}</div>
 
-      {/* Desktop: add margin for sidebar, adjust for collapsed state */}
+      {/* Desktop: add padding for sidebar, adjust for collapsed state */}
       <div
-        className="hidden lg:block"
-        style={{
-          marginLeft: `${desktopMargin}px`,
-          transition: 'margin-left 0.2s ease',
-        }}
+        className={`hidden lg:block transition-all duration-200 ${
+          isCollapsed ? 'pl-16' : 'pl-60'
+        }`}
       >
         {children}
       </div>
     </main>
-  );
+  )
 }
