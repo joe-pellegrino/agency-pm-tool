@@ -127,7 +127,7 @@ function KPIGauge({
         <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
       <div className="flex justify-between text-[10px] text-gray-400">
-        <span>{isOnTrack ? '✅ On Track' : isAtRisk ? '⚠️ At Risk' : '🔴 Behind'}</span>
+        <span>{isOnTrack ? 'On Track' : isAtRisk ? 'At Risk' : 'Behind'}</span>
         <span>{Math.round(pct)}%</span>
       </div>
     </div>
@@ -347,7 +347,12 @@ function ServiceStrategyCard({ ss, clientColor }: { ss: ServiceStrategy; clientC
         style={{ borderLeft: `3px solid ${clientColor}` }}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-xl flex-shrink-0">{service?.icon || '📋'}</span>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
+            style={{ backgroundColor: clientColor || 'var(--color-primary)' }}
+          >
+            {(service?.name || 'S').charAt(0).toUpperCase()}
+          </div>
           <div className="min-w-0">
             <div className="font-semibold text-gray-900 dark:text-white text-sm truncate">{service?.name || 'Service'}</div>
             <div className="text-xs text-gray-500 truncate">{ss.name}</div>

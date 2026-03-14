@@ -338,7 +338,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 'hd-m1',
-    title: '🎯 Q2 Campaign Launch',
+    title: 'Q2 Campaign Launch',
     clientId: 'happy-days',
     assigneeId: 'joe',
     status: 'todo',
@@ -510,7 +510,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 'kp-m1',
-    title: '🎯 Spring Menu Launch',
+    title: 'Spring Menu Launch',
     clientId: 'k-pacho',
     assigneeId: 'rick',
     status: 'todo',
@@ -712,7 +712,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 'tr-m1',
-    title: '🎯 Grand Opening',
+    title: 'Grand Opening',
     clientId: 'the-refuge',
     assigneeId: 'joe',
     status: 'done',
@@ -730,7 +730,7 @@ export const TASKS: Task[] = [
   },
   {
     id: 'tr-m2',
-    title: '🎯 Website Live',
+    title: 'Website Live',
     clientId: 'the-refuge',
     assigneeId: 'joe',
     status: 'review',
@@ -1200,13 +1200,13 @@ export const PRIORITY_DOT: Record<Priority, string> = {
 };
 
 export const TYPE_ICONS: Record<NonNullable<Task['type']>, string> = {
-  social: '📱',
-  ad: '📣',
-  blog: '✍️',
-  report: '📊',
-  meeting: '🤝',
-  design: '🎨',
-  other: '📋',
+  social: 'SOC',
+  ad: 'AD',
+  blog: 'BLG',
+  report: 'RPT',
+  meeting: 'MTG',
+  design: 'DES',
+  other: 'OTH',
 };
 
 // ============================================================
@@ -1680,7 +1680,7 @@ export const SERVICES: Service[] = [
     name: 'Paid Ads',
     category: 'Paid Media',
     description: 'Meta, Google, and local paid advertising campaigns — managed start to finish.',
-    icon: '📣',
+    icon: '',
     defaultCadence: 'monthly',
   },
   {
@@ -1688,7 +1688,7 @@ export const SERVICES: Service[] = [
     name: 'SEO',
     category: 'SEO',
     description: 'Technical SEO, on-page optimization, local listings, and content strategy.',
-    icon: '🔍',
+    icon: '',
     defaultCadence: 'monthly',
   },
   {
@@ -1696,7 +1696,7 @@ export const SERVICES: Service[] = [
     name: 'Content Creation',
     category: 'Content',
     description: 'Video production, photography, and creative content for social and web.',
-    icon: '🎬',
+    icon: '',
     defaultCadence: 'monthly',
   },
   {
@@ -1704,7 +1704,7 @@ export const SERVICES: Service[] = [
     name: 'Social Media Management',
     category: 'Social Media',
     description: 'Full social media management: calendars, publishing, community engagement, and reporting.',
-    icon: '📱',
+    icon: '',
     defaultCadence: 'monthly',
   },
   {
@@ -1712,7 +1712,7 @@ export const SERVICES: Service[] = [
     name: 'Email Marketing',
     category: 'Email Marketing',
     description: 'Email list management, newsletter design, automation flows, and deliverability.',
-    icon: '✉️',
+    icon: '',
     defaultCadence: 'monthly',
   },
   {
@@ -1720,7 +1720,7 @@ export const SERVICES: Service[] = [
     name: 'Web Development',
     category: 'Web Development',
     description: 'Website design, development, launch, and ongoing maintenance.',
-    icon: '🌐',
+    icon: '',
     defaultCadence: 'one-time',
   },
   {
@@ -1728,7 +1728,7 @@ export const SERVICES: Service[] = [
     name: 'Tech Support / Virtual CIO',
     category: 'Tech Support',
     description: 'Technical operations support, platform management, and virtual CIO advisory.',
-    icon: '🛠️',
+    icon: '',
     defaultCadence: 'monthly',
   },
   {
@@ -1736,7 +1736,7 @@ export const SERVICES: Service[] = [
     name: 'Strategy Consulting',
     category: 'Strategy Consulting',
     description: 'Quarterly strategy planning, competitive analysis, and growth roadmaps.',
-    icon: '🎯',
+    icon: '',
     defaultCadence: 'quarterly',
   },
 ];

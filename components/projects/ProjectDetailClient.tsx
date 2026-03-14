@@ -7,6 +7,7 @@ import {
   Trash2, Download, Upload, X, Check, List, LayoutGrid,
   Calendar, AlertCircle, DollarSign, TrendingUp, Activity,
   FileText, Settings, BarChart3, UserPlus, Filter,
+  CheckCircle, RefreshCw, ImageIcon, Video, Paperclip, Archive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectDetail } from '@/lib/actions-projects';
@@ -34,23 +35,24 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'settings', label: 'Settings' },
 ];
 
-const EMOJIS = ['📋', '📊', '🎯', '🚀', '💡', '🎨', '📱', '🌐', '🏪', '🎬', '🎵', '✨', '🔥', '💰', '📸', '🎭', '🏆', '🌟', '💼', '🔧', '📦', '🎪', '🌿', '🎮', '🏋️', '🎤', '🛒', '🍽️', '🏠', '🌍'];
 const ICON_COLORS = ['var(--color-primary)', '#2BB673', '#F59F00', '#E03131', '#7C3AED', '#0891B2', '#D97706', '#374151'];
 
-const ACTION_ICONS: Record<string, string> = {
-  task_created: '📋',
-  task_completed: '✅',
-  task_status_changed: '🔄',
-  expense_added: '💰',
-  expense_deleted: '🗑️',
-  budget_updated: '📊',
-  member_added: '👤',
-  member_removed: '👤',
-  file_uploaded: '📁',
-  file_deleted: '🗑️',
-  settings_updated: '⚙️',
-  default: '📌',
-};
+function getActionIcon(actionType: string) {
+  switch (actionType) {
+    case 'task_created': return <FileText size={13} />;
+    case 'task_completed': return <CheckCircle size={13} />;
+    case 'task_status_changed': return <RefreshCw size={13} />;
+    case 'expense_added':
+    case 'expense_deleted': return <DollarSign size={13} />;
+    case 'budget_updated': return <BarChart3 size={13} />;
+    case 'member_added':
+    case 'member_removed': return <Users size={13} />;
+    case 'file_uploaded': return <Upload size={13} />;
+    case 'file_deleted': return <Trash2 size={13} />;
+    case 'settings_updated': return <Settings size={13} />;
+    default: return <Activity size={13} />;
+  }
+}
 
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-gray-100 text-gray-600',
@@ -155,7 +157,6 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [, startTransition] = useTransition();
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const [pendingIcon, setPendingIcon] = useState(project.icon);
   const [pendingColor, setPendingColor] = useState(project.iconColor);
   const [showCreateTask, setShowCreateTask] = useState(false);
 
@@ -222,8 +223,8 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   const handleSaveIcon = () => {
     startTransition(async () => {
       try {
-        await updateProject(project.id, { icon: pendingIcon, iconColor: pendingColor });
-        setProject(p => ({ ...p, icon: pendingIcon, iconColor: pendingColor }));
+        await updateProject(project.id, { iconColor: pendingColor });
+        setProject(p => ({ ...p, iconColor: pendingColor }));
         setShowIconPicker(false);
         toast.success('Icon updated');
       } catch {
@@ -257,32 +258,25 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
               <div className="relative">
                 <button
                   onClick={() => setShowIconPicker(v => !v)}
-                  className="flex items-center justify-center text-3xl rounded-xl transition-opacity hover:opacity-80"
+                  className="flex items-center justify-center rounded-xl transition-opacity hover:opacity-80"
                   style={{
                     width: 64, height: 64,
                     backgroundColor: project.iconColor,
                     borderRadius: 12,
                     flexShrink: 0,
                   }}
-                  title="Change icon"
+                  title="Change color"
                 >
-                  {project.icon}
+                  <span style={{ fontSize: 24, fontWeight: 'bold', color: 'white', lineHeight: 1 }}>
+                    {project.name.charAt(0).toUpperCase()}
+                  </span>
                 </button>
 
                 {showIconPicker && (
-                  <div className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-border)] p-4 z-50 w-72"
+                  <div className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-border)] p-4 z-50 w-56"
                     style={{ boxShadow: '0 8px 24px rgba(30,42,58,0.12)' }}>
-                    <div className="text-xs font-semibold text-[#1E2A3A] mb-2">Choose Emoji</div>
-                    <div className="grid grid-cols-6 gap-1 mb-3">
-                      {EMOJIS.map(e => (
-                        <button key={e} onClick={() => setPendingIcon(e)}
-                          className={`text-xl p-1 rounded hover:bg-[#EDF0F5] transition-colors ${pendingIcon === e ? 'bg-[#E8EDFF]' : ''}`}>
-                          {e}
-                        </button>
-                      ))}
-                    </div>
                     <div className="text-xs font-semibold text-[#1E2A3A] mb-2">Background Color</div>
-                    <div className="flex gap-2 mb-3">
+                    <div className="flex gap-2 mb-3 flex-wrap">
                       {ICON_COLORS.map(c => (
                         <button key={c} onClick={() => setPendingColor(c)}
                           className="w-7 h-7 rounded-full border-2 transition-all"
@@ -609,7 +603,7 @@ function OverviewTab({
                       {items.map(a => (
                         <div key={a.id} className="flex items-start gap-2">
                           <div className="absolute left-8 text-[10px] text-[#8896A6] pt-0.5">{formatTime(a.createdAt)}</div>
-                          <span className="text-base leading-5 flex-shrink-0">{ACTION_ICONS[a.actionType] || ACTION_ICONS.default}</span>
+                          <span className="flex-shrink-0 text-[#5A6A7E] flex items-center pt-0.5">{getActionIcon(a.actionType)}</span>
                           <span className="text-[13px] text-[#5A6A7E] leading-5">{a.description}</span>
                         </div>
                       ))}
@@ -1014,8 +1008,8 @@ function ActivityTab({ activity }: { activity: Awaited<ReturnType<typeof getProj
                       <div className="absolute left-0 text-xs text-[#8896A6] pt-0.5 w-12 text-right tabular-nums">
                         {formatTime(a.createdAt)}
                       </div>
-                      <div className="absolute left-[46px] w-5 h-5 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center text-xs">
-                        {ACTION_ICONS[a.actionType] || ACTION_ICONS.default}
+                      <div className="absolute left-[46px] w-5 h-5 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center text-[#5A6A7E]">
+                        {getActionIcon(a.actionType)}
                       </div>
                       <div className="flex-1">
                         <p className="text-[14px] text-[#1E2A3A]">{a.description}</p>
@@ -1232,11 +1226,11 @@ function FilesTab({
   };
 
   const getFileIcon = (type: string) => {
-    if (type.includes('image')) return '🖼️';
-    if (type.includes('pdf')) return '📄';
-    if (type.includes('video')) return '🎬';
-    if (type.includes('zip') || type.includes('archive')) return '🗜️';
-    return '📎';
+    if (type.includes('image')) return <ImageIcon size={48} className="text-gray-300" />;
+    if (type.includes('pdf')) return <FileText size={48} className="text-gray-300" />;
+    if (type.includes('video')) return <Video size={48} className="text-gray-300" />;
+    if (type.includes('zip') || type.includes('archive')) return <Archive size={48} className="text-gray-300" />;
+    return <Paperclip size={48} className="text-gray-300" />;
   };
 
   return (
@@ -1275,7 +1269,7 @@ function FilesTab({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={a.url} alt={a.name} className="w-full h-full object-cover" style={{ borderRadius: '8px 8px 0 0' }} />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-5xl">
+                  <div className="w-full h-full flex items-center justify-center">
                     {getFileIcon(a.type)}
                   </div>
                 )}

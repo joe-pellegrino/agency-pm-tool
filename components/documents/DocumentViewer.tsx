@@ -125,7 +125,7 @@ function DocumentEditor({ doc, onBack }: { doc: Document; onBack: () => void }) 
       .replace(/^- (.+)$/gm, '<li>$1</li>')
       .replace(/(<li>.*<\/li>(\n)?)+/g, (m) => `<ul>${m}</ul>`)
       .replace(/^---$/gm, '<hr>')
-      .replace(/\[x\]/g, '✅').replace(/\[ \]/g, '☐')
+      .replace(/\[x\]/g, '[x]').replace(/\[ \]/g, '[ ]')
       .replace(/\| (.+) \|/g, (m, inner) => {
         const cells = inner.split(' | ');
         return '<tr>' + cells.map((c: string) => `<td>${c}</td>`).join('') + '</tr>';

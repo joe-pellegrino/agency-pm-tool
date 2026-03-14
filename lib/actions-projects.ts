@@ -182,7 +182,7 @@ export async function getProjectDetail(id: string): Promise<ProjectDetail | null
     startDate: project.start_date,
     endDate: project.end_date,
     progress: project.progress || 0,
-    icon: project.icon || '📋',
+    icon: project.icon || '',
     iconColor: project.icon_color || '#3B5BDB',
     strategyId: project.strategy_id,
     pillarId: project.pillar_id,

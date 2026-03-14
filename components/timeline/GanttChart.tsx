@@ -324,7 +324,7 @@ export default function GanttChart() {
                         >
                           {w > 8 && (
                             <span className="text-white text-[10px] font-medium truncate leading-none">
-                              {isBlocked ? '🔒 ' : ''}{task.title}
+                              {task.title}
                             </span>
                           )}
                         </div>

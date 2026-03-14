@@ -373,13 +373,13 @@ function TeamCapacity({ tasks, teamMembers }: Pick<Props, 'tasks' | 'teamMembers
     const urgentHigh = openTasks.filter(t => t.priority === 'Urgent' || t.priority === 'High').length;
     const count = openTasks.length;
     let capacityColor = 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400';
-    let capacityLabel = '🟢 Low';
+    let capacityLabel = 'Low';
     if (count >= 8) {
       capacityColor = 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
-      capacityLabel = '🔴 High';
+      capacityLabel = 'High';
     } else if (count >= 4) {
       capacityColor = 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
-      capacityLabel = '🟡 Moderate';
+      capacityLabel = 'Moderate';
     }
     return { member, count, urgentHigh, capacityColor, capacityLabel };
   });

@@ -131,7 +131,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
                 </span>
                 {template && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#3B5BDB] font-medium">
-                    📋 {template.name}
+                    {template.name}
                   </span>
                 )}
               </div>
@@ -449,7 +449,7 @@ function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project
           )}
           {template && (
             <span className="text-indigo-400 font-medium truncate max-w-[120px]">
-              📋 {template.category}
+              {template.category}
             </span>
           )}
         </div>
@@ -644,7 +644,7 @@ export default function ProjectsPage() {
                   selectedService === svc.id ? 'bg-[#3B5BDB] text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
                 }`}
               >
-                {svc.icon} {svc.name}
+                {svc.name}
               </button>
             ))}
           </div>

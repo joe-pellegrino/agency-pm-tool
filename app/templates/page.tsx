@@ -25,9 +25,9 @@ const TYPE_COLORS: Record<string, string> = {
   other: 'bg-gray-100 text-gray-600',
 };
 
-const TYPE_ICONS: Record<string, string> = {
-  social: '📱', ad: '📣', blog: '✍️', report: '📊',
-  meeting: '🤝', design: '🎨', other: '📋',
+const TYPE_LABELS: Record<string, string> = {
+  social: 'SOC', ad: 'AD', blog: 'BLG', report: 'RPT',
+  meeting: 'MTG', design: 'DES', other: 'OTH',
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -151,7 +151,7 @@ function TaskTemplateModal({
                 <label className={labelClass}>Type</label>
                 <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as typeof TASK_TYPES[number] }))} className={inputClass}>
                   {TASK_TYPES.map(t => (
-                    <option key={t} value={t}>{TYPE_ICONS[t]} {t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
                   ))}
                 </select>
               </div>
@@ -495,8 +495,8 @@ function TaskTemplateCard({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md hover:border-[#C7D2FE] dark:hover:border-indigo-700 transition-all group">
       <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-center text-xl group-hover:bg-[#EEF2FF] transition-colors flex-shrink-0">
-          {TYPE_ICONS[template.type || 'other']}
+        <div className="w-10 h-10 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-center group-hover:bg-[#EEF2FF] transition-colors flex-shrink-0">
+          <span className="text-[11px] font-bold text-gray-500 group-hover:text-[#3B5BDB]">{TYPE_LABELS[template.type || 'other']}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${TYPE_COLORS[template.type || 'other']}`}>
