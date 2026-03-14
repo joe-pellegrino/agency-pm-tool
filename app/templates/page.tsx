@@ -682,7 +682,7 @@ export default function TemplatesPage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-      <TopBar title="Templates" subtitle="Workflow templates and reusable task templates" />
+      <TopBar />
 
       {/* Modals */}
       {(newTaskTemplate || editTaskTemplate) && (
@@ -709,6 +709,10 @@ export default function TemplatesPage() {
       )}
 
       <div style={{ padding: '24px 32px' }}>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Templates</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Workflow templates and reusable task templates</p>
+        </div>
         {/* Tab switcher */}
         <div className="flex items-center gap-2 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-1.5 w-fit">
           <button

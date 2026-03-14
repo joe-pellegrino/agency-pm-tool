@@ -1,13 +1,12 @@
 'use client'
 
-import { Bell, Search, Menu, Sun, Moon } from 'lucide-react'
+import { Bell, Search, Menu, Sun, Moon, Settings } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useSidebar } from './SidebarContext'
 import { useTheme } from '@/components/ThemeProvider'
+import { Menu as HeadlessMenu, MenuButton, MenuItems, MenuItem } from '@headlessui/react'
 
 interface TopBarProps {
-  title: string
-  subtitle?: string
   breadcrumb?: string[]
   actions?: React.ReactNode
 }
@@ -19,9 +18,9 @@ const NOTIFICATIONS = [
   { id: 4, text: 'Monthly analytics report ready for review', time: '1d ago', unread: false },
 ]
 
-export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarProps) {
+export default function TopBar({ breadcrumb, actions }: TopBarProps) {
   const [notifOpen, setNotifOpen] = useState(false)
-  const { toggleCollapsed, openMobile, isCollapsed } = useSidebar()
+  const { toggleCollapsed, openMobile, closeMobile, isMobileOpen, isCollapsed } = useSidebar()
   const { theme, toggle } = useTheme()
   const [isMobile, setIsMobile] = useState(false)
   const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length
@@ -54,7 +53,7 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
     >
       {/* Hamburger — single button that works for both mobile and desktop */}
       <button
-        onClick={() => (isMobile ? openMobile() : toggleCollapsed())}
+        onClick={() => (isMobile ? (isMobileOpen ? closeMobile() : openMobile()) : toggleCollapsed())}
         className="icon-btn"
         style={{
           display: 'flex',
@@ -105,27 +104,17 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
         )}
       </div>
 
-      {/* Breadcrumb / Title */}
+      {/* Breadcrumb */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.3 }}>
-            {title}
-          </h1>
-          {breadcrumb && breadcrumb.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--color-text-muted)' }}>
-              {breadcrumb.map((crumb, i) => (
-                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ color: 'var(--color-icon-muted)', fontSize: '12px' }}>&gt;</span>
-                  <span style={{ color: i === breadcrumb.length - 1 ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>{crumb}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        {subtitle && (
-          <p className="hidden md:block" style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.4 }}>
-            {subtitle}
-          </p>
+        {breadcrumb && breadcrumb.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--color-text-muted)' }}>
+            {breadcrumb.map((crumb, i) => (
+              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: 'var(--color-icon-muted)', fontSize: '12px' }}>&gt;</span>
+                <span style={{ color: i === breadcrumb.length - 1 ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>{crumb}</span>
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
@@ -162,16 +151,6 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
           }}
         />
       </div>
-
-      {/* Theme toggle */}
-      <button
-        onClick={toggle}
-        className="icon-btn"
-        aria-label="Toggle theme"
-        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
 
       {/* Notifications */}
       <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -278,25 +257,103 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
         )}
       </div>
 
-      {/* User avatar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
-        <div
+      {/* User avatar dropdown */}
+      <HeadlessMenu as="div" className="relative" style={{ flexShrink: 0 }}>
+        <MenuButton
+          className="icon-btn"
           style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--color-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--color-white)',
-            fontSize: '12px',
-            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+          title="User menu"
+        >
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--color-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-white)',
+              fontSize: '12px',
+              fontWeight: 700,
+            }}
+          >
+            JP
+          </div>
+        </MenuButton>
+
+        <MenuItems
+          className="absolute right-0 mt-2 w-48 origin-top-right rounded-lg shadow-lg ring-1 focus:outline-none z-50"
+          style={{
+            backgroundColor: 'var(--color-white)',
+            borderRadius: '8px',
+            boxShadow: 'var(--shadow-dropdown)',
+            border: '1px solid var(--color-border)',
           }}
         >
-          JP
-        </div>
-      </div>
+          <MenuItem>
+            <div
+              className="px-4 py-3 border-b"
+              style={{
+                borderColor: 'var(--color-border)',
+              }}
+            >
+              <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)', margin: 0 }}>
+                Joe Pellegrino
+              </p>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)', margin: '2px 0 0 0' }}>
+                Owner
+              </p>
+            </div>
+          </MenuItem>
+
+          <MenuItem>
+            {({ focus }) => (
+              <button
+                onClick={toggle}
+                className="flex w-full items-center gap-3 px-4 py-2 text-sm"
+                style={{
+                  color: 'var(--color-text-secondary)',
+                  backgroundColor: focus ? 'var(--color-hover-bg)' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  textAlign: 'left',
+                  transition: 'background-color 0.15s ease',
+                }}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </button>
+            )}
+          </MenuItem>
+
+          <MenuItem>
+            {({ focus }) => (
+              <a
+                href="/settings"
+                className="flex items-center gap-3 px-4 py-2 text-sm"
+                style={{
+                  color: 'var(--color-text-secondary)',
+                  backgroundColor: focus ? 'var(--color-hover-bg)' : 'transparent',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  transition: 'background-color 0.15s ease',
+                }}
+              >
+                <Settings size={16} />
+                Settings
+              </a>
+            )}
+          </MenuItem>
+        </MenuItems>
+      </HeadlessMenu>
     </header>
   )
 }

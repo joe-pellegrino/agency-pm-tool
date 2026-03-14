@@ -913,7 +913,7 @@ export default function StrategyPage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-      <TopBar title="Strategy" subtitle="Client strategies, service strategies, and KPI hierarchy" />
+      <TopBar />
 
       {showStrategyModal && (
         <StrategyModal
@@ -934,6 +934,10 @@ export default function StrategyPage() {
       )}
 
       <div style={{ padding: '24px 32px' }}>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Strategy</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Client strategies, service strategies, and KPI hierarchy</p>
+        </div>
         {/* Top action bar — New Strategy always visible */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">

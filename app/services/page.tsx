@@ -503,10 +503,14 @@ export default function ServicesPage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-      <TopBar title="Services" subtitle="Agency-wide service delivery across all clients" />
+      <TopBar />
       {showNewService && <ClientServiceModal onClose={() => setShowNewService(false)} />}
 
       <div style={{ padding: '24px 32px' }}>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Services</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Agency-wide service delivery across all clients</p>
+        </div>
         {/* Assign Service button */}
         <div className="flex justify-end mb-4">
           <button

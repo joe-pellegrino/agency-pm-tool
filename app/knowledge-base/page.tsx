@@ -178,9 +178,16 @@ export default function KnowledgeBasePage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-      <TopBar title="Knowledge Base" subtitle="Internal articles, guides, and documentation" />
+      <TopBar />
 
-      <div className="flex h-[calc(100vh-7rem)]">
+      <div className="px-4 sm:px-6 py-4">
+        <div className="mb-4">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Knowledge Base</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Internal articles, guides, and documentation</p>
+        </div>
+      </div>
+
+      <div className="flex h-[calc(100vh-13rem)]">
         {/* Left panel: Categories */}
         <div className="w-64 flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">

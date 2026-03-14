@@ -151,9 +151,13 @@ export default function CalendarPage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-      <TopBar title="Calendar" subtitle="Monthly view of tasks and deadlines" />
+      <TopBar />
 
       <div style={{ padding: '24px 32px' }}>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Calendar</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Monthly view of tasks and deadlines</p>
+        </div>
         {selectedDay && (
           <DayModal
             date={selectedDay}

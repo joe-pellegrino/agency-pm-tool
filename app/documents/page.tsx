@@ -524,7 +524,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      <TopBar title="Documents" subtitle="Real-time collaborative document editor" />
+      <TopBar />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Folder Sidebar */}
@@ -540,6 +540,10 @@ export default function DocumentsPage() {
 
         {/* Main content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Documents</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Real-time collaborative document editor</p>
+          </div>
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
             {/* Mobile: folder toggle button */}

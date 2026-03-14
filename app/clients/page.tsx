@@ -91,7 +91,13 @@ export default function ClientsPage() {
   if (loading) {
     return (
       <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-        <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
+        <TopBar />
+        <div style={{ padding: '24px 32px' }}>
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Clients</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">All client accounts and service subscriptions</p>
+          </div>
+        </div>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-primary)' }} />
         </div>
@@ -114,9 +120,13 @@ export default function ClientsPage() {
           onCancel={() => setArchiveId(null)}
         />
       )}
-      <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
+      <TopBar />
 
       <div style={{ padding: '24px 32px' }}>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Clients</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">All client accounts and service subscriptions</p>
+        </div>
         <div className="flex justify-end mb-5">
           <button
             onClick={() => setShowNewClient(true)}

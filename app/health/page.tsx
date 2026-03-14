@@ -231,9 +231,13 @@ export default function HealthPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-      <TopBar title="Client Health" subtitle="Relationship scores and task performance per client" />
+      <TopBar />
 
       <div className="p-4 sm:p-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Client Health</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Relationship scores and task performance per client</p>
+        </div>
         {/* Summary bar */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[

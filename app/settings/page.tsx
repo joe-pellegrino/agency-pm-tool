@@ -89,7 +89,7 @@ export default function SettingsPage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-      <TopBar title="Settings" subtitle="Manage your workspace preferences" />
+      <TopBar />
 
       {(showNewMember || editMember) && (
         <TeamMemberModal member={editMember || undefined} onClose={() => { setShowNewMember(false); setEditMember(null); }} />
@@ -106,6 +106,10 @@ export default function SettingsPage() {
       )}
 
       <div className="p-6 max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Settings</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Manage your workspace preferences</p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Team Members */}
           <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
