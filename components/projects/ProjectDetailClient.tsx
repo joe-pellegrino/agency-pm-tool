@@ -35,7 +35,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'settings', label: 'Settings' },
 ];
 
-const ICON_COLORS = ['var(--color-primary)', '#2BB673', '#F59F00', '#E03131', '#7C3AED', '#0891B2', '#D97706', '#374151'];
+
 
 function getActionIcon(actionType: string) {
   switch (actionType) {
@@ -156,8 +156,6 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   const [project, setProject] = useState(initialProject);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [, startTransition] = useTransition();
-  const [showIconPicker, setShowIconPicker] = useState(false);
-  const [pendingColor, setPendingColor] = useState(project.iconColor);
   const [showCreateTask, setShowCreateTask] = useState(false);
 
   // Tab data
@@ -220,18 +218,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
     loadTabData(tab);
   };
 
-  const handleSaveIcon = () => {
-    startTransition(async () => {
-      try {
-        await updateProject(project.id, { iconColor: pendingColor });
-        setProject(p => ({ ...p, iconColor: pendingColor }));
-        setShowIconPicker(false);
-        toast.success('Icon updated');
-      } catch {
-        toast.error('Failed to update icon');
-      }
-    });
-  };
+
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const totalBudget = budget?.totalBudget || 0;
@@ -251,89 +238,44 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
             All Projects
           </button>
 
-          <div className="flex items-start justify-between gap-4">
-            {/* Left: Icon + Title */}
-            <div className="flex items-start gap-4">
-              {/* Project Icon */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowIconPicker(v => !v)}
-                  className="flex items-center justify-center rounded-xl transition-opacity hover:opacity-80"
-                  style={{
-                    width: 64, height: 64,
-                    backgroundColor: project.iconColor,
-                    borderRadius: 12,
-                    flexShrink: 0,
-                  }}
-                  title="Change color"
-                >
-                  <span style={{ fontSize: 24, fontWeight: 'bold', color: 'white', lineHeight: 1 }}>
-                    {project.name.charAt(0).toUpperCase()}
-                  </span>
-                </button>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            {/* Left: Title */}
+            <div>
+              <h1 className="text-[20px] font-bold text-[#1E2A3A] leading-tight">{project.name}</h1>
+              <p className="text-[14px] text-[#5A6A7E] mt-0.5 max-w-xl">{project.description}</p>
 
-                {showIconPicker && (
-                  <div className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-border)] p-4 z-50 w-56"
-                    style={{ boxShadow: '0 8px 24px rgba(30,42,58,0.12)' }}>
-                    <div className="text-xs font-semibold text-[#1E2A3A] mb-2">Background Color</div>
-                    <div className="flex gap-2 mb-3 flex-wrap">
-                      {ICON_COLORS.map(c => (
-                        <button key={c} onClick={() => setPendingColor(c)}
-                          className="w-7 h-7 rounded-full border-2 transition-all"
-                          style={{ backgroundColor: c, borderColor: pendingColor === c ? 'var(--color-text-primary)' : 'transparent' }} />
-                      ))}
+              {/* Meta row */}
+              <div className="flex items-center gap-5 mt-2">
+                <div className="flex items-center gap-1 text-[13px] text-[#8896A6]">
+                  <Clock size={13} className="text-[#A0AAB8]" />
+                  {project.totalHours}h
+                </div>
+                <div className="flex items-center gap-1 text-[13px] text-[#8896A6]">
+                  <CheckSquare size={13} className="text-[#A0AAB8]" />
+                  {project.taskCount} tasks left
+                </div>
+                <div className="flex items-center gap-1 text-[13px] text-[#8896A6]">
+                  <Users size={13} className="text-[#A0AAB8]" />
+                  {project.memberCount} Members
+                </div>
+                {/* Avatar stack */}
+                <div className="flex items-center">
+                  {members.slice(0, 4).map((m, i) => (
+                    <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: 4 - i }}>
+                      <Avatar initials={m.initials} color={m.color} size={28} name={m.name} />
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={handleSaveIcon}
-                        className="flex-1 py-1.5 text-sm font-medium text-white rounded-md bg-[#3B5BDB] hover:bg-[#364FC7] transition-colors">
-                        Save
-                      </button>
-                      <button onClick={() => setShowIconPicker(false)}
-                        className="flex-1 py-1.5 text-sm font-medium text-[#5A6A7E] rounded-md border border-[var(--color-border)] hover:bg-[#F5F7FA] transition-colors">
-                        Cancel
-                      </button>
+                  ))}
+                  {members.length > 4 && (
+                    <div className="w-7 h-7 rounded-full bg-[#EDF0F5] text-[#5A6A7E] text-xs font-semibold flex items-center justify-center border-2 border-white" style={{ marginLeft: -8 }}>
+                      +{members.length - 4}
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h1 className="text-[20px] font-bold text-[#1E2A3A] leading-tight">{project.name}</h1>
-                <p className="text-[14px] text-[#5A6A7E] mt-0.5 max-w-xl">{project.description}</p>
-
-                {/* Meta row */}
-                <div className="flex items-center gap-5 mt-2">
-                  <div className="flex items-center gap-1 text-[13px] text-[#8896A6]">
-                    <Clock size={13} className="text-[#A0AAB8]" />
-                    {project.totalHours}h
-                  </div>
-                  <div className="flex items-center gap-1 text-[13px] text-[#8896A6]">
-                    <CheckSquare size={13} className="text-[#A0AAB8]" />
-                    {project.taskCount} tasks left
-                  </div>
-                  <div className="flex items-center gap-1 text-[13px] text-[#8896A6]">
-                    <Users size={13} className="text-[#A0AAB8]" />
-                    {project.memberCount} Members
-                  </div>
-                  {/* Avatar stack */}
-                  <div className="flex items-center">
-                    {members.slice(0, 4).map((m, i) => (
-                      <div key={m.id} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: 4 - i }}>
-                        <Avatar initials={m.initials} color={m.color} size={28} name={m.name} />
-                      </div>
-                    ))}
-                    {members.length > 4 && (
-                      <div className="w-7 h-7 rounded-full bg-[#EDF0F5] text-[#5A6A7E] text-xs font-semibold flex items-center justify-center border-2 border-white" style={{ marginLeft: -8 }}>
-                        +{members.length - 4}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Right: Action buttons */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 self-start">
               <button
                 onClick={() => handleTabChange('settings')}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#3B5BDB] border border-[#3B5BDB] rounded-md hover:bg-[#E8EDFF] transition-colors"
