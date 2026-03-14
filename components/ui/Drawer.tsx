@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle, TransitionChild } from '@headlessui/react';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { X } from 'lucide-react';
 
 interface DrawerProps {
@@ -40,39 +40,42 @@ export default function Drawer({
                 transition
                 className="pointer-events-auto relative w-screen max-w-md transform transition duration-500 ease-in-out data-closed:translate-x-full sm:duration-700"
               >
-                {/* Floating close button with its own fade transition */}
-                <TransitionChild>
-                  <div className="absolute top-0 left-0 -ml-8 flex pt-4 pr-2 duration-500 ease-in-out data-closed:opacity-0 sm:-ml-10 sm:pr-4">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="relative rounded-md text-gray-300 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      <span className="absolute -inset-2.5" />
-                      <span className="sr-only">Close panel</span>
-                      <X aria-hidden="true" size={24} strokeWidth={1.5} />
-                    </button>
-                  </div>
-                </TransitionChild>
-
                 {/* Panel body */}
                 <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-900 shadow-xl">
 
                   {/* Header */}
                   {isCreate ? (
                     <div className="flex-shrink-0 bg-indigo-700 px-4 py-6 sm:px-6">
-                      <DialogTitle className="text-base font-semibold text-white">
-                        {title}
-                      </DialogTitle>
+                      <div className="flex items-center justify-between">
+                        <DialogTitle className="text-base font-semibold text-white">
+                          {title}
+                        </DialogTitle>
+                        <button
+                          type="button"
+                          onClick={onClose}
+                          className="rounded-md bg-indigo-700 text-indigo-200 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                        >
+                          <span className="sr-only">Close panel</span>
+                          <X aria-hidden="true" size={24} strokeWidth={1.5} />
+                        </button>
+                      </div>
                       {subtitle && (
                         <p className="mt-1 text-sm text-indigo-300">{subtitle}</p>
                       )}
                     </div>
                   ) : (
-                    <div className="flex-shrink-0 px-4 py-6 sm:px-6" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <div className="flex-shrink-0 flex items-center justify-between px-4 py-6 sm:px-6" style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <DialogTitle className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                         {title}
                       </DialogTitle>
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      >
+                        <span className="sr-only">Close panel</span>
+                        <X aria-hidden="true" size={20} strokeWidth={1.5} />
+                      </button>
                     </div>
                   )}
 
