@@ -364,36 +364,6 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
         )}
       </nav>
 
-      {/* User footer - only show when expanded */}
-      {!isCollapsed && (
-        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-sidebar-border)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#FFFFFF',
-                fontSize: '12px',
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
-              JP
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                Joe Pellegrino
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Owner</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
