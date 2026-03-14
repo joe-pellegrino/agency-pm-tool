@@ -44,21 +44,24 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
         gap: '12px',
       }}
     >
-      {/* Hamburger — mobile only */}
+      {/* Hamburger — single button that works for both mobile and desktop */}
       <button
-        onClick={toggleMobile}
-        className="lg:hidden icon-btn"
-        aria-label="Open menu"
-      >
-        <Menu size={20} />
-      </button>
-
-      {/* Hamburger — desktop (for collapse toggle) */}
-      <button
-        onClick={toggleCollapsed}
-        className="hidden lg:flex icon-btn"
-        aria-label="Toggle sidebar"
-        title="Toggle sidebar"
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches) {
+            toggleCollapsed();
+          } else {
+            toggleMobile();
+          }
+        }}
+        className="icon-btn"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+        aria-label="Toggle menu"
+        title="Toggle menu"
       >
         <Menu size={20} />
       </button>

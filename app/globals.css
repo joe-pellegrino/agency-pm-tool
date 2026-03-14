@@ -562,6 +562,14 @@ body {
   }
 }
 
+/* ─── Mobile Sidebar Fix ──────────────────────────────────────────────────── */
+/* Ensure desktop sidebar is absolutely hidden on mobile */
+@media (max-width: 1023px) {
+  .hidden.lg\:flex {
+    display: none !important;
+  }
+}
+
 /* ─── Dark Mode Tailwind Class Overrides ──────────────────────────────────── */
 /* Override Tailwind gray utility classes in dark mode via data-theme selector */
 [data-theme="dark"] .text-gray-900,

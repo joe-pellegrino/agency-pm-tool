@@ -159,6 +159,7 @@ export default function Sidebar() {
         transition: 'width 0.2s ease',
       }}
       className="hidden lg:flex"
+      // Explicit media query to ensure mobile hides this completely
     >
       {/* Logo area - only show when expanded */}
       {!collapsed && (
