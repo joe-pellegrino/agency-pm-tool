@@ -42,7 +42,7 @@ function openDb(): Database.Database {
 function applySchema(db: Database.Database) {
   const sql = fs.readFileSync(SCHEMA_PATH, 'utf-8');
   db.exec(sql);
-  console.log('✓ Schema applied');
+  console.log('[OK] Schema applied');
 }
 
 function clearAllTables(db: Database.Database) {
@@ -82,7 +82,7 @@ function clearAllTables(db: Database.Database) {
   for (const t of tables) {
     db.prepare(`DELETE FROM ${t}`).run();
   }
-  console.log('✓ Tables cleared');
+  console.log('[OK] Tables cleared');
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +100,7 @@ function seedTeamMembers(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ team_members: ${TEAM_MEMBERS.length} rows`);
+  console.log(`[OK] team_members: ${TEAM_MEMBERS.length} rows`);
 }
 
 function seedClients(db: Database.Database) {
@@ -112,7 +112,7 @@ function seedClients(db: Database.Database) {
     for (const c of CLIENTS) insert.run(c);
   });
   run();
-  console.log(`✓ clients: ${CLIENTS.length} rows`);
+  console.log(`[OK] clients: ${CLIENTS.length} rows`);
 }
 
 function seedTasks(db: Database.Database) {
@@ -156,7 +156,7 @@ function seedTasks(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ tasks: ${TASKS.length} rows`);
+  console.log(`[OK] tasks: ${TASKS.length} rows`);
 }
 
 function seedDocuments(db: Database.Database) {
@@ -222,7 +222,7 @@ function seedDocuments(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ documents: ${DOCUMENTS.length} rows`);
+  console.log(`[OK] documents: ${DOCUMENTS.length} rows`);
 }
 
 function seedTaskTemplates(db: Database.Database) {
@@ -236,7 +236,7 @@ function seedTaskTemplates(db: Database.Database) {
     for (const t of TASK_TEMPLATES) insert.run({ ...t, type: t.type ?? null });
   });
   run();
-  console.log(`✓ task_templates: ${TASK_TEMPLATES.length} rows`);
+  console.log(`[OK] task_templates: ${TASK_TEMPLATES.length} rows`);
 }
 
 function seedAutomations(db: Database.Database) {
@@ -255,7 +255,7 @@ function seedAutomations(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ automations: ${AUTOMATIONS.length} rows`);
+  console.log(`[OK] automations: ${AUTOMATIONS.length} rows`);
 }
 
 function seedTimeEntries(db: Database.Database) {
@@ -267,7 +267,7 @@ function seedTimeEntries(db: Database.Database) {
     for (const te of TIME_ENTRIES) insert.run({ ...te, note: te.note ?? null });
   });
   run();
-  console.log(`✓ time_entries: ${TIME_ENTRIES.length} rows`);
+  console.log(`[OK] time_entries: ${TIME_ENTRIES.length} rows`);
 }
 
 function seedAssets(db: Database.Database) {
@@ -294,7 +294,7 @@ function seedAssets(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ assets: ${ASSETS.length} rows`);
+  console.log(`[OK] assets: ${ASSETS.length} rows`);
 }
 
 function seedWorkflowTemplates(db: Database.Database) {
@@ -325,7 +325,7 @@ function seedWorkflowTemplates(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ workflow_templates: ${WORKFLOW_TEMPLATES.length} rows`);
+  console.log(`[OK] workflow_templates: ${WORKFLOW_TEMPLATES.length} rows`);
 }
 
 function seedStrategies(db: Database.Database) {
@@ -361,7 +361,7 @@ function seedStrategies(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ strategies: ${STRATEGIES.length} rows`);
+  console.log(`[OK] strategies: ${STRATEGIES.length} rows`);
 }
 
 function seedProjects(db: Database.Database) {
@@ -389,7 +389,7 @@ function seedProjects(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ projects: ${PROJECTS.length} rows`);
+  console.log(`[OK] projects: ${PROJECTS.length} rows`);
 }
 
 function seedServices(db: Database.Database) {
@@ -401,7 +401,7 @@ function seedServices(db: Database.Database) {
     for (const s of SERVICES) insert.run(s);
   });
   run();
-  console.log(`✓ services: ${SERVICES.length} rows`);
+  console.log(`[OK] services: ${SERVICES.length} rows`);
 }
 
 function seedClientServices(db: Database.Database) {
@@ -429,7 +429,7 @@ function seedClientServices(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ client_services: ${CLIENT_SERVICES.length} rows`);
+  console.log(`[OK] client_services: ${CLIENT_SERVICES.length} rows`);
 }
 
 function seedServiceStrategies(db: Database.Database) {
@@ -458,7 +458,7 @@ function seedServiceStrategies(db: Database.Database) {
     }
   });
   run();
-  console.log(`✓ service_strategies: ${SERVICE_STRATEGIES.length} rows`);
+  console.log(`[OK] service_strategies: ${SERVICE_STRATEGIES.length} rows`);
 }
 
 // ---------------------------------------------------------------------------
@@ -488,9 +488,9 @@ async function main() {
     seedClientServices(db);
     seedServiceStrategies(db);
 
-    console.log('\n✅ Seed complete.\n');
+    console.log('\n[SUCCESS] Seed complete.\n');
   } catch (err) {
-    console.error('\n❌ Seed failed:', err);
+    console.error('\n[ERROR] Seed failed:', err);
     process.exit(1);
   } finally {
     db.close();

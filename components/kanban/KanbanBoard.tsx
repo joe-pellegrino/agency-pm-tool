@@ -112,7 +112,7 @@ function ApprovalModal({
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className={`font-medium ${entry.action === 'approved' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                            {entry.action === 'approved' ? '✓ Approved' : '↩ Sent Back'}
+                            {entry.action === 'approved' ? '[APPROVED]' : '[SENT BACK]'}
                           </span>
                           <span className="text-gray-400 text-xs">by {approver?.name}</span>
                         </div>

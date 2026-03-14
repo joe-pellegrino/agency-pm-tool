@@ -361,7 +361,7 @@ function CampaignCard({
                   {kpi.kpiTarget != null && (
                     <span className="text-[#8896A6] font-normal"> / {formatKpiValue(kpi.kpiTarget, kpi.metricType)}</span>
                   )}
-                  {kpiPct != null && kpiPct >= 100 && <span className="ml-1 text-green-600">✓</span>}
+                  {kpiPct != null && kpiPct >= 100 && <span className="ml-1 text-green-600">[OK]</span>}
                 </span>
                 {kpiPct != null && (
                   <div className="w-24 h-1 bg-gray-100 dark:bg-gray-700 rounded-full mt-0.5 overflow-hidden">

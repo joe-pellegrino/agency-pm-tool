@@ -258,7 +258,7 @@ function UploadZone({
           storageUrl: publicUrl,
         });
 
-        setProgress(p => p.map(x => x.includes(file.name) ? `✓ ${file.name} uploaded` : x));
+        setProgress(p => p.map(x => x.includes(file.name) ? `[UPLOADED] ${file.name}` : x));
         toast.success(`${file.name} uploaded`);
       } catch (err) {
         toast.error(`Error: ${(err as Error).message}`);
