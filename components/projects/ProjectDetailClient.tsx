@@ -1238,7 +1238,7 @@ function FilesTab({
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-base font-semibold text-[#1E2A3A]">Project Files ({assets.length})</h2>
-        <div>
+        <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
           <button
             onClick={() => fileRef.current?.click()}
@@ -1249,6 +1249,13 @@ function FilesTab({
             <Upload size={13} />
             {uploading ? 'Uploading...' : '+ Upload File'}
           </button>
+          <a
+            href="/documents"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#3B5BDB] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-md transition-colors border border-[#C7D2FE]"
+          >
+            <FileText size={13} />
+            + Create Document
+          </a>
         </div>
       </div>
 
