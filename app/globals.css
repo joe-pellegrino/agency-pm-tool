@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 /* ─── AirControl Design System — Spec-Accurate Theme ─────────────────────── */
 
@@ -551,4 +551,46 @@ body {
     margin-left: 0;
     padding: 16px;
   }
+}
+
+/* ─── Dark Mode Tailwind Class Overrides ──────────────────────────────────── */
+/* Override Tailwind gray utility classes in dark mode via data-theme selector */
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-gray-800 {
+  color: var(--color-text-primary) !important;
+}
+[data-theme="dark"] .text-gray-700 {
+  color: var(--color-text-secondary) !important;
+}
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-400 {
+  color: var(--color-text-muted) !important;
+}
+[data-theme="dark"] .bg-white {
+  background-color: var(--color-white) !important;
+}
+[data-theme="dark"] .bg-gray-800 {
+  background-color: var(--color-white) !important;
+}
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .hover\:bg-gray-50:hover {
+  background-color: var(--color-hover-bg) !important;
+}
+[data-theme="dark"] .bg-gray-100,
+[data-theme="dark"] .bg-gray-200 {
+  background-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .border-gray-100,
+[data-theme="dark"] .border-gray-200 {
+  border-color: var(--color-border) !important;
+}
+[data-theme="dark"] .border-gray-700 {
+  border-color: var(--color-border) !important;
+}
+[data-theme="dark"] .bg-gray-700 {
+  background-color: var(--color-hover-bg) !important;
+}
+[data-theme="dark"] .hover\:bg-gray-700\/50:hover {
+  background-color: var(--color-hover-bg) !important;
 }
