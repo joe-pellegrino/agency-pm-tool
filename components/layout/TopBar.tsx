@@ -91,7 +91,7 @@ export default function TopBar({ title, subtitle, breadcrumb, actions }: TopBarP
           )}
         </div>
         {subtitle && (
-          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.4 }}>{subtitle}</p>
+          <p className="hidden md:block" style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.4 }}>{subtitle}</p>
         )}
       </div>
 

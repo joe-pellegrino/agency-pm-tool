@@ -309,9 +309,10 @@ export default function Sidebar() {
               {/* Panel with slide-in from left animation */}
               <DialogPanel
                 transition
-                className="pointer-events-auto relative flex w-full max-w-xs flex-col transform transition duration-300 ease-in-out data-closed:-translate-x-full bg-gray-900"
+                className="pointer-events-auto relative flex flex-col transform transition duration-300 ease-in-out data-closed:-translate-x-full bg-gray-900"
                 style={{
                   backgroundColor: 'var(--color-bg-sidebar)',
+                  width: '240px',
                   top: '56px',
                   height: 'calc(100vh - 56px)',
                 }}
