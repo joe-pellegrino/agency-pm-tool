@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { Project, Task, PRIORITY_COLORS } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
@@ -110,11 +111,20 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl overflow-hidden max-h-[92vh] flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
+    <Dialog open={true} onClose={onClose} className="relative z-50">
+      {/* Backdrop with fade transition */}
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 bg-black/40 transition duration-300 ease-in-out data-closed:opacity-0"
+      />
+
+      {/* Dialog positioning container */}
+      <div className="fixed inset-0 flex items-end sm:items-center justify-center overflow-y-auto">
+        {/* Panel with scale + fade animation */}
+        <DialogPanel
+          transition
+          className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl overflow-hidden max-h-[92vh] flex flex-col transform transition duration-300 ease-out data-closed:opacity-0 data-closed:scale-95"
+        >
         {/* Header */}
         <div className="px-5 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-start justify-between gap-3">
@@ -341,8 +351,9 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
             </div>
           )}
         </div>
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
   );
 }
 

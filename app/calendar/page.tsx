@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { TYPE_ICONS, Task } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -34,11 +35,20 @@ function DayModal({ date, tasks, onClose }: { date: string; tasks: Task[]; onClo
   const { CLIENTS = [], TEAM_MEMBERS = [] } = useAppData();
   const d = new Date(date + 'T12:00:00');
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
+    <Dialog open={true} onClose={onClose} className="relative z-50">
+      {/* Backdrop with fade transition */}
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 bg-black/40 transition duration-300 ease-in-out data-closed:opacity-0"
+      />
+
+      {/* Dialog positioning container */}
+      <div className="fixed inset-0 flex items-end sm:items-center justify-center overflow-y-auto">
+        {/* Panel with scale + fade animation */}
+        <DialogPanel
+          transition
+          className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md overflow-hidden transform transition duration-300 ease-out data-closed:opacity-0 data-closed:scale-95"
+        >
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white">
@@ -89,8 +99,9 @@ function DayModal({ date, tasks, onClose }: { date: string; tasks: Task[]; onClo
             </div>
           )}
         </div>
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
   );
 }
 

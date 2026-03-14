@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { X, Loader2 } from 'lucide-react';
+import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { toast } from 'sonner';
 import type { Project } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
@@ -86,11 +87,20 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
+    <Dialog open={true} onClose={onClose} className="relative z-50">
+      {/* Backdrop with fade transition */}
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 bg-black/40 transition duration-300 ease-in-out data-closed:opacity-0"
+      />
+
+      {/* Dialog positioning container */}
+      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
+        {/* Panel with scale + fade animation */}
+        <DialogPanel
+          transition
+          className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] flex flex-col transform transition duration-300 ease-out data-closed:opacity-0 data-closed:scale-95"
+        >
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
           <h2 className="font-semibold text-gray-900 dark:text-white text-lg">
             {project ? 'Edit Project' : 'New Project'}
@@ -190,7 +200,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </button>
           </div>
         </form>
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
   );
 }

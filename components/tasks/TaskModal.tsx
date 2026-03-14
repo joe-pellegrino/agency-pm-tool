@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { X, Loader2 } from 'lucide-react';
+import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { toast } from 'sonner';
 import type { Task } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
@@ -133,16 +134,25 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
-        style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '8px',
-          boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
+    <Dialog open={true} onClose={onClose} className="relative z-50">
+      {/* Backdrop with fade transition */}
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 bg-black/40 transition duration-300 ease-in-out data-closed:opacity-0"
+      />
+
+      {/* Dialog positioning container */}
+      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
+        {/* Panel with scale + fade animation */}
+        <DialogPanel
+          transition
+          className="w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col transform transition duration-300 ease-out data-closed:opacity-0 data-closed:scale-95"
+          style={{
+            backgroundColor: 'var(--color-white)',
+            borderRadius: '8px',
+            boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)',
+          }}
+        >
         <div
           className="px-6 py-5 flex items-center justify-between flex-shrink-0"
           style={{ borderBottom: '1px solid var(--color-border)' }}
@@ -335,7 +345,8 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             </button>
           </div>
         </form>
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
   );
 }
