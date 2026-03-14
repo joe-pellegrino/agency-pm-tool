@@ -48,7 +48,7 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
         display: 'flex',
         alignItems: 'center',
         padding: '0 20px',
-        gap: '12px',
+        gap: '16px',
       }}
     >
       {/* Hamburger — single button that works for both mobile and desktop */}
@@ -60,11 +60,12 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
+          color: 'var(--color-icon-muted)',
         }}
         aria-label="Toggle menu"
         title="Toggle menu"
       >
-        <Menu size={20} />
+        <Menu size={20} strokeWidth={1.5} />
       </button>
 
       {/* Logo area — desktop */}
@@ -73,7 +74,7 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
         style={{
           width: `${logoWidth}px`,
           flexShrink: 0,
-          gap: '8px',
+          gap: '12px',
           paddingLeft: '0',
           transition: 'width 0.2s ease',
           justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -99,7 +100,7 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
             >
               ▲
             </div>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>RJ Media</span>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>RJ Media</span>
           </>
         )}
       </div>
@@ -143,7 +144,7 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
           }}
           onFocus={e => {
             e.target.style.borderColor = 'var(--color-border-input-focus)'
-            e.target.style.boxShadow = '0 0 0 3px rgba(59, 91, 219, 0.12)'
+            e.target.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)'
           }}
           onBlur={e => {
             e.target.style.borderColor = 'var(--color-border)'
@@ -157,7 +158,10 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
         <button
           onClick={() => setNotifOpen(!notifOpen)}
           className="icon-btn"
-          style={{ position: 'relative' }}
+          style={{ 
+            position: 'relative',
+            color: 'var(--color-icon-muted)',
+          }}
         >
           <Bell size={20} strokeWidth={1.5} />
           {unreadCount > 0 && (
@@ -168,7 +172,7 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
                 right: '4px',
                 width: '16px',
                 height: '16px',
-                backgroundColor: '#E03131',
+                backgroundColor: 'var(--color-danger)',
                 color: 'var(--color-white)',
                 fontSize: '10px',
                 borderRadius: '50%',

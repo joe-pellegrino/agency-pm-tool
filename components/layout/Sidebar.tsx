@@ -138,7 +138,14 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
         borderRadius: '6px',
       }
 
-  const iconColor = (active: boolean) => active ? '#FFFFFF' : '#8A94A6'
+  const getIconColor = (active: boolean) => {
+    if (active) {
+      return 'var(--color-sidebar-text-active)'
+    }
+    return 'var(--color-text-muted)'
+  }
+
+  const getHoverTextColor = () => 'var(--color-text-primary)'
 
   return (
     <div className="flex flex-col h-full">
@@ -146,12 +153,12 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
       {!isCollapsed && (
         <div
           style={{
-            padding: '16px',
+            padding: '20px 24px',
             borderBottom: '1px solid var(--color-sidebar-border)',
             flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '12px',
           }}
         >
           {logoUrl ? (
@@ -175,7 +182,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--color-white)',
+                  color: '#FFFFFF',
                   fontSize: '14px',
                   fontWeight: 700,
                   flexShrink: 0,
@@ -190,7 +197,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
       )}
 
       {/* Nav */}
-      <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
             {/* Section label - hidden when collapsed */}
@@ -202,7 +209,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                   color: 'var(--color-sidebar-section)',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  padding: '20px 16px 8px 16px',
+                  padding: '16px 24px 8px 24px',
                 }}
               >
                 {group.label}
@@ -210,7 +217,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
             )}
 
             {/* Nav items */}
-            <div style={{ paddingLeft: isCollapsed ? '0px' : '4px', paddingRight: isCollapsed ? '0px' : '4px' }}>
+            <div style={{ paddingLeft: isCollapsed ? '8px' : '12px', paddingRight: isCollapsed ? '8px' : '12px' }}>
               {group.items.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
                 return (
@@ -227,26 +234,24 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                         alignItems: 'center',
                         gap: isCollapsed ? '0' : '12px',
                         textDecoration: 'none',
-                        marginBottom: '2px',
-                        marginLeft: isCollapsed ? '8px' : '0',
-                        marginRight: isCollapsed ? '8px' : '0',
+                        marginBottom: '4px',
                         transition: 'all 0.15s ease',
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                       }}
                       onMouseEnter={e => {
                         if (!active) {
                           (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)'
-                          ;(e.currentTarget as HTMLElement).style.color = '#FFFFFF'
+                          ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
                         }
                       }}
                       onMouseLeave={e => {
                         if (!active) {
                           (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                          ;(e.currentTarget as HTMLElement).style.color = '#8A94A6'
+                          ;(e.currentTarget as HTMLElement).style.color = 'var(--color-sidebar-text)'
                         }
                       }}
                     >
-                      <Icon size={18} color={iconColor(active)} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                      <Icon size={18} color={getIconColor(active)} strokeWidth={1.5} style={{ flexShrink: 0 }} />
                       {!isCollapsed && (
                         <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {label}
@@ -276,7 +281,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                   color: 'var(--color-sidebar-section)',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  padding: '20px 16px 8px 16px',
+                  padding: '16px 24px 8px 24px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -286,7 +291,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                 CLIENTS
               </div>
             )}
-            <div style={{ paddingLeft: isCollapsed ? '0px' : '4px', paddingRight: isCollapsed ? '0px' : '4px' }}>
+            <div style={{ paddingLeft: isCollapsed ? '8px' : '12px', paddingRight: isCollapsed ? '8px' : '12px' }}>
               {CLIENTS.map((client) => {
                 const href = `/clients/${client.id}`
                 const active = pathname === href || pathname.startsWith(href + '/')
@@ -303,22 +308,20 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                         alignItems: 'center',
                         gap: isCollapsed ? '0' : '12px',
                         textDecoration: 'none',
-                        marginBottom: '2px',
-                        marginLeft: isCollapsed ? '8px' : '0',
-                        marginRight: isCollapsed ? '8px' : '0',
+                        marginBottom: '4px',
                         transition: 'all 0.15s ease',
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                       }}
                       onMouseEnter={e => {
                         if (!active) {
                           (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-sidebar-hover-bg)'
-                          ;(e.currentTarget as HTMLElement).style.color = '#FFFFFF'
+                          ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
                         }
                       }}
                       onMouseLeave={e => {
                         if (!active) {
                           (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                          ;(e.currentTarget as HTMLElement).style.color = '#8A94A6'
+                          ;(e.currentTarget as HTMLElement).style.color = 'var(--color-sidebar-text)'
                         }
                       }}
                     >
@@ -344,7 +347,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
                           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {client.name}
                           </span>
-                          <ChevronRight size={12} color="#8A94A6" style={{ flexShrink: 0 }} />
+                          <ChevronRight size={12} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
                         </>
                       )}
                     </Link>
@@ -363,7 +366,7 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
 
       {/* User footer - only show when expanded */}
       {!isCollapsed && (
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--color-sidebar-border)', flexShrink: 0 }}>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-sidebar-border)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               style={{
@@ -383,10 +386,10 @@ function SidebarContent({ isCollapsed = false }: { isCollapsed?: boolean }) {
               JP
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 Joe Pellegrino
               </div>
-              <div style={{ fontSize: '11px', color: '#8A94A6' }}>Owner</div>
+              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Owner</div>
             </div>
           </div>
         </div>
@@ -411,7 +414,7 @@ export default function Sidebar() {
     <>
       {/* ── DESKTOP SIDEBAR ── only on lg+ screens ── */}
       <div
-        className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 bg-gray-900 transition-all duration-200 ease-in-out ${
+        className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 transition-all duration-200 ease-in-out ${
           isCollapsed ? 'w-16' : 'w-60'
         }`}
         style={{
@@ -431,12 +434,15 @@ export default function Sidebar() {
       >
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-in-out data-closed:opacity-0"
+          className="fixed inset-0 transition-opacity duration-300 ease-in-out data-closed:opacity-0"
+          style={{
+            backgroundColor: 'var(--color-overlay)',
+          }}
         />
         <div className="fixed inset-0 flex">
           <DialogPanel
             transition
-            className="relative flex w-60 flex-col bg-gray-900 transition duration-300 ease-in-out data-closed:-translate-x-full"
+            className="relative flex w-60 flex-col transition duration-300 ease-in-out data-closed:-translate-x-full"
             style={{
               top: '56px',
               height: 'calc(100vh - 56px)',
@@ -454,10 +460,10 @@ export default function Sidebar() {
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Menu</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Menu</span>
               <button
                 onClick={closeMobile}
-                style={{ color: '#8A94A6', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
+                style={{ color: 'var(--color-text-muted)', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
                 aria-label="Close menu"
               >
                 <X size={18} />
