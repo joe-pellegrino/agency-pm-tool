@@ -404,7 +404,8 @@ export default function Sidebar() {
     if (isMobileOpen) {
       closeMobile()
     }
-  }, [pathname, isMobileOpen, closeMobile])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
 
   return (
     <>
