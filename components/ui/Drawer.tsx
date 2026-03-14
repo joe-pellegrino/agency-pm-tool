@@ -38,22 +38,23 @@ export default function Drawer({ isOpen, onClose, title, children }: DrawerProps
   }, [isOpen]);
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+    <Dialog open={isOpen} onClose={onClose} className="relative" style={{ zIndex: 1000 }}>
       {/* Backdrop with smooth fade transition */}
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/30 transition duration-500 ease-in-out data-closed:opacity-0 sm:duration-700"
+        className="fixed inset-0 bg-black/30 transition-opacity duration-300 ease-in-out data-closed:opacity-0"
+        style={{ zIndex: 999 }}
       />
 
       {/* Drawer positioning container */}
-      <div className="fixed inset-0 overflow-hidden">
+      <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 1001 }}>
         <div className="absolute inset-0 overflow-hidden">
           <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
             {/* Panel with slide-in animation */}
             <DialogPanel
               ref={drawerRef}
               transition
-              className="pointer-events-auto relative ml-auto block size-full max-w-md transform transition duration-500 ease-in-out data-closed:translate-x-full sm:max-w-lg sm:duration-700 bg-white dark:bg-gray-900 shadow-2xl shadow-black/20 flex flex-col"
+              className="pointer-events-auto relative ml-auto block size-full max-w-md transform transition-transform duration-300 ease-in-out data-closed:translate-x-full sm:max-w-lg bg-white dark:bg-gray-900 shadow-2xl shadow-black/20 flex flex-col"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">

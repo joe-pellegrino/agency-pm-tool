@@ -903,7 +903,19 @@ export default function ClientPage() {
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <ClientInfoEditor client={client} onSave={handleUpdateClient} />
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 mt-0.5">{client.industry} · {client.location}</p>
+                </div>
+                <button
+                  onClick={() => {}}
+                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                  title="Edit client info"
+                >
+                  <Edit2 size={14} />
+                  Edit
+                </button>
+              </div>
 
               {strategy && (
                 <div className="mt-3">
