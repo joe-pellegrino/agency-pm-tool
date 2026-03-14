@@ -356,311 +356,192 @@ function TaskDetailModal({
   const isOwner = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.isOwner;
   const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
 
-  const [activeTab, setActiveTab] = useState<'details' | 'comments'>('details');
-
   return (
-    <Drawer isOpen={true} onClose={onClose} title={task.title}>
-      <div className="flex flex-col h-full overflow-y-auto">
-        {/* Header */}
-        <div className="px-6 py-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <div className="flex-1 pr-4">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span
-                className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: '#000000', color: '#ffffff' }}
-              >
-                {client.name}
-              </span>
-              <span
-                className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
-                style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
-              >
-                {task.priority}
-              </span>
-              {overdue && (
-                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}>
-                  Overdue
-                </span>
-              )}
+    <Drawer isOpen={true} onClose={onClose} title={task.title} variant="details">
+      <div className="pb-16 space-y-6">
+        {/* Task title + client + priority badge */}
+        <div>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>{task.title}</h2>
+              <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{client.name}</p>
             </div>
-            <h2 className="font-semibold text-lg leading-snug" style={{ color: 'var(--color-text-primary)' }}>{task.title}</h2>
+            <span
+              className="text-[11px] px-2.5 py-0.5 rounded-full font-medium flex-shrink-0"
+              style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
+            >
+              {task.priority}
+            </span>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+        </div>
+
+        {/* Information - definition list */}
+        <div>
+          <h3 className="font-medium" style={{ color: 'var(--color-text-primary)' }}>Information</h3>
+          <dl className="mt-2 border-t border-b" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="py-3 flex justify-between text-sm font-medium" style={{ borderBottom: '1px solid var(--color-border)' }}>
+              <dt style={{ color: 'var(--color-text-muted)' }}>Status</dt>
+              <dd style={{ color: 'var(--color-text-primary)' }}>
+                {task.status === 'inprogress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+              </dd>
+            </div>
+            <div className="py-3 flex justify-between text-sm font-medium" style={{ borderBottom: '1px solid var(--color-border)' }}>
+              <dt style={{ color: 'var(--color-text-muted)' }}>Priority</dt>
+              <dd>
+                <span
+                  className="text-[11px] px-2.5 py-0.5 rounded-full"
+                  style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
+                >
+                  {task.priority}
+                </span>
+              </dd>
+            </div>
+            <div className="py-3 flex justify-between text-sm font-medium" style={{ borderBottom: '1px solid var(--color-border)' }}>
+              <dt style={{ color: 'var(--color-text-muted)' }}>Due date</dt>
+              <dd style={{ color: 'var(--color-text-primary)' }}>
+                {new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </dd>
+            </div>
+            <div className="py-3 flex justify-between text-sm font-medium" style={{ borderBottom: '1px solid var(--color-border)' }}>
+              <dt style={{ color: 'var(--color-text-muted)' }}>Assigned to</dt>
+              <dd style={{ color: 'var(--color-text-primary)' }}>{currentAssignee.name}</dd>
+            </div>
+            <div className="py-3 flex justify-between text-sm font-medium">
+              <dt style={{ color: 'var(--color-text-muted)' }}>Time tracked</dt>
+              <dd style={{ color: 'var(--color-text-primary)' }}>{totalMinutes}m</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* Description */}
+        <div>
+          <h3 className="font-medium" style={{ color: 'var(--color-text-primary)' }}>Description</h3>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-sm italic" style={{ color: 'var(--color-text-muted)' }}>
+              {task.description || 'No description.'}
+            </p>
             {onEdit && (
               <button
                 onClick={() => onEdit(task)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                style={{ color: 'var(--color-primary)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-donut-track)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                className="ml-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors flex-shrink-0"
                 title="Edit task"
               >
-                <Pencil size={13} />
-                Edit
+                <Pencil size={13} style={{ color: 'var(--color-text-muted)' }} />
               </button>
             )}
-            {onArchive && (
+          </div>
+        </div>
+
+        {/* Time Tracking */}
+        <div>
+          <h3 className="font-medium" style={{ color: 'var(--color-text-primary)' }}>Time Tracking</h3>
+          <div className="mt-2 space-y-3">
+            <div className="flex items-center gap-3">
+              {!isRunning ? (
+                <button
+                  onClick={() => setIsRunning(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium transition-colors"
+                >
+                  <Play size={12} />
+                  Start Timer
+                </button>
+              ) : (
+                <button
+                  onClick={stopTimer}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
+                >
+                  <Square size={12} />
+                  Stop
+                </button>
+              )}
+              {isRunning && (
+                <span className="text-xs font-mono" style={{ color: 'var(--color-primary)' }}>
+                  {formatElapsed(elapsed)}
+                </span>
+              )}
               <button
-                onClick={() => onArchive(task.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                style={{ color: '#DC2626' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FEE2E2'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
-                title="Archive task"
+                onClick={() => setShowManual(!showManual)}
+                className="text-xs ml-auto" style={{ color: 'var(--color-primary)' }}
               >
-                <Archive size={13} />
-                Archive
+                Manual entry
               </button>
-            )}
-            <button onClick={onClose} className="transition-colors ml-1" style={{ color: 'var(--color-text-muted)' }}>
-              <X size={18} />
-            </button>
-          </div>
-        </div>
+            </div>
 
-        {/* Tabs */}
-        <div className="flex px-6 gap-1" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          {(['details', 'comments'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className="px-4 py-3 text-sm font-medium capitalize transition-colors"
-              style={{
-                color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                borderBottom: activeTab === tab ? '2px solid #3B5BDB' : '2px solid transparent',
-                marginBottom: '-1px',
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div className="overflow-y-auto flex-1 px-6 py-5">
-          {activeTab === 'comments' ? (
-            <TaskComments taskId={task.id} />
-          ) : (
-          <div className="space-y-5">
-          {/* Meta row */}
-          <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: 'var(--color-text-muted)' }}>
-            {/* Editable assignee */}
-            <div className="flex items-center gap-1.5">
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
-                style={{ backgroundColor: currentAssignee.color }}
-              >
-                {currentAssignee.initials}
+            {showManual && (
+              <div className="flex items-end gap-2 p-2 rounded" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+                <input
+                  type="number"
+                  value={manualMinutes}
+                  onChange={e => setManualMinutes(e.target.value)}
+                  placeholder="60"
+                  min="1"
+                  className="w-16 text-xs border rounded px-2 py-1" style={{ borderColor: 'var(--color-border)' }}
+                />
+                <input
+                  type="text"
+                  value={manualNote}
+                  onChange={e => setManualNote(e.target.value)}
+                  placeholder="Note"
+                  className="flex-1 text-xs border rounded px-2 py-1" style={{ borderColor: 'var(--color-border)' }}
+                />
+                <button
+                  onClick={addManualEntry}
+                  disabled={!manualMinutes || parseInt(manualMinutes) <= 0}
+                  className="px-3 py-1 bg-indigo-600 text-white text-xs rounded disabled:opacity-50"
+                >
+                  Add
+                </button>
               </div>
-              <select
-                value={localAssigneeId}
-                onChange={e => handleAssigneeChange(e.target.value)}
-                disabled={savingAssignee}
-                className="text-xs rounded px-1.5 py-0.5 disabled:opacity-60"
-                style={{ border: '1px solid #D0D6E0', backgroundColor: 'var(--color-white)', color: 'var(--color-text-primary)', outline: 'none' }}
-              >
-                {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
-              {savingAssignee && <Loader2 size={11} className="animate-spin" style={{ color: 'var(--color-primary)' }} />}
-            </div>
-            <div className="flex items-center gap-1">
-              <CalendarDays size={12} />
-              <span>Due {new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-            </div>
-            <span
-              className="capitalize px-2.5 py-0.5 rounded-full font-medium text-[11px]"
-              style={STATUS_BADGE[task.status] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
-            >
-              {task.status === 'inprogress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-            </span>
-          </div>
+            )}
 
-          {/* Mark Complete button */}
+            {timeEntries.length > 0 ? (
+              <div className="space-y-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                {timeEntries.map(entry => {
+                  const member = TEAM_MEMBERS.find(m => m.id === entry.memberId);
+                  const hours = Math.floor(entry.durationMinutes / 60);
+                  const mins = entry.durationMinutes % 60;
+                  const durationStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+                  return (
+                    <div key={entry.id} className="flex items-center gap-2">
+                      <span className="w-12 flex-shrink-0">{new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <span className="font-semibold w-10" style={{ color: 'var(--color-text-primary)' }}>{durationStr}</span>
+                      <span className="flex-1 truncate">{entry.note || '—'}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-center py-2" style={{ color: 'var(--color-text-muted)' }}>No time entries yet</p>
+            )}
+          </div>
+        </div>
+
+        {/* Comments */}
+        <div>
+          <h3 className="font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>Comments</h3>
+          <TaskComments taskId={task.id} />
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-3 pt-4">
           {task.status !== 'done' && (
             <button
               onClick={handleMarkComplete}
               disabled={markingComplete}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: markingComplete ? '#86efac' : '#22C55E' }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded text-sm font-medium transition-colors"
             >
-              {markingComplete ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
-              Mark as Complete
+              {markingComplete ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              Mark Complete
             </button>
           )}
-
-          {/* Description */}
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>
-
-          {/* Dependencies */}
-          {((task.dependencies && task.dependencies.length > 0) || TASKS.some(t => t.dependencies?.includes(task.id))) && (
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
-              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: 'var(--color-bg-page)', borderBottom: '1px solid var(--color-border)' }}>
-                <Lock size={13} style={{ color: 'var(--color-text-muted)' }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Dependencies</span>
-              </div>
-              <div className="px-4 py-3 space-y-2">
-                {task.dependencies && task.dependencies.length > 0 && (
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 mb-1.5">Blocked by</div>
-                    {task.dependencies.map(depId => {
-                      const dep = TASKS.find(t => t.id === depId);
-                      if (!dep) return null;
-                      const isBlocked = dep.status !== 'done';
-                      return (
-                        <div key={depId} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs mb-1 ${isBlocked ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'}`}>
-                          {isBlocked ? <Lock size={10} /> : <CheckCircle size={10} />}
-                          <span className="flex-1 font-medium truncate">{dep.title}</span>
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] capitalize ${isBlocked ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
-                            {dep.status === 'done' ? 'Done' : dep.status === 'inprogress' ? 'In Progress' : dep.status}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {TASKS.filter(t => t.dependencies?.includes(task.id)).length > 0 && (
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 mb-1.5">Blocks</div>
-                    {TASKS.filter(t => t.dependencies?.includes(task.id)).map(blocking => (
-                      <div key={blocking.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 mb-1">
-                        <ArrowRight size={10} />
-                        <span className="flex-1 font-medium truncate">{blocking.title}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-600 capitalize">
-                          {blocking.status === 'inprogress' ? 'In Progress' : blocking.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Approval action if in review */}
-          {task.status === 'review' && isOwner && (
+          {onArchive && (
             <button
-              onClick={() => { onClose(); onOpenApproval(task); }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-sm font-medium transition-colors"
+              onClick={() => onArchive(task.id)}
+              className="flex-1 px-4 py-2.5 border rounded text-sm font-medium transition-colors"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             >
-              <CheckCircle size={15} />
-              Open Review &amp; Approve
+              Archive
             </button>
-          )}
-
-          {/* Time Tracking */}
-          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
-            <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: 'var(--color-bg-page)', borderBottom: '1px solid var(--color-border)' }}>
-              <div className="flex items-center gap-2">
-                <Timer size={14} style={{ color: 'var(--color-primary)' }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Time Tracking</span>
-              </div>
-              <div className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                Total: <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{totalHours}h</span>
-                <span className="text-xs ml-1">({totalMinutes} min)</span>
-              </div>
-            </div>
-
-            <div className="p-4">
-              {/* Timer controls */}
-              <div className="flex items-center gap-3 mb-4">
-                {!isRunning ? (
-                  <button
-                    onClick={() => setIsRunning(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <Play size={14} />
-                    Start Timer
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopTimer}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <Square size={14} />
-                    Stop — {formatElapsed(elapsed)}
-                  </button>
-                )}
-                {isRunning && (
-                  <div className="flex items-center gap-2 text-sm text-[#3B5BDB] font-mono font-medium">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    {formatElapsed(elapsed)}
-                  </div>
-                )}
-                <button
-                  onClick={() => setShowManual(!showManual)}
-                  className="flex items-center gap-1.5 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors ml-auto"
-                >
-                  <Edit3 size={13} />
-                  Manual entry
-                </button>
-              </div>
-
-              {/* Manual entry form */}
-              {showManual && (
-                <div className="flex items-end gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Minutes</label>
-                    <input
-                      type="number"
-                      value={manualMinutes}
-                      onChange={e => setManualMinutes(e.target.value)}
-                      placeholder="60"
-                      min="1"
-                      className="w-20 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Note (optional)</label>
-                    <input
-                      type="text"
-                      value={manualNote}
-                      onChange={e => setManualNote(e.target.value)}
-                      placeholder="What did you work on?"
-                      className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
-                    />
-                  </div>
-                  <button
-                    onClick={addManualEntry}
-                    disabled={!manualMinutes || parseInt(manualMinutes) <= 0}
-                    className="px-4 py-1.5 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-              )}
-
-              {/* Time log */}
-              {timeEntries.length > 0 ? (
-                <div className="space-y-2">
-                  {timeEntries.map(entry => {
-                    const member = TEAM_MEMBERS.find(m => m.id === entry.memberId);
-                    const hours = Math.floor(entry.durationMinutes / 60);
-                    const mins = entry.durationMinutes % 60;
-                    const durationStr = hours > 0
-                      ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`.trim()
-                      : `${mins}m`;
-                    return (
-                      <div key={entry.id} className="flex items-center gap-3 py-2 text-xs border-b border-gray-100 dark:border-gray-800 last:border-0">
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
-                          style={{ backgroundColor: member?.color || '#6366f1' }}
-                        >
-                          {member?.initials || '?'}
-                        </div>
-                        <span className="text-gray-500 w-20 flex-shrink-0">
-                          {new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                        <span className="font-semibold text-gray-900 dark:text-white w-16 flex-shrink-0">{durationStr}</span>
-                        <span className="text-gray-500 flex-1 truncate">{entry.note || '—'}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>No time entries yet. Start the timer or add a manual entry.</p>
-              )}
-            </div>
-          </div>
-            </div>
           )}
         </div>
       </div>

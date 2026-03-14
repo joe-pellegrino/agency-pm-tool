@@ -8,10 +8,21 @@ interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  subtitle?: string;
   children: ReactNode;
+  footer?: ReactNode;
+  variant?: 'create' | 'details';
 }
 
-export default function Drawer({ isOpen, onClose, title, children }: DrawerProps) {
+export default function Drawer({ 
+  isOpen, 
+  onClose, 
+  title, 
+  subtitle,
+  children, 
+  footer,
+  variant = 'details'
+}: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
@@ -37,12 +48,14 @@ export default function Drawer({ isOpen, onClose, title, children }: DrawerProps
     };
   }, [isOpen]);
 
+  const isCreateVariant = variant === 'create';
+
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative" style={{ zIndex: 1000 }}>
       {/* Backdrop with smooth fade transition */}
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/30 transition-opacity duration-300 ease-in-out data-closed:opacity-0"
+        className="fixed inset-0 bg-black/30 transition-opacity ease-in-out data-[closed]:opacity-0 data-[enter]:duration-500 data-[leave]:duration-300"
         style={{ zIndex: 999 }}
       />
 
@@ -54,27 +67,59 @@ export default function Drawer({ isOpen, onClose, title, children }: DrawerProps
             <DialogPanel
               ref={drawerRef}
               transition
-              className="pointer-events-auto relative ml-auto block size-full max-w-md transform transition-transform duration-300 ease-in-out data-closed:translate-x-full sm:max-w-lg bg-white dark:bg-gray-900 shadow-2xl shadow-black/20 flex flex-col"
+              className="pointer-events-auto relative ml-auto flex flex-col size-full max-w-md sm:max-w-lg bg-white dark:bg-gray-900 shadow-2xl shadow-black/20 transform transition-transform ease-in-out data-[closed]:translate-x-full data-[enter]:duration-500 data-[leave]:duration-300"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {title}
-                </h2>
-                <button
-                  onClick={onClose}
-                  data-drawer-close
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                  aria-label="Close drawer"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+              {/* Header - variant-dependent */}
+              {isCreateVariant ? (
+                <div className="py-6 px-6 bg-indigo-700 flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-medium text-white">
+                      {title}
+                    </h2>
+                    <button
+                      onClick={onClose}
+                      data-drawer-close
+                      className="bg-indigo-700 rounded-md text-indigo-200 hover:text-white transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-white"
+                      aria-label="Close drawer"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
+                  {subtitle && (
+                    <div className="mt-1">
+                      <p className="text-sm text-indigo-300">
+                        {subtitle}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {title}
+                  </h2>
+                  <button
+                    onClick={onClose}
+                    data-drawer-close
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                    aria-label="Close drawer"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              )}
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto px-6 py-5">
                 {children}
               </div>
+
+              {/* Footer - only shown if provided */}
+              {footer && (
+                <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700">
+                  {footer}
+                </div>
+              )}
             </DialogPanel>
           </div>
         </div>

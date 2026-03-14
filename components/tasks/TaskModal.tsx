@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { X, Loader2 } from 'lucide-react';
-import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Task } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { createTask, updateTask, linkTaskToProject } from '@/lib/actions';
+import Drawer from '@/components/ui/Drawer';
 
 interface TaskModalProps {
   task?: Task;
@@ -24,16 +24,6 @@ const STATUSES = [
   { value: 'done', label: 'Done' },
 ];
 const TYPES = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'];
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="ds-label">{label}</label>
-      {children}
-      {error && <p className="text-xs mt-1" style={{ color: '#DC2626' }}>{error}</p>}
-    </div>
-  );
-}
 
 export default function TaskModal({ task, defaultStatus = 'todo', defaultProjectId, onClose, onSuccess }: TaskModalProps) {
   const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], refresh } = useAppData();
@@ -121,231 +111,140 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
     });
   };
 
-  const inputStyle = {
-    height: '44px',
-    border: '1px solid #D0D6E0',
-    borderRadius: '6px',
-    backgroundColor: 'var(--color-white)',
-    fontSize: '14px',
-    color: 'var(--color-text-primary)',
-    padding: '0 14px',
-    width: '100%',
-    outline: 'none',
-  };
+  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const labelClass = 'block text-sm font-medium text-gray-900 dark:text-white mb-1';
 
   return (
-    <Dialog open={true} onClose={onClose} className="relative z-50">
-      {/* Backdrop with fade transition */}
-      <DialogBackdrop
-        transition
-        className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
-      />
-
-      {/* Dialog positioning container */}
-      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
-        {/* Panel with scale + fade animation */}
-        <DialogPanel
-          transition
-          className="relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-2xl data-closed:sm:translate-y-0 data-closed:sm:scale-95 max-h-[90vh] flex flex-col"
-          style={{
-            backgroundColor: 'var(--color-white)',
-            boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)',
-          }}
-        >
-        <div
-          className="px-6 py-5 flex items-center justify-between flex-shrink-0"
-          style={{ borderBottom: '1px solid var(--color-border)' }}
-        >
-          <h2 className="font-semibold text-lg" style={{ color: 'var(--color-text-primary)' }}>
-            {task ? 'Edit Task' : 'New Task'}
-          </h2>
-          <button onClick={onClose} className="transition-colors" style={{ color: 'var(--color-text-muted)' }}>
-            <X size={18} />
+    <Drawer
+      isOpen={true}
+      onClose={onClose}
+      title={task ? 'Edit Task' : 'New Task'}
+      subtitle="Add a new task to your workflow."
+      variant="create"
+      footer={
+        <div className="px-6 py-4 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="task-form"
+            disabled={isPending}
+            className="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors flex items-center gap-2"
+          >
+            {isPending && <Loader2 size={14} className="animate-spin" />}
+            {task ? 'Save Changes' : 'Create Task'}
           </button>
         </div>
+      }
+    >
+      <form id="task-form" onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={labelClass}>Title *</label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={e => set('title', e.target.value)}
+            placeholder="Task title..."
+            className={`${inputClass} ${errors.title ? 'border-red-400' : ''}`}
+            autoFocus
+          />
+          {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
+        </div>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
-          <div className="px-6 py-5 space-y-4">
-            <Field label="Title *" error={errors.title}>
-              <input
-                type="text"
-                value={form.title}
-                onChange={e => set('title', e.target.value)}
-                placeholder="Task title..."
-                style={{
-                  ...inputStyle,
-                  borderColor: errors.title ? '#DC2626' : '#D0D6E0',
-                }}
-                onFocus={e => {
-                  e.currentTarget.style.borderColor = 'var(--color-primary)';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)';
-                }}
-                onBlur={e => {
-                  e.currentTarget.style.borderColor = errors.title ? '#DC2626' : '#D0D6E0';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-                autoFocus
-              />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Client *" error={errors.clientId}>
-                <select
-                  value={form.clientId}
-                  onChange={e => set('clientId', e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                  {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </Field>
-              <Field label="Assignee *" error={errors.assigneeId}>
-                <select
-                  value={form.assigneeId}
-                  onChange={e => set('assigneeId', e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                  {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Status">
-                <select
-                  value={form.status}
-                  onChange={e => set('status', e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                  {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
-              </Field>
-              <Field label="Priority">
-                <select
-                  value={form.priority}
-                  onChange={e => set('priority', e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                  {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <Field label="Start Date">
-                <input
-                  type="date"
-                  value={form.startDate}
-                  onChange={e => set('startDate', e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                />
-              </Field>
-              <Field label="Due Date *" error={errors.dueDate}>
-                <input
-                  type="date"
-                  value={form.dueDate}
-                  onChange={e => set('dueDate', e.target.value)}
-                  style={{ ...inputStyle, borderColor: errors.dueDate ? '#DC2626' : '#D0D6E0' }}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = errors.dueDate ? '#DC2626' : '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                />
-              </Field>
-              <Field label="End Date">
-                <input
-                  type="date"
-                  value={form.endDate}
-                  onChange={e => set('endDate', e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                />
-              </Field>
-            </div>
-
-            <Field label="Type">
-              <select
-                value={form.type}
-                onChange={e => set('type', e.target.value)}
-                style={inputStyle}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-              >
-                {TYPES.map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
-              </select>
-            </Field>
-
-            {!task && (
-              <Field label="Project (optional)">
-                <select
-                  value={form.projectId}
-                  onChange={e => set('projectId', e.target.value)}
-                  style={inputStyle}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                  <option value="">No project</option>
-                  {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </Field>
-            )}
-
-            <Field label="Description">
-              <textarea
-                value={form.description}
-                onChange={e => set('description', e.target.value)}
-                placeholder="Task description..."
-                rows={3}
-                style={{
-                  ...inputStyle,
-                  height: 'auto',
-                  padding: '10px 14px',
-                  resize: 'none',
-                  lineHeight: '1.6',
-                }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)'; }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#D0D6E0'; e.currentTarget.style.boxShadow = 'none'; }}
-              />
-            </Field>
-          </div>
-
-          <div
-            className="px-6 py-4 flex gap-3 flex-shrink-0"
-            style={{ borderTop: '1px solid var(--color-border)' }}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-colors"
-              style={{ border: '1px solid #D0D6E0', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-white)' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F8F9FA'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-white)'; }}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Client *</label>
+            <select
+              value={form.clientId}
+              onChange={e => set('clientId', e.target.value)}
+              className={`${inputClass} ${errors.clientId ? 'border-red-400' : ''}`}
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors text-white"
-              style={{ backgroundColor: isPending ? '#9ab0f5' : 'var(--color-primary)' }}
-              onMouseEnter={e => { if (!isPending) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
-              onMouseLeave={e => { if (!isPending) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
-            >
-              {isPending && <Loader2 size={14} className="animate-spin" />}
-              {task ? 'Save Changes' : 'Create Task'}
-            </button>
+              {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            {errors.clientId && <p className="text-xs text-red-500 mt-1">{errors.clientId}</p>}
           </div>
-        </form>
-        </DialogPanel>
-      </div>
-    </Dialog>
+          <div>
+            <label className={labelClass}>Assignee *</label>
+            <select
+              value={form.assigneeId}
+              onChange={e => set('assigneeId', e.target.value)}
+              className={`${inputClass} ${errors.assigneeId ? 'border-red-400' : ''}`}
+            >
+              {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+            {errors.assigneeId && <p className="text-xs text-red-500 mt-1">{errors.assigneeId}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Status</label>
+            <select value={form.status} onChange={e => set('status', e.target.value)} className={inputClass}>
+              {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Priority</label>
+            <select value={form.priority} onChange={e => set('priority', e.target.value)} className={inputClass}>
+              {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className={labelClass}>Start Date</label>
+            <input type="date" value={form.startDate} onChange={e => set('startDate', e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Due Date *</label>
+            <input
+              type="date"
+              value={form.dueDate}
+              onChange={e => set('dueDate', e.target.value)}
+              className={`${inputClass} ${errors.dueDate ? 'border-red-400' : ''}`}
+            />
+            {errors.dueDate && <p className="text-xs text-red-500 mt-1">{errors.dueDate}</p>}
+          </div>
+          <div>
+            <label className={labelClass}>End Date</label>
+            <input type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)} className={inputClass} />
+          </div>
+        </div>
+
+        <div>
+          <label className={labelClass}>Type</label>
+          <select value={form.type} onChange={e => set('type', e.target.value)} className={inputClass}>
+            {TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+          </select>
+        </div>
+
+        {!task && (
+          <div>
+            <label className={labelClass}>Project (optional)</label>
+            <select value={form.projectId} onChange={e => set('projectId', e.target.value)} className={inputClass}>
+              <option value="">No project</option>
+              {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label className={labelClass}>Description</label>
+          <textarea
+            value={form.description}
+            onChange={e => set('description', e.target.value)}
+            placeholder="Task description..."
+            rows={4}
+            className={`${inputClass} resize-none`}
+          />
+        </div>
+      </form>
+    </Drawer>
   );
 }
