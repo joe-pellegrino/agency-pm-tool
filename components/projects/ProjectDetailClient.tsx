@@ -238,10 +238,10 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   const budgetRemaining = totalBudget - totalSpent;
 
   return (
-    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
+    <div>
       {/* Project Header Card */}
-      <div className="bg-white border-b border-[var(--color-border)]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
-        <div style={{ padding: '20px 32px 0 32px' }}>
+      <div className="bg-white border-b border-[var(--color-border)]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)', marginLeft: '-32px', marginRight: '-32px', paddingLeft: '32px', paddingRight: '32px' }}>
+        <div style={{ paddingTop: '20px' }}>
           {/* Back link */}
           <button
             onClick={() => router.push('/projects')}
