@@ -27,18 +27,19 @@ export default function Drawer({
 
   return (
     <div>
-      <Dialog open={isOpen} onClose={onClose} className="relative z-10">
+      <Dialog open={isOpen} onClose={onClose} className="relative z-[200]">
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-closed:opacity-0"
+          className="fixed inset-0 bg-gray-500/75 transition-opacity duration-300 ease-in-out data-closed:opacity-0"
+          style={{ top: '56px' }}
         />
 
-        <div className="fixed inset-0 overflow-hidden">
+        <div className="fixed inset-0 overflow-hidden" style={{ top: '56px' }}>
           <div className="absolute inset-0 overflow-hidden">
-            <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10 sm:pl-16">
+            <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full" style={{ top: '56px' }}>
               <DialogPanel
                 transition
-                className="pointer-events-auto relative w-screen max-w-md transform transition duration-500 ease-in-out data-closed:translate-x-full sm:duration-700"
+                className="pointer-events-auto relative w-screen max-w-md transform transition duration-300 ease-in-out data-closed:translate-x-full"
               >
                 {/* Panel body */}
                 <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-900 shadow-xl">
