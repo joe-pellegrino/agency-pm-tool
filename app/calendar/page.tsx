@@ -139,7 +139,7 @@ export default function CalendarPage() {
   const monthTasks = Object.values(tasksByDate).flat();
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Calendar" subtitle="Monthly view of tasks and deadlines" />
 
       <div style={{ padding: '24px 32px' }}>

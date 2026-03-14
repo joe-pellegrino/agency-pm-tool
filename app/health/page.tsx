@@ -230,7 +230,7 @@ export default function HealthPage() {
   const utilization = Math.min(100, Math.round((activeTasks / maxCapacity) * 100));
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#EDF0F5' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
       <TopBar title="Client Health" subtitle="Relationship scores and task performance per client" />
 
       <div className="p-4 sm:p-8">

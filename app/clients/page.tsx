@@ -90,17 +90,17 @@ export default function ClientsPage() {
 
   if (loading) {
     return (
-      <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+      <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
         <TopBar title="Clients" subtitle="All client accounts and service subscriptions" />
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#3B5BDB' }} />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-primary)' }} />
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       {(showNewClient || editClient) && (
         <ClientModal client={editClient || undefined} onClose={() => { setShowNewClient(false); setEditClient(null); }} />
       )}
@@ -121,9 +121,9 @@ export default function ClientsPage() {
           <button
             onClick={() => setShowNewClient(true)}
             className="flex items-center gap-2 px-5 py-2.5 text-white rounded-md text-sm font-medium transition-colors"
-            style={{ backgroundColor: '#3B5BDB' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
           >
             <Plus size={14} />
             New Client
@@ -145,8 +145,8 @@ export default function ClientsPage() {
                 href={`/clients/${client.id}`}
                 className="rounded-lg overflow-hidden transition-all group block"
                 style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #E2E6EE',
+                  backgroundColor: 'var(--color-white)',
+                  border: '1px solid var(--color-border)',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
                 }}
                 onMouseEnter={e => {
@@ -155,7 +155,7 @@ export default function ClientsPage() {
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)';
-                  (e.currentTarget as HTMLElement).style.borderColor = '#E2E6EE';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
                 }}
               >
                 {/* Client color accent bar */}
@@ -170,9 +170,9 @@ export default function ClientsPage() {
                         {client.logo}
                       </div>
                       <div>
-                        <h3 className="font-bold" style={{ color: '#1E2A3A' }}>{client.name}</h3>
-                        <p className="text-xs" style={{ color: '#8896A6' }}>{client.industry}</p>
-                        <p className="text-xs" style={{ color: '#A0AAB8' }}>{client.location}</p>
+                        <h3 className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{client.name}</h3>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{client.industry}</p>
+                        <p className="text-xs" style={{ color: 'var(--color-icon-muted)' }}>{client.location}</p>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -209,25 +209,25 @@ export default function ClientsPage() {
                       { label: 'Open Tasks', value: openTasks, icon: CheckCircle },
                       { label: 'Planning', value: planningServices, icon: Activity },
                     ].map(({ label, value, icon: Icon }) => (
-                      <div key={label} className="rounded-lg py-2 px-1" style={{ backgroundColor: '#EDF0F5' }}>
-                        <div className="text-lg font-bold" style={{ color: '#1E2A3A' }}>{value}</div>
-                        <div className="text-[10px] leading-tight" style={{ color: '#8896A6' }}>{label}</div>
+                      <div key={label} className="rounded-lg py-2 px-1" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+                        <div className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{value}</div>
+                        <div className="text-[10px] leading-tight" style={{ color: 'var(--color-text-muted)' }}>{label}</div>
                       </div>
                     ))}
                   </div>
 
                   <div
                     className="flex items-center justify-between mt-4 pt-4"
-                    style={{ borderTop: '1px solid #E2E6EE' }}
+                    style={{ borderTop: '1px solid var(--color-border)' }}
                   >
-                    <span className="text-xs" style={{ color: '#8896A6' }}>View services & strategy</span>
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>View services & strategy</span>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={(e) => { e.preventDefault(); setEditClient(client); }}
                         className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: '#8896A6' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#3B5BDB'; (e.currentTarget as HTMLElement).style.backgroundColor = '#E0E7FF'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8896A6'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                        style={{ color: 'var(--color-text-muted)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-donut-track)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                         title="Edit client"
                       >
                         <Pencil size={13} />
@@ -235,14 +235,14 @@ export default function ClientsPage() {
                       <button
                         onClick={(e) => { e.preventDefault(); setArchiveId(client.id); }}
                         className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: '#8896A6' }}
+                        style={{ color: 'var(--color-text-muted)' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#DC2626'; (e.currentTarget as HTMLElement).style.backgroundColor = '#FEE2E2'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8896A6'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                         title="Archive client"
                       >
                         <Archive size={13} />
                       </button>
-                      <ChevronRight size={16} style={{ color: '#A0AAB8' }} className="group-hover:text-blue-500 transition-colors" />
+                      <ChevronRight size={16} style={{ color: 'var(--color-icon-muted)' }} className="group-hover:text-blue-500 transition-colors" />
                     </div>
                   </div>
                 </div>

@@ -177,7 +177,7 @@ export default function KnowledgeBasePage() {
   const getCategoryName = (id?: string) => allCategories.find(c => c.id === id)?.name;
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Knowledge Base" subtitle="Internal articles, guides, and documentation" />
 
       <div className="flex h-[calc(100vh-7rem)]">

@@ -523,7 +523,7 @@ export default function DocumentsPage() {
   }, [DOCUMENTS, search, filterType, filterClient, activeFolderId]);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#EDF0F5' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg-page)' }}>
       <TopBar title="Documents" subtitle="Real-time collaborative document editor" />
 
       <div className="flex flex-1 overflow-hidden">

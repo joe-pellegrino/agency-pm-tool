@@ -519,7 +519,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Projects" subtitle="Manage client projects and track progress" />
 
       {(showNewProject || editProject) && (

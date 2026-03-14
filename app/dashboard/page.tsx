@@ -5,13 +5,13 @@ import Link from 'next/link';
 import DashboardView from './DashboardView';
 import ExecutiveDashboard from './ExecutiveDashboard';
 
-function DonutRing({ pct, color = '#3B5BDB' }: { pct: number; color?: string }) {
+function DonutRing({ pct, color = 'var(--color-primary)' }: { pct: number; color?: string }) {
   const r = 18;
   const circ = 2 * Math.PI * r;
   const filled = (pct / 100) * circ;
   return (
     <svg width="48" height="48" viewBox="0 0 48 48" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
-      <circle cx="24" cy="24" r={r} fill="none" stroke="#E2E6EE" strokeWidth="6" />
+      <circle cx="24" cy="24" r={r} fill="none" stroke="var(--color-border)" strokeWidth="6" />
       <circle
         cx="24" cy="24" r={r} fill="none"
         stroke={color} strokeWidth="6"
@@ -32,8 +32,8 @@ function StatCard({ label, value, sub, pct, donutColor }: {
   return (
     <div
       style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E2E6EE',
+        backgroundColor: 'var(--color-white)',
+        border: '1px solid var(--color-border)',
         borderRadius: '8px',
         padding: '20px 24px',
         boxShadow: 'var(--shadow-card)',
@@ -43,11 +43,11 @@ function StatCard({ label, value, sub, pct, donutColor }: {
       }}
     >
       <div>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#8896A6', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
           {label}
         </div>
-        <div style={{ fontSize: '28px', fontWeight: 700, color: '#1E2A3A', lineHeight: 1.2 }}>{value}</div>
-        <div style={{ fontSize: '12px', color: '#8896A6', marginTop: '4px' }}>{sub}</div>
+        <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.2 }}>{value}</div>
+        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>{sub}</div>
       </div>
       <DonutRing pct={pct} color={donutColor} />
     </div>
@@ -82,12 +82,12 @@ export default async function DashboardPage() {
 
   const statusBadgeStyle = (status: string) => {
     const styles: Record<string, { backgroundColor: string; color: string }> = {
-      todo:       { backgroundColor: '#E0E7FF', color: '#4338CA' },
+      todo:       { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' },
       inprogress: { backgroundColor: '#FEF3C7', color: '#D97706' },
       review:     { backgroundColor: '#F3E8FF', color: '#7C3AED' },
       done:       { backgroundColor: '#D1FAE5', color: '#059669' },
     };
-    return styles[status] || { backgroundColor: '#EDF0F5', color: '#4A5568' };
+    return styles[status] || { backgroundColor: 'var(--color-bg-page)', color: 'var(--color-text-secondary)' };
   };
 
   const statusLabel = (status: string) => {
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
     <>
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Tasks"   value={totalTasks}      sub="Across all clients"   pct={totalTasks > 0 ? Math.min(100, Math.round((totalTasks/50)*100)) : 0} donutColor="#3B5BDB" />
+        <StatCard label="Total Tasks"   value={totalTasks}      sub="Across all clients"   pct={totalTasks > 0 ? Math.min(100, Math.round((totalTasks/50)*100)) : 0} donutColor="var(--color-primary)" />
         <StatCard label="In Progress"   value={inProgressTasks} sub="Currently active"     pct={totalTasks > 0 ? Math.round((inProgressTasks/totalTasks)*100) : 0} donutColor="#F59F00" />
         <StatCard label="Completed"     value={doneTasks}       sub={`${totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0}% completion rate`} pct={totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0} donutColor="#2BB673" />
         <StatCard label="Urgent Items"  value={urgentTasks}     sub="Needs attention"      pct={totalTasks > 0 ? Math.round((urgentTasks/totalTasks)*100) : 0} donutColor="#E03131" />
@@ -112,14 +112,14 @@ export default async function DashboardPage() {
         <div
           className="lg:col-span-2 rounded-lg p-5 sm:p-6"
           style={{
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E6EE',
+            backgroundColor: 'var(--color-white)',
+            border: '1px solid var(--color-border)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
           }}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>Client Overview</h2>
-            <Link href="/clients" className="text-xs flex items-center gap-1 hover:underline" style={{ color: '#3B5BDB' }}>
+            <h2 className="font-semibold text-lg" style={{ color: 'var(--color-text-primary)' }}>Client Overview</h2>
+            <Link href="/clients" className="text-xs flex items-center gap-1 hover:underline" style={{ color: 'var(--color-primary)' }}>
               View all <ArrowRight size={12} />
             </Link>
           </div>
@@ -138,23 +138,23 @@ export default async function DashboardPage() {
                         {client.logo}
                       </span>
                       <div>
-                        <div className="text-sm font-medium" style={{ color: '#1E2A3A' }}>{client.name}</div>
-                        <div className="text-xs" style={{ color: '#8896A6' }}>{client.industry}</div>
+                        <div className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{client.name}</div>
+                        <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{client.industry}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>{done}/{total}</div>
-                      <div className="text-xs" style={{ color: '#8896A6' }}>{inProg} active</div>
+                      <div className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{done}/{total}</div>
+                      <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{inProg} active</div>
                     </div>
                   </div>
                   {/* Progress bar */}
-                  <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#E0E7FF' }}>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-donut-track)' }}>
                     <div
                       className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, backgroundColor: '#3B5BDB' }}
+                      style={{ width: `${pct}%`, backgroundColor: 'var(--color-primary)' }}
                     />
                   </div>
-                  <div className="text-xs mt-1" style={{ color: '#8896A6' }}>{pct}% complete</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{pct}% complete</div>
                 </div>
               );
             })}
@@ -165,14 +165,14 @@ export default async function DashboardPage() {
         <div
           className="rounded-lg p-5 sm:p-6"
           style={{
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E6EE',
+            backgroundColor: 'var(--color-white)',
+            border: '1px solid var(--color-border)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
           }}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-semibold text-lg flex items-center gap-2" style={{ color: '#1E2A3A' }}>
-              <Users size={15} style={{ color: '#3B5BDB' }} />
+            <h2 className="font-semibold text-lg flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <Users size={15} style={{ color: 'var(--color-primary)' }} />
               Team Load
             </h2>
           </div>
@@ -194,13 +194,13 @@ export default async function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium" style={{ color: '#1E2A3A' }}>{member.name.split(' ')[0]}</span>
-                      <span className="text-xs" style={{ color: '#8896A6' }}>{memberTasks.length} tasks</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{member.name.split(' ')[0]}</span>
+                      <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{memberTasks.length} tasks</span>
                     </div>
-                    <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#E0E7FF' }}>
+                    <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-donut-track)' }}>
                       <div
                         className="h-full rounded-full"
-                        style={{ width: `${pct}%`, backgroundColor: '#3B5BDB' }}
+                        style={{ width: `${pct}%`, backgroundColor: 'var(--color-primary)' }}
                       />
                     </div>
                     {urgent > 0 && (
@@ -220,14 +220,14 @@ export default async function DashboardPage() {
       <div
         className="mt-6 rounded-lg p-5 sm:p-6"
         style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E2E6EE',
+          backgroundColor: 'var(--color-white)',
+          border: '1px solid var(--color-border)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
         }}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>Upcoming Deadlines</h2>
-          <Link href="/kanban" className="text-xs flex items-center gap-1 hover:underline" style={{ color: '#3B5BDB' }}>
+          <h2 className="font-semibold text-lg" style={{ color: 'var(--color-text-primary)' }}>Upcoming Deadlines</h2>
+          <Link href="/kanban" className="text-xs flex items-center gap-1 hover:underline" style={{ color: 'var(--color-primary)' }}>
             View board <ArrowRight size={12} />
           </Link>
         </div>
@@ -242,10 +242,10 @@ export default async function DashboardPage() {
               <div
                 key={task.id}
                 className="flex flex-col gap-2 p-3 rounded-lg"
-                style={{ backgroundColor: '#EDF0F5', border: '1px solid #E2E6EE' }}
+                style={{ backgroundColor: 'var(--color-bg-page)', border: '1px solid var(--color-border)' }}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-medium text-sm leading-snug" style={{ color: '#1E2A3A' }}>{task.title}</span>
+                  <span className="font-medium text-sm leading-snug" style={{ color: 'var(--color-text-primary)' }}>{task.title}</span>
                   <span
                     className="text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0"
                     style={badge}
@@ -253,7 +253,7 @@ export default async function DashboardPage() {
                     {statusLabel(task.status)}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap text-xs" style={{ color: '#8896A6' }}>
+                <div className="flex items-center gap-3 flex-wrap text-xs" style={{ color: 'var(--color-text-muted)' }}>
                   <span
                     className="inline-flex items-center gap-1 font-medium px-2 py-0.5 rounded-full"
                     style={{ backgroundColor: client.color + '18', color: client.color }}
@@ -288,7 +288,7 @@ export default async function DashboardPage() {
                   <th
                     key={h}
                     className="pb-3 text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: '#8896A6' }}
+                    style={{ color: 'var(--color-text-muted)' }}
                   >
                     {h}
                   </th>
@@ -305,10 +305,10 @@ export default async function DashboardPage() {
                   <tr
                     key={task.id}
                     className="transition-colors hover:bg-gray-50"
-                    style={{ borderTop: '1px solid #E2E6EE' }}
+                    style={{ borderTop: '1px solid var(--color-border)' }}
                   >
                     <td className="py-3 pr-4">
-                      <span className="font-medium" style={{ color: '#1E2A3A' }}>{task.title}</span>
+                      <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{task.title}</span>
                     </td>
                     <td className="py-3 pr-4">
                       <span
@@ -326,16 +326,16 @@ export default async function DashboardPage() {
                         >
                           {assignee.initials}
                         </div>
-                        <span style={{ color: '#4A5568' }}>{assignee.name.split(' ')[0]}</span>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{assignee.name.split(' ')[0]}</span>
                       </div>
                     </td>
                     <td className="py-3 pr-4">
                       <span className="inline-flex items-center gap-1 text-xs font-medium">
                         <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
-                        <span style={{ color: '#4A5568' }}>{task.priority}</span>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{task.priority}</span>
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-xs" style={{ color: '#4A5568' }}>
+                    <td className="py-3 pr-4 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                       {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </td>
                     <td className="py-3">
@@ -361,7 +361,7 @@ export default async function DashboardPage() {
   );
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Dashboard" subtitle="Welcome back, Joe" />
       <div style={{ padding: '24px 32px', maxWidth: '1400px' }}>
         <DashboardView standardView={standardView} executiveView={executiveView} />

@@ -69,7 +69,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
 
   const currentUser = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID);
   const currentInitials = currentUser?.initials || 'JP';
-  const currentColor = currentUser?.color || '#3B5BDB';
+  const currentColor = currentUser?.color || 'var(--color-primary)';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,10 +117,10 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>Comments</span>
+        <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Comments</span>
         <span
           className="text-xs px-2 py-0.5 rounded-full font-medium"
-          style={{ backgroundColor: '#E0E7FF', color: '#4338CA' }}
+          style={{ backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
         >
           {comments.length}
         </span>
@@ -128,10 +128,10 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 size={18} className="animate-spin" style={{ color: '#3B5BDB' }} />
+          <Loader2 size={18} className="animate-spin" style={{ color: 'var(--color-primary)' }} />
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-sm text-center py-6" style={{ color: '#8896A6' }}>
+        <p className="text-sm text-center py-6" style={{ color: 'var(--color-text-muted)' }}>
           No comments yet. Be the first to add one.
         </p>
       ) : (
@@ -140,18 +140,18 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
             <div key={group.label}>
               {/* Date grouper */}
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex-1 h-px" style={{ backgroundColor: '#E2E6EE' }} />
-                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#8896A6', letterSpacing: '1px' }}>
+                <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
+                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)', letterSpacing: '1px' }}>
                   {group.label}
                 </span>
-                <div className="flex-1 h-px" style={{ backgroundColor: '#E2E6EE' }} />
+                <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-border)' }} />
               </div>
 
               <div className="space-y-3">
                 {group.comments.map(comment => {
                   const author = TEAM_MEMBERS.find(m => m.id === comment.author_id);
                   const initials = author?.initials || comment.author_id.slice(0, 2).toUpperCase();
-                  const color = author?.color || '#3B5BDB';
+                  const color = author?.color || 'var(--color-primary)';
                   const name = author?.name || comment.author_id;
 
                   return (
@@ -167,23 +167,23 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
                       <div
                         className="flex-1 rounded-lg px-5 py-4"
                         style={{
-                          backgroundColor: '#FFFFFF',
-                          border: '1px solid #E2E6EE',
+                          backgroundColor: 'var(--color-white)',
+                          border: '1px solid var(--color-border)',
                           boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
                         }}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>
+                          <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                             {name}
                           </span>
                           <span
                             className="text-[11px] uppercase font-medium"
-                            style={{ color: '#8896A6', letterSpacing: '0.5px' }}
+                            style={{ color: 'var(--color-text-muted)', letterSpacing: '0.5px' }}
                           >
                             {timeAgo(comment.created_at)}
                           </span>
                         </div>
-                        <p className="text-sm" style={{ color: '#4A5568', lineHeight: '1.6' }}>
+                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
                           {comment.text}
                         </p>
                       </div>
@@ -215,14 +215,14 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
               height: '44px',
               border: '1px solid #D0D6E0',
               borderRadius: '8px',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--color-white)',
               fontSize: '14px',
-              color: '#1E2A3A',
+              color: 'var(--color-text-primary)',
               padding: '0 14px',
               outline: 'none',
             }}
             onFocus={e => {
-              e.currentTarget.style.borderColor = '#3B5BDB';
+              e.currentTarget.style.borderColor = 'var(--color-primary)';
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 91, 219,0.15)';
             }}
             onBlur={e => {
@@ -235,7 +235,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
             type="submit"
             disabled={!text.trim() || submitting}
             className="flex items-center justify-center w-10 h-10 rounded-lg text-white transition-colors flex-shrink-0"
-            style={{ backgroundColor: text.trim() && !submitting ? '#3B5BDB' : '#D0D6E0' }}
+            style={{ backgroundColor: text.trim() && !submitting ? 'var(--color-primary)' : '#D0D6E0' }}
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
           </button>

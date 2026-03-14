@@ -328,7 +328,7 @@ export default function AutomationsPage() {
   const pausedCount = automations.filter(a => a.status === 'paused').length;
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Automations" subtitle="Recurring task rules per client" />
 
       <div style={{ padding: '24px 32px' }}>

@@ -253,7 +253,7 @@ export default function KBArticleEditorPage() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
         <div className="text-center">
           <p className="text-gray-500 dark:text-gray-400 font-medium mb-3">Article not found</p>
           <button onClick={() => router.push('/knowledge-base')} className="flex items-center gap-2 text-sm text-[#3B5BDB] hover:underline">
@@ -266,7 +266,7 @@ export default function KBArticleEditorPage() {
 
   if (!article) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
         <Loader2 size={24} className="animate-spin text-[#3B5BDB]" />
       </div>
     );

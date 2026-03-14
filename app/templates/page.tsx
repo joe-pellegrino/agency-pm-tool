@@ -681,7 +681,7 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Templates" subtitle="Workflow templates and reusable task templates" />
 
       {/* Modals */}

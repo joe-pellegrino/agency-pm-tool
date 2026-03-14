@@ -33,7 +33,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Settings" subtitle="Manage your workspace preferences" />
 
       {(showNewMember || editMember) && (

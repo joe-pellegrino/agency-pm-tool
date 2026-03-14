@@ -23,7 +23,6 @@ import {
   Briefcase,
   Users,
   BookOpen,
-  Menu,
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -61,17 +60,17 @@ export default function Sidebar() {
 
   const navItemStyle = (active: boolean) => active
     ? {
-        backgroundColor: '#E8EDFF',
-        color: '#3B5BDB',
+        backgroundColor: 'var(--color-primary-light)',
+        color: 'var(--color-primary)',
         fontWeight: 500,
         borderRadius: '6px',
       }
     : {
-        color: '#5A6A7E',
+        color: 'var(--color-text-secondary)',
         borderRadius: '6px',
       };
 
-  const iconColor = (active: boolean) => active ? '#3B5BDB' : '#A0AAB8';
+  const iconColor = (active: boolean) => active ? 'var(--color-primary)' : 'var(--color-icon-muted)';
 
   const sidebarContent = (
     <aside
@@ -81,8 +80,8 @@ export default function Sidebar() {
         top: '56px',
         width: '240px',
         height: 'calc(100vh - 56px)',
-        backgroundColor: '#FFFFFF',
-        borderRight: '1px solid #E2E6EE',
+        backgroundColor: 'var(--color-bg-sidebar)',
+        borderRight: '1px solid var(--color-border)',
         zIndex: 50,
         overflowY: 'auto',
         display: 'flex',
@@ -100,14 +99,14 @@ export default function Sidebar() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #E2E6EE',
+          borderBottom: '1px solid var(--color-border)',
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: '14px', fontWeight: 600, color: '#1E2A3A' }}>Menu</span>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Menu</span>
         <button
           onClick={closeMobile}
-          style={{ color: '#A0AAB8', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
+          style={{ color: 'var(--color-icon-muted)', padding: '4px', cursor: 'pointer', background: 'none', border: 'none' }}
           aria-label="Close menu"
         >
           <X size={18} />
@@ -123,7 +122,7 @@ export default function Sidebar() {
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                color: '#8896A6',
+                color: 'var(--color-text-muted)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 padding: '20px 16px 8px 16px',
@@ -156,14 +155,14 @@ export default function Sidebar() {
                     }}
                     onMouseEnter={e => {
                       if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F7FA';
-                        (e.currentTarget as HTMLElement).style.color = '#1E2A3A';
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-hover-bg)';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = '#5A6A7E';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)';
                       }
                     }}
                   >
@@ -185,7 +184,7 @@ export default function Sidebar() {
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                color: '#8896A6',
+                color: 'var(--color-text-muted)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 padding: '20px 16px 8px 16px',
@@ -194,7 +193,7 @@ export default function Sidebar() {
                 gap: '6px',
               }}
             >
-              <Building2 size={10} color="#8896A6" />
+              <Building2 size={10} color="var(--color-text-muted)" />
               CLIENTS
             </div>
             <div style={{ paddingLeft: '4px', paddingRight: '4px' }}>
@@ -220,14 +219,14 @@ export default function Sidebar() {
                     }}
                     onMouseEnter={e => {
                       if (!active) {
-                        (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F7FA';
-                        (e.currentTarget as HTMLElement).style.color = '#1E2A3A';
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-hover-bg)';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-primary)';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
                         (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = '#5A6A7E';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)';
                       }
                     }}
                   >
@@ -251,7 +250,7 @@ export default function Sidebar() {
                     <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {client.name}
                     </span>
-                    <ChevronRight size={12} color="#A0AAB8" style={{ flexShrink: 0 }} />
+                    <ChevronRight size={12} color="var(--color-icon-muted)" style={{ flexShrink: 0 }} />
                   </Link>
                 );
               })}
@@ -261,18 +260,18 @@ export default function Sidebar() {
       </nav>
 
       {/* User footer */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid #E2E6EE', flexShrink: 0 }}>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--color-border)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              backgroundColor: '#3B5BDB',
+              backgroundColor: 'var(--color-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#FFFFFF',
+              color: 'var(--color-white)',
               fontSize: '12px',
               fontWeight: 700,
               flexShrink: 0,
@@ -281,10 +280,10 @@ export default function Sidebar() {
             JP
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#1E2A3A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Joe Pellegrino
             </div>
-            <div style={{ fontSize: '11px', color: '#8896A6' }}>Owner</div>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Owner</div>
           </div>
         </div>
       </div>
@@ -300,7 +299,7 @@ export default function Sidebar() {
             position: 'fixed',
             inset: 0,
             zIndex: 40,
-            backgroundColor: 'rgba(30, 42, 58, 0.45)',
+            backgroundColor: 'var(--color-overlay)',
           }}
           className="lg:hidden"
           onClick={closeMobile}

@@ -907,7 +907,7 @@ export default function StrategyPage() {
   };
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Strategy" subtitle="Client strategies, service strategies, and KPI hierarchy" />
 
       {showStrategyModal && (

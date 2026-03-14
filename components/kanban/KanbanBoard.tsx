@@ -30,14 +30,14 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import TaskComments from '@/components/tasks/TaskComments';
 
 const COLUMNS: { id: Status; label: string; accentColor: string }[] = [
-  { id: 'todo', label: 'Pending', accentColor: '#3B5BDB' },
-  { id: 'inprogress', label: 'Doing', accentColor: '#3B5BDB' },
+  { id: 'todo', label: 'Pending', accentColor: 'var(--color-primary)' },
+  { id: 'inprogress', label: 'Doing', accentColor: 'var(--color-primary)' },
   { id: 'review', label: 'Review', accentColor: '#F59F00' },
   { id: 'done', label: 'Done', accentColor: '#2BB673' },
 ];
 
 const STATUS_BADGE: Record<string, { backgroundColor: string; color: string }> = {
-  todo:       { backgroundColor: '#E0E7FF', color: '#4338CA' },
+  todo:       { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' },
   inprogress: { backgroundColor: '#FEF3C7', color: '#D97706' },
   review:     { backgroundColor: '#F3E8FF', color: '#7C3AED' },
   done:       { backgroundColor: '#D1FAE5', color: '#059669' },
@@ -66,23 +66,23 @@ function ApprovalModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-lg mx-4 overflow-hidden"
-        style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)' }}
+        style={{ backgroundColor: 'var(--color-white)', borderRadius: '8px', boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 flex items-start justify-between" style={{ borderBottom: '1px solid #E2E6EE' }}>
+        <div className="px-6 py-5 flex items-start justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div>
-            <h2 className="font-semibold text-lg" style={{ color: '#1E2A3A' }}>Task Review</h2>
-            <p className="text-sm mt-0.5 line-clamp-1" style={{ color: '#8896A6' }}>{task.title}</p>
+            <h2 className="font-semibold text-lg" style={{ color: 'var(--color-text-primary)' }}>Task Review</h2>
+            <p className="text-sm mt-0.5 line-clamp-1" style={{ color: 'var(--color-text-muted)' }}>{task.title}</p>
           </div>
-          <button onClick={onClose} className="transition-colors mt-0.5" style={{ color: '#8896A6' }}>
+          <button onClick={onClose} className="transition-colors mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
             <X size={18} />
           </button>
         </div>
 
         <div className="px-6 py-5">
           {/* Description */}
-          <p className="text-sm mb-5" style={{ color: '#4A5568' }}>{task.description}</p>
+          <p className="text-sm mb-5" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>
 
           {/* Approval history */}
           {task.approvalHistory && task.approvalHistory.length > 0 && (
@@ -361,22 +361,22 @@ function TaskDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
-        style={{ backgroundColor: '#FFFFFF', borderRadius: '8px', boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)' }}
+        style={{ backgroundColor: 'var(--color-white)', borderRadius: '8px', boxShadow: '0 16px 48px rgba(30, 42, 58, 0.18), 0 4px 16px rgba(30, 42, 58, 0.08)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: '1px solid #E2E6EE' }}>
+        <div className="px-6 py-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div className="flex-1 pr-4">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
                 className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: (client.color || '#3B5BDB') + '18', color: client.color || '#3B5BDB' }}
+                style={{ backgroundColor: (client.color || 'var(--color-primary)') + '18', color: client.color || 'var(--color-primary)' }}
               >
                 {client.name}
               </span>
               <span
                 className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
-                style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: '#E0E7FF', color: '#4338CA' }}
+                style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
               >
                 {task.priority}
               </span>
@@ -386,15 +386,15 @@ function TaskDetailModal({
                 </span>
               )}
             </div>
-            <h2 className="font-semibold text-lg leading-snug" style={{ color: '#1E2A3A' }}>{task.title}</h2>
+            <h2 className="font-semibold text-lg leading-snug" style={{ color: 'var(--color-text-primary)' }}>{task.title}</h2>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {onEdit && (
               <button
                 onClick={() => onEdit(task)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                style={{ color: '#3B5BDB' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#E0E7FF'; }}
+                style={{ color: 'var(--color-primary)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-donut-track)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                 title="Edit task"
               >
@@ -415,21 +415,21 @@ function TaskDetailModal({
                 Archive
               </button>
             )}
-            <button onClick={onClose} className="transition-colors ml-1" style={{ color: '#8896A6' }}>
+            <button onClick={onClose} className="transition-colors ml-1" style={{ color: 'var(--color-text-muted)' }}>
               <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex px-6 gap-1" style={{ borderBottom: '1px solid #E2E6EE' }}>
+        <div className="flex px-6 gap-1" style={{ borderBottom: '1px solid var(--color-border)' }}>
           {(['details', 'comments'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className="px-4 py-3 text-sm font-medium capitalize transition-colors"
               style={{
-                color: activeTab === tab ? '#3B5BDB' : '#8896A6',
+                color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-text-muted)',
                 borderBottom: activeTab === tab ? '2px solid #3B5BDB' : '2px solid transparent',
                 marginBottom: '-1px',
               }}
@@ -445,7 +445,7 @@ function TaskDetailModal({
           ) : (
           <div className="space-y-5">
           {/* Meta row */}
-          <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: '#8896A6' }}>
+          <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: 'var(--color-text-muted)' }}>
             {/* Editable assignee */}
             <div className="flex items-center gap-1.5">
               <div
@@ -459,11 +459,11 @@ function TaskDetailModal({
                 onChange={e => handleAssigneeChange(e.target.value)}
                 disabled={savingAssignee}
                 className="text-xs rounded px-1.5 py-0.5 disabled:opacity-60"
-                style={{ border: '1px solid #D0D6E0', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
+                style={{ border: '1px solid #D0D6E0', backgroundColor: 'var(--color-white)', color: 'var(--color-text-primary)', outline: 'none' }}
               >
                 {TEAM_MEMBERS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
-              {savingAssignee && <Loader2 size={11} className="animate-spin" style={{ color: '#3B5BDB' }} />}
+              {savingAssignee && <Loader2 size={11} className="animate-spin" style={{ color: 'var(--color-primary)' }} />}
             </div>
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
@@ -471,7 +471,7 @@ function TaskDetailModal({
             </div>
             <span
               className="capitalize px-2.5 py-0.5 rounded-full font-medium text-[11px]"
-              style={STATUS_BADGE[task.status] || { backgroundColor: '#E0E7FF', color: '#4338CA' }}
+              style={STATUS_BADGE[task.status] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
             >
               {task.status === 'inprogress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
             </span>
@@ -491,14 +491,14 @@ function TaskDetailModal({
           )}
 
           {/* Description */}
-          <p className="text-sm leading-relaxed" style={{ color: '#4A5568' }}>{task.description}</p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>
 
           {/* Dependencies */}
           {((task.dependencies && task.dependencies.length > 0) || TASKS.some(t => t.dependencies?.includes(task.id))) && (
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E6EE' }}>
-              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: '#EDF0F5', borderBottom: '1px solid #E2E6EE' }}>
-                <Lock size={13} style={{ color: '#8896A6' }} />
-                <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>Dependencies</span>
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: 'var(--color-bg-page)', borderBottom: '1px solid var(--color-border)' }}>
+                <Lock size={13} style={{ color: 'var(--color-text-muted)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Dependencies</span>
               </div>
               <div className="px-4 py-3 space-y-2">
                 {task.dependencies && task.dependencies.length > 0 && (
@@ -550,14 +550,14 @@ function TaskDetailModal({
           )}
 
           {/* Time Tracking */}
-          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E6EE' }}>
-            <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#EDF0F5', borderBottom: '1px solid #E2E6EE' }}>
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
+            <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: 'var(--color-bg-page)', borderBottom: '1px solid var(--color-border)' }}>
               <div className="flex items-center gap-2">
-                <Timer size={14} style={{ color: '#3B5BDB' }} />
-                <span className="text-sm font-semibold" style={{ color: '#1E2A3A' }}>Time Tracking</span>
+                <Timer size={14} style={{ color: 'var(--color-primary)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Time Tracking</span>
               </div>
-              <div className="text-sm" style={{ color: '#8896A6' }}>
-                Total: <span className="font-semibold" style={{ color: '#1E2A3A' }}>{totalHours}h</span>
+              <div className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                Total: <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{totalHours}h</span>
                 <span className="text-xs ml-1">({totalMinutes} min)</span>
               </div>
             </div>
@@ -659,7 +659,7 @@ function TaskDetailModal({
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-center py-4" style={{ color: '#8896A6' }}>No time entries yet. Start the timer or add a manual entry.</p>
+                <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>No time entries yet. Start the timer or add a manual entry.</p>
               )}
             </div>
           </div>
@@ -686,18 +686,18 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
   });
 
   const statusAccent: Record<string, string> = {
-    todo: '#3B5BDB', inprogress: '#3B5BDB', review: '#F59F00', done: '#2BB673',
+    todo: 'var(--color-primary)', inprogress: 'var(--color-primary)', review: '#F59F00', done: '#2BB673',
   };
-  const accentColor = statusAccent[task.status] || '#3B5BDB';
+  const accentColor = statusAccent[task.status] || 'var(--color-primary)';
 
   return (
     <div
       onClick={() => !isDragging && onOpenDetail?.(task)}
       className="task-card cursor-grab active:cursor-grabbing"
       style={{
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--color-white)',
         borderRadius: '8px',
-        border: isBlocked ? '1px solid #fca5a5' : '1px solid #E2E6EE',
+        border: isBlocked ? '1px solid #fca5a5' : '1px solid var(--color-border)',
         boxShadow: isDragging
           ? '0 20px 40px rgba(30,42,58,0.18)'
           : 'var(--shadow-card)',
@@ -720,7 +720,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
         </span>
         <span
           className="text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1"
-          style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: '#E0E7FF', color: '#4338CA' }}
+          style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
           {task.priority}
@@ -736,7 +736,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
       )}
 
       {/* Title */}
-      <p className="text-sm font-medium leading-snug mb-3" style={{ color: isBlocked ? '#8896A6' : '#1E2A3A' }}>
+      <p className="text-sm font-medium leading-snug mb-3" style={{ color: isBlocked ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}>
         {task.title}
       </p>
 
@@ -779,14 +779,14 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs" style={{ color: overdue ? '#DC2626' : '#8896A6', fontWeight: overdue ? 500 : 400 }}>
+        <div className="flex items-center gap-1 text-xs" style={{ color: overdue ? '#DC2626' : 'var(--color-text-muted)', fontWeight: overdue ? 500 : 400 }}>
           <CalendarDays size={11} />
           {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           {overdue && ' ⚠'}
         </div>
         <div
           className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-          style={{ backgroundColor: assignee?.color || '#3B5BDB' }}
+          style={{ backgroundColor: assignee?.color || 'var(--color-primary)' }}
           title={assignee?.name || 'Unknown'}
         >
           {assignee?.initials || '?'}
@@ -841,17 +841,17 @@ function Column({
     <div
       className="flex flex-col min-h-[200px]"
       style={{
-        border: '1px solid #E2E6EE',
+        border: '1px solid var(--color-border)',
         borderRadius: '8px',
-        backgroundColor: '#F8F9FC',
+        backgroundColor: 'var(--color-bg-page)',
         borderTop: `3px solid ${accentColor}`,
         overflow: 'hidden',
       }}
     >
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #E2E6EE' }}>
+      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm" style={{ color: '#1E2A3A' }}>{label}</span>
+          <span className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>{label}</span>
           <span
             className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
             style={{ backgroundColor: accentColor + '20', color: accentColor }}
@@ -862,9 +862,9 @@ function Column({
         <button
           onClick={onNewTask}
           className="transition-colors"
-          style={{ color: '#8896A6' }}
+          style={{ color: 'var(--color-text-muted)' }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = accentColor; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8896A6'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)'; }}
           title={`New ${label} task`}
         >
           <Plus size={15} />
@@ -879,7 +879,7 @@ function Column({
           ))}
         </SortableContext>
         {tasks.length === 0 && (
-          <div className="text-center py-8 text-sm" style={{ color: '#A0AAB8' }}>
+          <div className="text-center py-8 text-sm" style={{ color: 'var(--color-icon-muted)' }}>
             Drop tasks here
           </div>
         )}
@@ -1119,8 +1119,8 @@ export default function KanbanBoard() {
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors"
           style={
             showFilters || activeFilters > 0
-              ? { backgroundColor: '#E0E7FF', borderColor: '#3B5BDB', color: '#4338CA' }
-              : { backgroundColor: '#FFFFFF', borderColor: '#E2E6EE', color: '#4A5568' }
+              ? { backgroundColor: 'var(--color-donut-track)', borderColor: 'var(--color-primary)', color: '#4338CA' }
+              : { backgroundColor: 'var(--color-white)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }
           }
         >
           <Filter size={14} />
@@ -1128,7 +1128,7 @@ export default function KanbanBoard() {
           {activeFilters > 0 && (
             <span
               className="w-4 h-4 text-white text-[10px] rounded-full flex items-center justify-center font-bold"
-              style={{ backgroundColor: '#3B5BDB' }}
+              style={{ backgroundColor: 'var(--color-primary)' }}
             >
               {activeFilters}
             </span>
@@ -1140,7 +1140,7 @@ export default function KanbanBoard() {
           <button
             onClick={() => { setFilterClient('all'); setFilterAssignee('all'); setFilterPriority('all'); setFilterProject('all'); }}
             className="flex items-center gap-1 text-xs transition-colors"
-            style={{ color: '#8896A6' }}
+            style={{ color: 'var(--color-text-muted)' }}
           >
             <X size={12} /> Clear filters
           </button>
@@ -1170,14 +1170,14 @@ export default function KanbanBoard() {
           <button
             onClick={() => { setNewTaskDefaultStatus('todo'); setShowNewTaskModal(true); }}
             className="flex items-center gap-2 px-4 py-2 text-white rounded-md text-sm font-medium transition-colors"
-            style={{ backgroundColor: '#3B5BDB' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3B5BDB'; }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
           >
             <Plus size={14} />
             New Task
           </button>
-          <div className="hidden sm:flex items-center gap-2 text-xs" style={{ color: '#8896A6' }}>
+          <div className="hidden sm:flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
             <div
               className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
               style={{ backgroundColor: TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID)?.color }}
@@ -1192,7 +1192,7 @@ export default function KanbanBoard() {
       {showFilters && (
         <div
           className="flex flex-wrap gap-3 mb-5 p-4 rounded-lg"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E6EE' }}
+          style={{ backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border)' }}
         >
           {[
             { label: 'Client', value: filterClient, onChange: setFilterClient, options: [{ value: 'all', label: 'All Clients' }, ...CLIENTS.map(c => ({ value: c.id, label: c.name }))] },
@@ -1201,12 +1201,12 @@ export default function KanbanBoard() {
             { label: 'Project', value: filterProject, onChange: setFilterProject, options: [{ value: 'all', label: 'All Projects' }, ...PROJECTS.map(p => ({ value: p.id, label: p.name }))] },
           ].map(({ label, value, onChange, options }) => (
             <div key={label}>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: '#4A5568' }}>{label}</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>{label}</label>
               <select
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 className="text-sm px-3 py-1.5 rounded-md"
-                style={{ border: '1px solid #D0D6E0', backgroundColor: '#FFFFFF', color: '#1E2A3A', outline: 'none' }}
+                style={{ border: '1px solid #D0D6E0', backgroundColor: 'var(--color-white)', color: 'var(--color-text-primary)', outline: 'none' }}
               >
                 {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>

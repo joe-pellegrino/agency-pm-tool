@@ -502,7 +502,7 @@ export default function ServicesPage() {
   }, [filteredServices, statusFilter, clientFilter, CLIENTS, CLIENT_SERVICES]);
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Services" subtitle="Agency-wide service delivery across all clients" />
       {showNewService && <ClientServiceModal onClose={() => setShowNewService(false)} />}
 

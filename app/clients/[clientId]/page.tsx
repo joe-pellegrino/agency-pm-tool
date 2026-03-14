@@ -613,7 +613,7 @@ export default function ClientPage() {
 
   if (!client) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F5' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
         <div className="text-center">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Client not found</h2>
           <Link href="/dashboard" className="text-[#3B5BDB] hover:text-[#3B5BDB] text-sm">
@@ -625,7 +625,7 @@ export default function ClientPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#EDF0F5' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
       <TopBar title={client.name} subtitle={`${client.industry} · ${client.location}`} />
 
       <div style={{ padding: '24px 32px' }}>

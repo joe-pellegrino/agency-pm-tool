@@ -35,7 +35,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 const EMOJIS = ['📋', '📊', '🎯', '🚀', '💡', '🎨', '📱', '🌐', '🏪', '🎬', '🎵', '✨', '🔥', '💰', '📸', '🎭', '🏆', '🌟', '💼', '🔧', '📦', '🎪', '🌿', '🎮', '🏋️', '🎤', '🛒', '🍽️', '🏠', '🌍'];
-const ICON_COLORS = ['#3B5BDB', '#2BB673', '#F59F00', '#E03131', '#7C3AED', '#0891B2', '#D97706', '#374151'];
+const ICON_COLORS = ['var(--color-primary)', '#2BB673', '#F59F00', '#E03131', '#7C3AED', '#0891B2', '#D97706', '#374151'];
 
 const ACTION_ICONS: Record<string, string> = {
   task_created: '📋',
@@ -109,17 +109,17 @@ function formatFileSize(bytes: number) {
 }
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
-function StatCard({ label, value, percentage, color = '#3B5BDB', note }: {
+function StatCard({ label, value, percentage, color = 'var(--color-primary)', note }: {
   label: string; value: string; percentage: number; color?: string; note?: string;
 }) {
   return (
-    <div className="bg-white rounded-lg border border-[#E2E6EE] p-5" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+    <div className="bg-white rounded-lg border border-[var(--color-border)] p-5" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
       <div className="flex items-center justify-between mb-1">
         <span className="text-[11px] font-semibold text-[#8896A6] uppercase tracking-wide">{label}</span>
         <span className="text-[13px] text-[#8896A6]">{note || `${Math.round(percentage)}%`}</span>
       </div>
       <div className="text-[28px] font-bold text-[#1E2A3A] mb-3">{value}</div>
-      <div className="h-1 rounded-full bg-[#E2E6EE]">
+      <div className="h-1 rounded-full bg-[var(--color-border)]">
         <div className="h-1 rounded-full transition-all" style={{ width: `${Math.min(100, Math.max(0, percentage))}%`, backgroundColor: color }} />
       </div>
     </div>
@@ -140,9 +140,9 @@ function Avatar({ initials, color, size = 32, name }: { initials: string; color:
 }
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
-function ProgressBar({ value, color = '#3B5BDB' }: { value: number; color?: string }) {
+function ProgressBar({ value, color = 'var(--color-primary)' }: { value: number; color?: string }) {
   return (
-    <div className="w-full h-1 bg-[#E2E6EE] rounded-full overflow-hidden">
+    <div className="w-full h-1 bg-[var(--color-border)] rounded-full overflow-hidden">
       <div className="h-1 rounded-full" style={{ width: `${Math.min(100, value)}%`, backgroundColor: color }} />
     </div>
   );
@@ -237,9 +237,9 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   const budgetRemaining = totalBudget - totalSpent;
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       {/* Project Header Card */}
-      <div className="bg-white border-b border-[#E2E6EE]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+      <div className="bg-white border-b border-[var(--color-border)]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
         <div style={{ padding: '20px 32px 0 32px' }}>
           {/* Back link */}
           <button
@@ -270,7 +270,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
                 </button>
 
                 {showIconPicker && (
-                  <div className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[#E2E6EE] p-4 z-50 w-72"
+                  <div className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-border)] p-4 z-50 w-72"
                     style={{ boxShadow: '0 8px 24px rgba(30,42,58,0.12)' }}>
                     <div className="text-xs font-semibold text-[#1E2A3A] mb-2">Choose Emoji</div>
                     <div className="grid grid-cols-6 gap-1 mb-3">
@@ -286,7 +286,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
                       {ICON_COLORS.map(c => (
                         <button key={c} onClick={() => setPendingColor(c)}
                           className="w-7 h-7 rounded-full border-2 transition-all"
-                          style={{ backgroundColor: c, borderColor: pendingColor === c ? '#1E2A3A' : 'transparent' }} />
+                          style={{ backgroundColor: c, borderColor: pendingColor === c ? 'var(--color-text-primary)' : 'transparent' }} />
                       ))}
                     </div>
                     <div className="flex gap-2">
@@ -295,7 +295,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
                         Save
                       </button>
                       <button onClick={() => setShowIconPicker(false)}
-                        className="flex-1 py-1.5 text-sm font-medium text-[#5A6A7E] rounded-md border border-[#E2E6EE] hover:bg-[#F5F7FA] transition-colors">
+                        className="flex-1 py-1.5 text-sm font-medium text-[#5A6A7E] rounded-md border border-[var(--color-border)] hover:bg-[#F5F7FA] transition-colors">
                         Cancel
                       </button>
                     </div>
@@ -350,7 +350,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
               <button
                 onClick={() => setShowCreateTask(true)}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
-                style={{ backgroundColor: '#3B5BDB' }}
+                style={{ backgroundColor: 'var(--color-primary)' }}
               >
                 <Plus size={13} />
                 Create task
@@ -359,15 +359,15 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
           </div>
 
           {/* Tabs */}
-          <div className="flex items-center gap-0 mt-5 border-b-2 border-[#E2E6EE]">
+          <div className="flex items-center gap-0 mt-5 border-b-2 border-[var(--color-border)]">
             {TABS.map(t => (
               <button
                 key={t.id}
                 onClick={() => handleTabChange(t.id)}
                 className="px-0 py-3 mr-7 text-sm transition-colors border-b-2 -mb-0.5 whitespace-nowrap"
                 style={{
-                  color: activeTab === t.id ? '#3B5BDB' : '#5A6A7E',
-                  borderBottomColor: activeTab === t.id ? '#3B5BDB' : 'transparent',
+                  color: activeTab === t.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  borderBottomColor: activeTab === t.id ? 'var(--color-primary)' : 'transparent',
                   fontWeight: activeTab === t.id ? 600 : 500,
                 }}
               >
@@ -533,7 +533,7 @@ function OverviewTab({
       <div className="grid gap-6" style={{ gridTemplateColumns: '60% 1fr' }}>
         {/* Left */}
         <div className="space-y-6">
-          <div className="bg-white rounded-lg border border-[#E2E6EE] p-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+          <div className="bg-white rounded-lg border border-[var(--color-border)] p-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
             <h2 className="text-base font-semibold text-[#1E2A3A] mb-3">Project Details</h2>
             <p className="text-[14px] text-[#5A6A7E] leading-relaxed">{project.description || 'No description provided.'}</p>
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
@@ -572,7 +572,7 @@ function OverviewTab({
         {/* Right */}
         <div className="space-y-6">
           {/* Project Leads */}
-          <div className="bg-white rounded-lg border border-[#E2E6EE] p-5" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+          <div className="bg-white rounded-lg border border-[var(--color-border)] p-5" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
             <h2 className="text-base font-semibold text-[#1E2A3A] mb-4">Project Leads</h2>
             {members.length === 0 ? (
               <p className="text-sm text-[#8896A6]">No members assigned yet.</p>
@@ -584,7 +584,7 @@ function OverviewTab({
                     <div className="flex-1 min-w-0">
                       <div className="text-[15px] font-semibold text-[#1E2A3A]">{m.name}</div>
                       <div className="text-[13px] text-[#5A6A7E]">{m.role}</div>
-                      <button className="text-[13px] font-medium mt-1 hover:underline" style={{ color: '#3B5BDB' }}>
+                      <button className="text-[13px] font-medium mt-1 hover:underline" style={{ color: 'var(--color-primary)' }}>
                         Send Message
                       </button>
                     </div>
@@ -595,7 +595,7 @@ function OverviewTab({
           </div>
 
           {/* Recent Activities */}
-          <div className="bg-white rounded-lg border border-[#E2E6EE] p-5" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+          <div className="bg-white rounded-lg border border-[var(--color-border)] p-5" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
             <h2 className="text-base font-semibold text-[#1E2A3A] mb-4">Recent Activities</h2>
             {activity.length === 0 ? (
               <p className="text-sm text-[#8896A6]">No activity yet.</p>
@@ -605,7 +605,7 @@ function OverviewTab({
                   <div key={dateLabel}>
                     <div className="text-[11px] font-semibold text-[#8896A6] uppercase tracking-wide mb-2">{dateLabel}</div>
                     <div className="relative pl-12 space-y-4 mb-4">
-                      <div className="absolute left-10 top-0 bottom-0 w-px bg-[#E2E6EE]" />
+                      <div className="absolute left-10 top-0 bottom-0 w-px bg-[var(--color-border)]" />
                       {items.map(a => (
                         <div key={a.id} className="flex items-start gap-2">
                           <div className="absolute left-8 text-[10px] text-[#8896A6] pt-0.5">{formatTime(a.createdAt)}</div>
@@ -649,7 +649,7 @@ function TeamTab({
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
-          style={{ backgroundColor: '#3B5BDB' }}
+          style={{ backgroundColor: 'var(--color-primary)' }}
         >
           <UserPlus size={14} />
           Add Member
@@ -658,7 +658,7 @@ function TeamTab({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {members.map(m => (
-          <div key={m.id} className="bg-white rounded-lg border border-[#E2E6EE] p-5 flex items-center gap-4"
+          <div key={m.id} className="bg-white rounded-lg border border-[var(--color-border)] p-5 flex items-center gap-4"
             style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
             <Avatar initials={m.initials} color={m.color} size={48} name={m.name} />
             <div className="flex-1 min-w-0">
@@ -729,7 +729,7 @@ function TeamTab({
             <p className="text-sm text-[#5A6A7E] mb-5">Remove this member from the project?</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmRemove(null)}
-                className="flex-1 py-2 text-sm font-medium text-[#5A6A7E] border border-[#E2E6EE] rounded-md hover:bg-[#F5F7FA]">
+                className="flex-1 py-2 text-sm font-medium text-[#5A6A7E] border border-[var(--color-border)] rounded-md hover:bg-[#F5F7FA]">
                 Cancel
               </button>
               <button
@@ -816,7 +816,7 @@ function BudgetTab({
               autoFocus
             />
             <button onClick={handleSaveBudget} className="p-1.5 text-white bg-[#3B5BDB] rounded-md hover:bg-[#364FC7]"><Check size={14} /></button>
-            <button onClick={() => setEditingBudget(false)} className="p-1.5 text-[#5A6A7E] border border-[#E2E6EE] rounded-md hover:bg-[#F5F7FA]"><X size={14} /></button>
+            <button onClick={() => setEditingBudget(false)} className="p-1.5 text-[#5A6A7E] border border-[var(--color-border)] rounded-md hover:bg-[#F5F7FA]"><X size={14} /></button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -838,13 +838,13 @@ function BudgetTab({
       </div>
 
       {/* Expense table */}
-      <div className="bg-white rounded-lg border border-[#E2E6EE]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E2E6EE]">
+      <div className="bg-white rounded-lg border border-[var(--color-border)]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
           <h2 className="text-base font-semibold text-[#1E2A3A]">Expenses ({expenses.length})</h2>
           <button
             onClick={() => setShowAddExpense(v => !v)}
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
-            style={{ backgroundColor: '#3B5BDB' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
           >
             <Plus size={13} />
             Add Expense
@@ -853,7 +853,7 @@ function BudgetTab({
 
         {/* Add expense form */}
         {showAddExpense && (
-          <div className="px-5 py-4 border-b border-[#E2E6EE] bg-[#F8F9FF]">
+          <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[#F8F9FF]">
             <div className="grid grid-cols-4 gap-3 mb-3">
               <div className="col-span-2">
                 <label className="block text-xs font-semibold text-[#1E2A3A] mb-1.5">Description *</label>
@@ -861,7 +861,7 @@ function BudgetTab({
                   value={expForm.description}
                   onChange={e => setExpForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="Expense description"
-                  className="w-full h-10 px-3 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB]"
+                  className="w-full h-10 px-3 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB]"
                 />
               </div>
               <div>
@@ -871,7 +871,7 @@ function BudgetTab({
                   value={expForm.amount}
                   onChange={e => setExpForm(f => ({ ...f, amount: e.target.value }))}
                   placeholder="0.00"
-                  className="w-full h-10 px-3 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB]"
+                  className="w-full h-10 px-3 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB]"
                 />
               </div>
               <div>
@@ -879,7 +879,7 @@ function BudgetTab({
                 <select
                   value={expForm.category}
                   onChange={e => setExpForm(f => ({ ...f, category: e.target.value }))}
-                  className="w-full h-10 px-3 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB] bg-white"
+                  className="w-full h-10 px-3 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB] bg-white"
                 >
                   {['Labor', 'Software', 'Advertising', 'Design', 'Other'].map(c => (
                     <option key={c}>{c}</option>
@@ -894,12 +894,12 @@ function BudgetTab({
                   type="date"
                   value={expForm.expenseDate}
                   onChange={e => setExpForm(f => ({ ...f, expenseDate: e.target.value }))}
-                  className="h-10 px-3 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB]"
+                  className="h-10 px-3 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB]"
                 />
               </div>
               <div className="flex items-end gap-2 ml-auto">
                 <button onClick={() => setShowAddExpense(false)}
-                  className="px-4 py-2 text-sm font-medium text-[#5A6A7E] border border-[#E2E6EE] rounded-md hover:bg-[#F5F7FA]">
+                  className="px-4 py-2 text-sm font-medium text-[#5A6A7E] border border-[var(--color-border)] rounded-md hover:bg-[#F5F7FA]">
                   Cancel
                 </button>
                 <button onClick={handleAddExpense} disabled={saving}
@@ -915,7 +915,7 @@ function BudgetTab({
         {expenses.length > 0 ? (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#E2E6EE]">
+              <tr className="border-b border-[var(--color-border)]">
                 {['DESCRIPTION', 'CATEGORY', 'DATE', 'AMOUNT', ''].map(h => (
                   <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold text-[#3B5BDB] uppercase tracking-wide">
                     {h}
@@ -925,7 +925,7 @@ function BudgetTab({
             </thead>
             <tbody>
               {expenses.map(e => (
-                <tr key={e.id} className="border-b border-[#E2E6EE] last:border-0 hover:bg-[#F8FAFC] transition-colors">
+                <tr key={e.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[#F8FAFC] transition-colors">
                   <td className="px-5 py-3 text-sm text-[#1E2A3A]">{e.description}</td>
                   <td className="px-5 py-3">
                     <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#EDF0F5] text-[#5A6A7E]">{e.category}</span>
@@ -989,14 +989,14 @@ function ActivityTab({ activity }: { activity: Awaited<ReturnType<typeof getProj
         {filters.map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors capitalize ${
-              filter === f ? 'bg-[#3B5BDB] text-white' : 'bg-white text-[#5A6A7E] border border-[#E2E6EE] hover:bg-[#F5F7FA]'
+              filter === f ? 'bg-[#3B5BDB] text-white' : 'bg-white text-[#5A6A7E] border border-[var(--color-border)] hover:bg-[#F5F7FA]'
             }`}>
             {f}
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg border border-[#E2E6EE] p-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+      <div className="bg-white rounded-lg border border-[var(--color-border)] p-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-[#8896A6]">
             <Activity size={32} className="mx-auto mb-2 opacity-30" />
@@ -1007,14 +1007,14 @@ function ActivityTab({ activity }: { activity: Awaited<ReturnType<typeof getProj
             <div key={dateLabel} className="mb-6 last:mb-0">
               <div className="text-[11px] font-semibold text-[#8896A6] uppercase tracking-wide mb-3">{dateLabel}</div>
               <div className="relative">
-                <div className="absolute left-[52px] top-0 bottom-0 w-px bg-[#E2E6EE]" />
+                <div className="absolute left-[52px] top-0 bottom-0 w-px bg-[var(--color-border)]" />
                 <div className="space-y-4">
                   {items.map(a => (
                     <div key={a.id} className="flex items-start gap-3 pl-16 relative">
                       <div className="absolute left-0 text-xs text-[#8896A6] pt-0.5 w-12 text-right tabular-nums">
                         {formatTime(a.createdAt)}
                       </div>
-                      <div className="absolute left-[46px] w-5 h-5 rounded-full bg-white border border-[#E2E6EE] flex items-center justify-center text-xs">
+                      <div className="absolute left-[46px] w-5 h-5 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center text-xs">
                         {ACTION_ICONS[a.actionType] || ACTION_ICONS.default}
                       </div>
                       <div className="flex-1">
@@ -1067,7 +1067,7 @@ function TasksTab({
 
   const columns = ['todo', 'inprogress', 'review', 'done'];
   const colLabels: Record<string, string> = { todo: 'To Do', inprogress: 'In Progress', review: 'Review', done: 'Done' };
-  const colColors: Record<string, string> = { todo: '#868E96', inprogress: '#3B5BDB', review: '#F59F00', done: '#2BB673' };
+  const colColors: Record<string, string> = { todo: '#868E96', inprogress: 'var(--color-primary)', review: '#F59F00', done: '#2BB673' };
 
   return (
     <div>
@@ -1079,14 +1079,14 @@ function TasksTab({
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value as typeof sortBy)}
-              className="h-9 px-3 text-sm border border-[#E2E6EE] rounded-md bg-white text-[#5A6A7E] focus:outline-none"
+              className="h-9 px-3 text-sm border border-[var(--color-border)] rounded-md bg-white text-[#5A6A7E] focus:outline-none"
             >
               <option value="status">Sort: Status</option>
               <option value="dueDate">Sort: Due Date</option>
               <option value="priority">Sort: Priority</option>
             </select>
           )}
-          <div className="flex items-center border border-[#E2E6EE] rounded-md overflow-hidden">
+          <div className="flex items-center border border-[var(--color-border)] rounded-md overflow-hidden">
             <button
               onClick={() => setViewAndSave('list')}
               className={`px-3 py-2 transition-colors ${view === 'list' ? 'bg-[#3B5BDB] text-white' : 'bg-white text-[#5A6A7E] hover:bg-[#F5F7FA]'}`}
@@ -1096,7 +1096,7 @@ function TasksTab({
             </button>
             <button
               onClick={() => setViewAndSave('kanban')}
-              className={`px-3 py-2 transition-colors border-l border-[#E2E6EE] ${view === 'kanban' ? 'bg-[#3B5BDB] text-white' : 'bg-white text-[#5A6A7E] hover:bg-[#F5F7FA]'}`}
+              className={`px-3 py-2 transition-colors border-l border-[var(--color-border)] ${view === 'kanban' ? 'bg-[#3B5BDB] text-white' : 'bg-white text-[#5A6A7E] hover:bg-[#F5F7FA]'}`}
               title="Kanban view"
             >
               <LayoutGrid size={14} />
@@ -1105,7 +1105,7 @@ function TasksTab({
           <button
             onClick={onCreateTask}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
-            style={{ backgroundColor: '#3B5BDB' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
           >
             <Plus size={13} />
             Create Task
@@ -1114,16 +1114,16 @@ function TasksTab({
       </div>
 
       {tasks.length === 0 ? (
-        <div className="bg-white rounded-lg border border-[#E2E6EE] text-center py-16 text-[#8896A6]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+        <div className="bg-white rounded-lg border border-[var(--color-border)] text-center py-16 text-[#8896A6]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
           <CheckSquare size={36} className="mx-auto mb-3 opacity-30" />
           <p className="font-medium">No tasks yet</p>
           <p className="text-sm mt-1">Create a task to get started</p>
         </div>
       ) : view === 'list' ? (
-        <div className="bg-white rounded-lg border border-[#E2E6EE]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+        <div className="bg-white rounded-lg border border-[var(--color-border)]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#E2E6EE]">
+              <tr className="border-b border-[var(--color-border)]">
                 {['TASK', 'STATUS', 'ASSIGNEE', 'DUE DATE', 'PRIORITY'].map(h => (
                   <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold text-[#3B5BDB] uppercase tracking-wide">{h}</th>
                 ))}
@@ -1131,7 +1131,7 @@ function TasksTab({
             </thead>
             <tbody>
               {sorted.map(t => (
-                <tr key={t.id} className="border-b border-[#E2E6EE] last:border-0 hover:bg-[#F8FAFC] transition-colors cursor-pointer">
+                <tr key={t.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[#F8FAFC] transition-colors cursor-pointer">
                   <td className="px-5 py-3.5 text-sm font-medium text-[#1E2A3A]">{t.title}</td>
                   <td className="px-5 py-3.5">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[t.status] || 'bg-gray-100 text-gray-600'}`}>
@@ -1160,9 +1160,9 @@ function TasksTab({
           {columns.map(col => {
             const colTasks = tasks.filter(t => t.status === col);
             return (
-              <div key={col} className="bg-white rounded-lg border border-[#E2E6EE] overflow-hidden"
+              <div key={col} className="bg-white rounded-lg border border-[var(--color-border)] overflow-hidden"
                 style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)', borderTop: `3px solid ${colColors[col]}` }}>
-                <div className="px-4 py-3 border-b border-[#E2E6EE]">
+                <div className="px-4 py-3 border-b border-[var(--color-border)]">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-[#1E2A3A]">{colLabels[col]}</span>
                     <span className="text-xs text-[#8896A6]">{colTasks.length}</span>
@@ -1170,7 +1170,7 @@ function TasksTab({
                 </div>
                 <div className="p-3 space-y-3">
                   {colTasks.map(t => (
-                    <div key={t.id} className="bg-white rounded-lg border border-[#E2E6EE] p-3 hover:shadow-md transition-shadow cursor-pointer"
+                    <div key={t.id} className="bg-white rounded-lg border border-[var(--color-border)] p-3 hover:shadow-md transition-shadow cursor-pointer"
                       style={{ boxShadow: '0 1px 2px rgba(30,42,58,0.04)' }}>
                       <div className="text-sm font-semibold text-[#1E2A3A] mb-1.5">{t.title}</div>
                       <div className="flex items-center justify-between">
@@ -1250,7 +1250,7 @@ function FilesTab({
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors disabled:opacity-60"
-            style={{ backgroundColor: '#3B5BDB' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
           >
             <Upload size={13} />
             {uploading ? 'Uploading...' : '+ Upload File'}
@@ -1259,7 +1259,7 @@ function FilesTab({
       </div>
 
       {assets.length === 0 ? (
-        <div className="bg-white rounded-lg border border-[#E2E6EE] text-center py-16 text-[#8896A6]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+        <div className="bg-white rounded-lg border border-[var(--color-border)] text-center py-16 text-[#8896A6]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
           <FileText size={36} className="mx-auto mb-3 opacity-30" />
           <p className="font-medium">No files yet</p>
           <p className="text-sm mt-1">Upload your first file to get started</p>
@@ -1267,10 +1267,10 @@ function FilesTab({
       ) : (
         <div className="grid grid-cols-4 gap-5">
           {assets.map(a => (
-            <div key={a.id} className="bg-white rounded-lg border border-[#E2E6EE] overflow-hidden"
+            <div key={a.id} className="bg-white rounded-lg border border-[var(--color-border)] overflow-hidden"
               style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
               {/* Thumbnail */}
-              <div className="relative" style={{ aspectRatio: '4/3', backgroundColor: '#F5F7FA' }}>
+              <div className="relative" style={{ aspectRatio: '4/3', backgroundColor: 'var(--color-hover-bg)' }}>
                 {a.url && a.type.includes('image') ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={a.url} alt={a.name} className="w-full h-full object-cover" style={{ borderRadius: '8px 8px 0 0' }} />
@@ -1296,7 +1296,7 @@ function FilesTab({
                   <div className="text-[12px] text-[#8896A6] mt-0.5">Uploaded by {a.uploadedBy}</div>
                 )}
                 {a.url && (
-                  <a href={a.url} download className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#5A6A7E] border border-[#E2E6EE] rounded-md hover:bg-[#F5F7FA] transition-colors">
+                  <a href={a.url} download className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#5A6A7E] border border-[var(--color-border)] rounded-md hover:bg-[#F5F7FA] transition-colors">
                     <Download size={12} />
                     Download
                   </a>
@@ -1340,7 +1340,7 @@ function SettingsTab({
 
   return (
     <div className="max-w-2xl">
-      <div className="bg-white rounded-lg border border-[#E2E6EE] p-6 mb-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+      <div className="bg-white rounded-lg border border-[var(--color-border)] p-6 mb-6" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
         <h2 className="text-base font-semibold text-[#1E2A3A] mb-5">Project Settings</h2>
 
         <div className="space-y-5">
@@ -1349,7 +1349,7 @@ function SettingsTab({
             <input
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="w-full h-11 px-3.5 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB] focus:shadow-[0_0_0_3px_rgba(59,91,219,0.12)]"
+              className="w-full h-11 px-3.5 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB] focus:shadow-[0_0_0_3px_rgba(59,91,219,0.12)]"
             />
           </div>
 
@@ -1359,7 +1359,7 @@ function SettingsTab({
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               rows={4}
-              className="w-full px-3.5 py-3 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB] focus:shadow-[0_0_0_3px_rgba(59,91,219,0.12)] resize-none"
+              className="w-full px-3.5 py-3 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB] focus:shadow-[0_0_0_3px_rgba(59,91,219,0.12)] resize-none"
             />
           </div>
 
@@ -1368,7 +1368,7 @@ function SettingsTab({
             <select
               value={form.status}
               onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-              className="w-full h-11 px-3.5 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB] bg-white"
+              className="w-full h-11 px-3.5 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB] bg-white"
             >
               {['active', 'on-hold', 'complete', 'planning'].map(s => (
                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -1383,7 +1383,7 @@ function SettingsTab({
                 type="date"
                 value={form.startDate}
                 onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
-                className="w-full h-11 px-3.5 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB]"
+                className="w-full h-11 px-3.5 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB]"
               />
             </div>
             <div>
@@ -1392,7 +1392,7 @@ function SettingsTab({
                 type="date"
                 value={form.endDate}
                 onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                className="w-full h-11 px-3.5 text-sm border border-[#E2E6EE] rounded-md focus:outline-none focus:border-[#3B5BDB]"
+                className="w-full h-11 px-3.5 text-sm border border-[var(--color-border)] rounded-md focus:outline-none focus:border-[#3B5BDB]"
               />
             </div>
           </div>
@@ -1428,7 +1428,7 @@ function SettingsTab({
               <p className="text-sm text-[#5A6A7E] mb-5">This will hide the project from all views. Are you sure?</p>
               <div className="flex gap-3">
                 <button onClick={() => setShowArchiveConfirm(false)}
-                  className="flex-1 py-2 text-sm font-medium text-[#5A6A7E] border border-[#E2E6EE] rounded-md hover:bg-[#F5F7FA]">
+                  className="flex-1 py-2 text-sm font-medium text-[#5A6A7E] border border-[var(--color-border)] rounded-md hover:bg-[#F5F7FA]">
                   Cancel
                 </button>
                 <button

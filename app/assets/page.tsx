@@ -83,8 +83,8 @@ function AssetCard({
     <div
       className="group"
       style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E2E6EE',
+        backgroundColor: 'var(--color-white)',
+        border: '1px solid var(--color-border)',
         borderRadius: '8px',
         boxShadow: 'var(--shadow-card)',
         overflow: 'hidden',
@@ -98,7 +98,7 @@ function AssetCard({
         style={{
           position: 'relative',
           aspectRatio: '4/3',
-          backgroundColor: '#EDF0F5',
+          backgroundColor: 'var(--color-bg-page)',
           overflow: 'hidden',
           borderRadius: '8px 8px 0 0',
         }}
@@ -110,9 +110,9 @@ function AssetCard({
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px', color: '#A0AAB8' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px', color: 'var(--color-icon-muted)' }}>
             {getFileIcon(asset.filename, asset.fileType)}
-            <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.08em', color: '#8896A6' }}>
+            <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>
               {asset.filename.split('.').pop()?.toUpperCase()}
             </span>
           </div>
@@ -130,7 +130,7 @@ function AssetCard({
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            color: '#A0AAB8',
+            color: 'var(--color-icon-muted)',
             opacity: 0,
             transition: 'opacity 0.15s ease, color 0.15s ease',
             display: 'flex',
@@ -139,7 +139,7 @@ function AssetCard({
           }}
           className="group-hover:opacity-100"
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#E03131'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#A0AAB8'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-icon-muted)'; }}
           title="Delete"
         >
           <Trash2 size={16} />
@@ -166,15 +166,15 @@ function AssetCard({
       {/* Info */}
       <div style={{ padding: '12px', textAlign: 'center' }}>
         <p
-          style={{ fontSize: '13px', fontWeight: 500, color: '#1E2A3A', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
           title={asset.filename}
         >
           {asset.filename}
         </p>
-        <p style={{ fontSize: '12px', color: '#8896A6', marginBottom: '4px' }}>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
           {asset.size} &middot; {asset.filename.split('.').pop()?.toUpperCase()}
         </p>
-        <p style={{ fontSize: '12px', color: '#8896A6', marginBottom: '10px' }}>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '10px' }}>
           {new Date(asset.uploadDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </p>
         {asset.storageUrl && (
@@ -190,17 +190,17 @@ function AssetCard({
               padding: '6px 14px',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#5A6A7E',
-              border: '1px solid #E2E6EE',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border)',
               borderRadius: '6px',
               textDecoration: 'none',
               transition: 'background 0.15s ease',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--color-white)',
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#F5F7FA'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#FFFFFF'; }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-hover-bg)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-white)'; }}
           >
-            <Download size={14} color="#5A6A7E" />
+            <Download size={14} color="var(--color-text-secondary)" />
             Download
           </a>
         )}
@@ -366,7 +366,7 @@ export default function AssetsPage() {
   const videoCount = assetsWithStorage.filter(a => ['mp4','mov','avi','webm','mkv'].some(e => a.filename.endsWith('.' + e))).length;
 
   return (
-    <div style={{ backgroundColor: '#EDF0F5', minHeight: '100vh' }}>
+    <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar title="Asset Library" subtitle="Brand assets, creatives, and media files" />
 
       {deleteTarget && (
