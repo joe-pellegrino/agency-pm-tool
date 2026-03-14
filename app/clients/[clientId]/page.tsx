@@ -9,11 +9,12 @@ import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, Zap, ArrowLeft,
-  X, Loader2, Megaphone,
+  X, Loader2, Megaphone, Edit2, Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { upsertClientService, removeClientService } from '@/lib/actions';
+import { upsertClientService, removeClientService, updateClient } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Drawer from '@/components/ui/Drawer';
 import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
@@ -568,6 +569,101 @@ function ServiceCard({
   );
 }
 
+// ── Project Detail Drawer ────────────────────────────────────────────────────
+function ProjectDetailDrawer({
+  project,
+  isOpen,
+  onClose,
+}: {
+  project: Project | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { TASKS = [] } = useAppData();
+
+  if (!project) return null;
+
+  const projectTasks = TASKS.filter(t => project.taskIds.includes(t.id));
+  const completedTasks = projectTasks.filter(t => t.status === 'done').length;
+
+  const statusConfig: Record<string, { label: string; color: string; dot: string }> = {
+    planning: { label: 'Planning', color: 'bg-blue-100 text-blue-600', dot: 'bg-blue-400' },
+    active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
+    complete: { label: 'Complete', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
+    'on-hold': { label: 'On Hold', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+  };
+
+  const statusCfg = statusConfig[project.status];
+
+  return (
+    <Drawer isOpen={isOpen} onClose={onClose} title={project.name}>
+      <div className="space-y-6">
+        {/* Status Badge */}
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1.5 ${statusCfg.color}`}>
+            <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
+            {statusCfg.label}
+          </span>
+        </div>
+
+        {/* Description */}
+        {project.description && (
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Description</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{project.description}</p>
+          </div>
+        )}
+
+        {/* Dates */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</h4>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{project.startDate}</p>
+          </div>
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">End Date</h4>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{project.endDate}</p>
+          </div>
+        </div>
+
+        {/* Progress */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Progress</h4>
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{project.progress}%</span>
+          </div>
+          <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-2 rounded-full bg-[#3B5BDB] transition-all"
+              style={{ width: `${project.progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Tasks Summary */}
+        <div>
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1">
+            <CheckCircle size={11} />
+            Tasks ({completedTasks}/{projectTasks.length})
+          </h4>
+          {projectTasks.length === 0 ? (
+            <p className="text-sm text-gray-400">No tasks yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {projectTasks.slice(0, 10).map(task => (
+                <TaskRow key={task.id} task={task} />
+              ))}
+              {projectTasks.length > 10 && (
+                <p className="text-xs text-gray-400 pt-2">...and {projectTasks.length - 10} more</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Drawer>
+  );
+}
+
 type ClientTab = 'overview' | 'projects' | 'tasks' | 'paid-ads' | 'documents';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
@@ -577,11 +673,118 @@ const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentTyp
   { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
 ];
 
+// ── Client Info Editor ───────────────────────────────────────────────────────
+function ClientInfoEditor({
+  client,
+  onSave,
+}: {
+  client: any;
+  onSave: (data: Partial<any>) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: client.name,
+    industry: client.industry,
+    location: client.location,
+  });
+  const [isSaving, startSaveTransition] = useTransition();
+
+  const handleSave = () => {
+    startSaveTransition(async () => {
+      try {
+        await onSave(formData);
+        toast.success('Client info updated');
+        setIsEditing(false);
+      } catch (err) {
+        toast.error('Failed to update: ' + (err as Error).message);
+      }
+    });
+  };
+
+  if (!isEditing) {
+    return (
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{client.name}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{client.industry} · {client.location}</p>
+        </div>
+        <button
+          onClick={() => setIsEditing(true)}
+          className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+          title="Edit client info"
+        >
+          <Edit2 size={14} />
+          Edit
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Name</label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Industry</label>
+          <input
+            type="text"
+            value={formData.industry}
+            onChange={e => setFormData(prev => ({ ...prev, industry: e.target.value }))}
+            className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Location</label>
+          <input
+            type="text"
+            value={formData.location}
+            onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+            className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            setIsEditing(false);
+            setFormData({
+              name: client.name,
+              industry: client.industry,
+              location: client.location,
+            });
+          }}
+          className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ClientPage() {
-  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [] } = useAppData();
+  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], refresh } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
   const client = CLIENTS.find(c => c.id === clientId);
   const [activeTab, setActiveTab] = useState<ClientTab>('overview');
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isProjectDrawerOpen, setIsProjectDrawerOpen] = useState(false);
 
   const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === clientId), [clientId, STRATEGIES]);
 
@@ -620,6 +823,16 @@ export default function ClientPage() {
     return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   }, [clientServices]);
 
+  const handleProjectClick = (project: Project) => {
+    setSelectedProject(project);
+    setIsProjectDrawerOpen(true);
+  };
+
+  const handleUpdateClient = async (data: Partial<any>) => {
+    await updateClient(clientId, data);
+    refresh?.();
+  };
+
   if (!client) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
@@ -636,6 +849,13 @@ export default function ClientPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
       <TopBar title={client.name} subtitle={`${client.industry} · ${client.location}`} />
+
+      {/* Project Detail Drawer */}
+      <ProjectDetailDrawer
+        project={selectedProject}
+        isOpen={isProjectDrawerOpen}
+        onClose={() => setIsProjectDrawerOpen(false)}
+      />
 
       <div style={{ padding: '24px 32px' }}>
         {/* Back nav */}
@@ -655,24 +875,32 @@ export default function ClientPage() {
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{client.name}</h1>
-              <p className="text-sm text-gray-500 mt-0.5">{client.industry} · {client.location}</p>
+              <ClientInfoEditor client={client} onSave={handleUpdateClient} />
 
               {strategy && (
                 <div className="mt-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  <Link
+                    href={`/clients/${clientId}/strategy`}
+                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1 hover:text-[#3B5BDB] dark:hover:text-[#3B5BDB] transition-colors"
+                  >
                     <Target size={13} style={{ color: client.color }} />
-                    <span className="font-medium">{strategy.name}</span>
+                    <span className="font-medium hover:underline">{strategy.name}</span>
                     <span
                       className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                       style={{ backgroundColor: client.color + '18', color: client.color }}
                     >
                       {strategy.quarter}
                     </span>
+                  </Link>
+                  <div className="flex gap-4 text-xs text-gray-500 mt-1">
+                    <Link href={`/clients/${clientId}/strategy#pillars`} className="hover:text-[#3B5BDB] transition-colors">
+                      {strategy.pillars.length} strategic pillars
+                    </Link>
+                    <span>·</span>
+                    <Link href={`/clients/${clientId}/strategy#kpis`} className="hover:text-[#3B5BDB] transition-colors">
+                      {strategy.pillars.flatMap(p => p.kpis).length} KPIs tracked
+                    </Link>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {strategy.pillars.length} strategic pillars · {strategy.pillars.flatMap(p => p.kpis).length} KPIs tracked
-                  </p>
                 </div>
               )}
             </div>
@@ -751,19 +979,20 @@ export default function ClientPage() {
               return (
                 <div className="space-y-2">
                   {clientProjects.map(proj => (
-                    <div
+                    <button
                       key={proj.id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-sm transition-shadow"
-                      style={{ backgroundColor: 'white' }}
+                      onClick={() => handleProjectClick(proj)}
+                      className="w-full text-left border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-sm hover:border-[#3B5BDB] dark:hover:border-[#3B5BDB] transition-all bg-white dark:bg-gray-800"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">{proj.name}</h3>
+                          <h3 className="font-medium text-gray-900 dark:text-white hover:text-[#3B5BDB] transition-colors">{proj.name}</h3>
                           <p className="text-sm text-gray-500 mt-1">{proj.description}</p>
                         </div>
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${
                           proj.status === 'complete' ? 'bg-green-100 text-green-700' :
                           proj.status === 'on-hold' ? 'bg-amber-100 text-amber-700' :
+                          proj.status === 'active' ? 'bg-blue-100 text-blue-700' :
                           'bg-gray-100 text-gray-600'
                         }`}>
                           {proj.status.charAt(0).toUpperCase() + proj.status.slice(1)}
@@ -773,7 +1002,7 @@ export default function ClientPage() {
                         <span>{proj.progress}% progress</span>
                         <span>{proj.startDate} to {proj.endDate}</span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               );
