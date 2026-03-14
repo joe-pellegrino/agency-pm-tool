@@ -14,19 +14,17 @@ export default function StatCardLink({ href, children }: StatCardLinkProps) {
       href={href}
       className="block transition-all group"
       onMouseEnter={e => {
-        const elem = e.currentTarget as HTMLElement;
-        const card = elem.querySelector('[data-stat-card]') as HTMLElement;
-        if (card) {
-          card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)';
-          card.style.borderColor = '#D0D6E0';
+        const inner = e.currentTarget.querySelector('[data-stat-inner]') as HTMLElement;
+        if (inner) {
+          inner.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)';
+          inner.style.borderColor = 'var(--color-primary)';
         }
       }}
       onMouseLeave={e => {
-        const elem = e.currentTarget as HTMLElement;
-        const card = elem.querySelector('[data-stat-card]') as HTMLElement;
-        if (card) {
-          card.style.boxShadow = 'var(--shadow-card)';
-          card.style.borderColor = 'var(--color-border)';
+        const inner = e.currentTarget.querySelector('[data-stat-inner]') as HTMLElement;
+        if (inner) {
+          inner.style.boxShadow = 'var(--shadow-card)';
+          inner.style.borderColor = 'var(--color-border)';
         }
       }}
     >

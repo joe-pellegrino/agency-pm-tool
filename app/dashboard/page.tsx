@@ -33,6 +33,7 @@ function StatCard({ label, value, sub, pct, donutColor }: {
 }) {
   return (
     <div
+      data-stat-inner
       style={{
         backgroundColor: 'var(--color-white)',
         border: '1px solid var(--color-border)',
