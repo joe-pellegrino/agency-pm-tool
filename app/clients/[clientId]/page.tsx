@@ -915,7 +915,7 @@ export default function ClientPage() {
                     <span className="font-medium hover:underline">{strategy.name}</span>
                     <span
                       className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                      style={{ backgroundColor: client.color + '18', color: client.color }}
+                      style={{ backgroundColor: '#000000', color: '#ffffff' }}
                     >
                       {strategy.quarter}
                     </span>

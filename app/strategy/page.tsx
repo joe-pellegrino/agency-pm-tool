@@ -643,7 +643,7 @@ function StrategyView({
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
                 className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: client.color + '18', color: client.color }}
+                style={{ backgroundColor: '#000000', color: '#ffffff' }}
               >
                 {client.name}
               </span>
@@ -694,7 +694,7 @@ function StrategyView({
             <Link
               href={`/clients/${client.id}`}
               className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all hover:shadow-sm"
-              style={{ borderColor: client.color + '40', color: client.color, backgroundColor: client.color + '10' }}
+              style={{ borderColor: '#000000', color: '#ffffff', backgroundColor: '#000000' }}
             >
               Client View <ArrowRight size={12} />
             </Link>
@@ -714,7 +714,7 @@ function StrategyView({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {serviceStrategies.map(ss => (
-              <ServiceStrategyCard key={ss.id} ss={ss} clientColor={client.color} />
+              <ServiceStrategyCard key={ss.id} ss={ss} clientColor={'#000000'} />
             ))}
           </div>
         </div>
@@ -745,7 +745,7 @@ function StrategyView({
               <PillarCard
                 key={pillar.id}
                 pillar={pillar}
-                clientColor={client.color}
+                clientColor={'#000000'}
                 onEditPillar={() => setPillarModal({ open: true, pillar })}
                 onDeletePillar={() => setDeletePillarId(pillar.id)}
                 onAddKPI={() => setKpiModal({ open: true, pillarId: pillar.id, kpi: null })}
@@ -972,7 +972,7 @@ function StrategyPageContent() {
                     ? 'text-white shadow-md border-transparent'
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50'
                 }`}
-                style={isSelected ? { backgroundColor: client.color, borderColor: client.color } : {}}
+                style={isSelected ? { backgroundColor: '#000000', borderColor: '#000000' } : {}}
               >
                 <span
                   className="w-6 h-6 rounded text-xs font-bold flex items-center justify-center flex-shrink-0"

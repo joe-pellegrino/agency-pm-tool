@@ -361,7 +361,7 @@ function FolderSidebar({
           </button>
 
           <div className="flex items-center gap-1 flex-shrink-0">
-            {client && <span className="text-[9px] px-1 py-0.5 rounded-full truncate max-w-[60px]" style={{ backgroundColor: client.color + '20', color: client.color }}>{client.name.split(' ')[0]}</span>}
+            {client && <span className="text-[9px] px-1 py-0.5 rounded-full truncate max-w-[60px]" style={{ backgroundColor: '#000000', color: '#ffffff' }}>{client.name.split(' ')[0]}</span>}
             <span className="text-[10px] text-gray-400 font-medium">{count}</span>
             <div className="relative">
               <button
@@ -649,7 +649,7 @@ export default function DocumentsPage() {
                       </div>
                       <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1.5 group-hover:text-[#3B5BDB] dark:group-hover:text-indigo-400 transition-colors line-clamp-2">{doc.title}</h3>
                       {client ? (
-                        <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-3" style={{ backgroundColor: client.color + '18', color: client.color }}>{client.name}</span>
+                        <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-3" style={{ backgroundColor: '#000000', color: '#ffffff' }}>{client.name}</span>
                       ) : (
                         <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-3 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">{docType === 'internal' ? 'Internal' : 'All Clients'}</span>
                       )}
@@ -720,7 +720,7 @@ export default function DocumentsPage() {
                             </div>
                           )}
                           {client && (
-                            <span className="text-[10px] font-medium" style={{ color: client.color }}>{client.name}</span>
+                            <span className="text-[10px] font-medium" style={{ color: '#ffffff' }}>{client.name}</span>
                           )}
                         </div>
                       </Link>
@@ -755,7 +755,7 @@ export default function DocumentsPage() {
                       </Link>
                       <Link href={`/documents/${doc.id}`}>
                         {client ? (
-                          <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full truncate max-w-[100px]" style={{ backgroundColor: client.color + '18', color: client.color }}>{client.name}</span>
+                          <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full truncate max-w-[100px]" style={{ backgroundColor: '#000000', color: '#ffffff' }}>{client.name}</span>
                         ) : (
                           <span className="text-xs text-gray-400">—</span>
                         )}

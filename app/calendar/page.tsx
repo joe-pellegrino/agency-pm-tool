@@ -79,7 +79,7 @@ function DayModal({ date, tasks, onClose }: { date: string; tasks: Task[]; onClo
                       <div className="flex items-center gap-2 mt-1">
                         <span
                           className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                          style={{ backgroundColor: client.color + '20', color: client.color }}
+                          style={{ backgroundColor: '#000000', color: '#ffffff' }}
                         >
                           {client.name}
                         </span>
@@ -220,7 +220,7 @@ export default function CalendarPage() {
                       key={client.id}
                       onClick={() => { setSelectedClient(client.id); setShowClientFilter(false); }}
                       className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors text-white"
-                      style={{ backgroundColor: selectedClient === client.id ? client.color : client.color + '80' }}
+                      style={{ backgroundColor: selectedClient === client.id ? '#000000' : '#80808080' }}
                     >
                       {client.name}
                     </button>
@@ -276,12 +276,11 @@ export default function CalendarPage() {
                           {/* Mobile: dots */}
                           <div className="flex gap-0.5 flex-wrap sm:hidden">
                             {dayTasks.slice(0, 3).map(task => {
-                              const client = CLIENTS.find(c => c.id === task.clientId)!;
                               return (
                                 <div
                                   key={task.id}
                                   className="w-1.5 h-1.5 rounded-full"
-                                  style={{ backgroundColor: client.color }}
+                                  style={{ backgroundColor: '#000000' }}
                                 />
                               );
                             })}
@@ -298,8 +297,8 @@ export default function CalendarPage() {
                                   key={task.id}
                                   className="flex items-center gap-1 px-1 py-0.5 rounded text-[10px] font-medium truncate"
                                   style={{
-                                    backgroundColor: client.color + (STATUS_OPACITY[task.status] || '30'),
-                                    color: task.status === 'done' ? '#6b7280' : '#ffffff',
+                                    backgroundColor: '#000000',
+                                    color: '#ffffff',
                                   }}
                                 >
                                   <span>{TYPE_ICONS[task.type || 'other']}</span>
@@ -340,7 +339,7 @@ export default function CalendarPage() {
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{task.title}</p>
                           <span
                             className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full mt-1 inline-block"
-                            style={{ backgroundColor: client.color + '20', color: client.color }}
+                            style={{ backgroundColor: '#000000', color: '#ffffff' }}
                           >
                             {client.name}
                           </span>
@@ -375,9 +374,9 @@ export default function CalendarPage() {
                     className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                       selectedClient === client.id ? 'text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
-                    style={selectedClient === client.id ? { backgroundColor: client.color } : {}}
+                    style={selectedClient === client.id ? { backgroundColor: '#000000' } : {}}
                   >
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: client.color }} />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#000000' }} />
                     {client.name}
                   </button>
                 ))}

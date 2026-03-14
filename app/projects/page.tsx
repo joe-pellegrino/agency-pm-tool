@@ -132,7 +132,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span
                   className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                  style={{ backgroundColor: client.color + '18', color: client.color }}
+                  style={{ backgroundColor: '#000000', color: '#ffffff' }}
                 >
                   {client.name}
                 </span>
@@ -387,7 +387,7 @@ function ProjectCard({ project, onClick, onEdit, onArchive }: { project: Project
         <div className="flex items-center gap-2 flex-wrap">
           <span
             className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: client.color + '18', color: client.color }}
+            style={{ backgroundColor: '#000000', color: '#ffffff' }}
           >
             {client.name}
           </span>

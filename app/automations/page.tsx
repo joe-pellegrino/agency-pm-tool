@@ -109,7 +109,7 @@ function CreateAutomationModal({ onClose }: { onClose: () => void }) {
                       form.clientId === client.id ? 'border-indigo-300 bg-[#EEF2FF] dark:bg-indigo-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 bg-white dark:bg-gray-800'
                     }`}
                   >
-                    <span className="w-8 h-8 rounded-lg text-sm font-bold flex items-center justify-center flex-shrink-0" style={{ backgroundColor: client.color + '20', color: client.color }}>{client.logo}</span>
+                    <span className="w-8 h-8 rounded-lg text-sm font-bold flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#000000', color: '#ffffff' }}>{client.logo}</span>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{client.name}</div>
                       <div className="text-xs text-gray-400">{client.industry}</div>
@@ -368,7 +368,7 @@ export default function AutomationsPage() {
                 key={client.id}
                 onClick={() => setSelectedClient(client.id)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${selectedClient === client.id ? 'text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'}`}
-                style={selectedClient === client.id ? { backgroundColor: client.color } : { color: client.color }}
+                style={selectedClient === client.id ? { backgroundColor: '#000000' } : { color: '#000000' }}
               >
                 {client.name}
               </button>
@@ -393,7 +393,7 @@ export default function AutomationsPage() {
               {/* Client header */}
               <div className="px-4 sm:px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg text-sm font-bold flex items-center justify-center flex-shrink-0" style={{ backgroundColor: client.color + '20', color: client.color }}>
+                  <span className="w-8 h-8 rounded-lg text-sm font-bold flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
                     {client.logo}
                   </span>
                   <div>
@@ -401,7 +401,7 @@ export default function AutomationsPage() {
                     <div className="text-xs text-gray-400">{clientAutomations.filter(a => a.status === 'active').length} active</div>
                   </div>
                 </div>
-                <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ backgroundColor: client.color + '15', color: client.color }}>
+                <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
                   {clientAutomations.length} rules
                 </span>
               </div>

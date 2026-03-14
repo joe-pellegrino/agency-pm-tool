@@ -304,7 +304,7 @@ function ListView({ filteredServices, clientFilter }: { filteredServices: Servic
                     <div className="flex items-center gap-2 w-36 flex-shrink-0">
                       <span
                         className="w-6 h-6 rounded text-xs font-bold flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: client.color + '20', color: client.color }}
+                        style={{ backgroundColor: '#000000', color: '#ffffff' }}
                       >
                         {client.logo}
                       </span>
@@ -642,7 +642,7 @@ export default function ServicesPage() {
                         <Link href={`/clients/${client.id}`} className="flex flex-col items-center gap-1 hover:opacity-70 transition-opacity">
                           <span
                             className="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center"
-                            style={{ backgroundColor: client.color + '20', color: client.color }}
+                            style={{ backgroundColor: '#000000', color: '#ffffff' }}
                           >
                             {client.logo}
                           </span>
@@ -709,7 +709,7 @@ export default function ServicesPage() {
                 >
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"
-                    style={{ backgroundColor: client.color }}
+                    style={{ backgroundColor: '#000000' }}
                   >
                     {client.logo}
                   </div>

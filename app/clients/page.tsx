@@ -200,7 +200,7 @@ export default function ClientsPage() {
                   {strategy && (
                     <div
                       className="flex items-center gap-2 text-xs rounded-lg px-3 py-2 mb-4"
-                      style={{ backgroundColor: client.color + '10', color: client.color }}
+                      style={{ backgroundColor: '#000000', color: '#ffffff' }}
                     >
                       <Target size={12} />
                       <span className="font-medium truncate">{strategy.name}</span>

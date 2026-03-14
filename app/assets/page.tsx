@@ -444,7 +444,7 @@ export default function AssetsPage() {
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     selectedClient === client.id ? 'text-white' : 'bg-white border border-gray-200 hover:bg-gray-50'
                   }`}
-                  style={selectedClient === client.id ? { backgroundColor: client.color } : { color: client.color }}
+                  style={selectedClient === client.id ? { backgroundColor: '#000000' } : { color: '#000000' }}
                 >
                   {client.logo} {client.name.split(' ')[0]}
                 </button>
@@ -476,7 +476,7 @@ export default function AssetsPage() {
                   key={client.id}
                   onClick={() => setSelectedClient(selectedClient === client.id ? 'all' : client.id)}
                   className="px-3 py-1.5 rounded-full text-xs font-medium text-white"
-                  style={{ backgroundColor: selectedClient === client.id ? client.color : client.color + '90' }}
+                  style={{ backgroundColor: selectedClient === client.id ? '#000000' : '#80808090' }}
                 >
                   {client.name}
                 </button>

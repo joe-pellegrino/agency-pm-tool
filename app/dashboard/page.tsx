@@ -143,7 +143,7 @@ export default async function DashboardPage() {
                     <div className="flex items-center gap-2.5">
                       <span
                         className="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: client.color + '20', color: client.color }}
+                        style={{ backgroundColor: '#000000', color: '#ffffff' }}
                       >
                         {client.logo}
                       </span>
@@ -215,7 +215,7 @@ export default async function DashboardPage() {
                 <div className="flex items-center gap-3 flex-wrap text-xs" style={{ color: 'var(--color-text-muted)' }}>
                   <span
                     className="inline-flex items-center gap-1 font-medium px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: client.color + '18', color: client.color }}
+                    style={{ backgroundColor: '#000000', color: '#ffffff' }}
                   >
                     {client.name}
                   </span>
@@ -272,7 +272,7 @@ export default async function DashboardPage() {
                     <td className="py-3 pr-4">
                       <span
                         className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full"
-                        style={{ backgroundColor: client.color + '18', color: client.color }}
+                        style={{ backgroundColor: '#000000', color: '#ffffff' }}
                       >
                         {client.name}
                       </span>

@@ -97,7 +97,7 @@ function ClientHealthCard({ client }: { client: Client }) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="h-1" style={{ backgroundColor: client.color }} />
+      <div className="h-1" style={{ backgroundColor: '#000000' }} />
 
       <div style={{ padding: '24px 32px' }}>
         {/* Header */}
@@ -105,7 +105,7 @@ function ClientHealthCard({ client }: { client: Client }) {
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold"
-              style={{ backgroundColor: client.color }}
+              style={{ backgroundColor: '#000000' }}
             >
               {client.logo}
             </div>

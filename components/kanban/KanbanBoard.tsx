@@ -367,7 +367,7 @@ function TaskDetailModal({
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
                 className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: (client.color || 'var(--color-primary)') + '18', color: client.color || 'var(--color-primary)' }}
+                style={{ backgroundColor: '#000000', color: '#ffffff' }}
               >
                 {client.name}
               </span>
@@ -711,7 +711,7 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
       <div className="flex items-center justify-between mb-2">
         <span
           className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-          style={{ backgroundColor: client.color + '18', color: client.color }}
+          style={{ backgroundColor: '#000000', color: '#ffffff' }}
         >
           {client.name}
         </span>

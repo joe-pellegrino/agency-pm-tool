@@ -206,7 +206,7 @@ function UnhealthyClients({ tasks, clients }: Pick<Props, 'tasks' | 'clients'>) 
                   <div className="flex items-center gap-2">
                     <span
                       className="w-6 h-6 rounded-md text-[10px] font-bold flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: h.client.color + '20', color: h.client.color }}
+                      style={{ backgroundColor: '#000000', color: '#ffffff' }}
                     >
                       {h.client.logo}
                     </span>
@@ -270,7 +270,7 @@ function RecentCompletions({ tasks, clients, teamMembers }: Props) {
                 {client && (
                   <span
                     className="hidden sm:inline text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: client.color + '18', color: client.color }}
+                    style={{ backgroundColor: '#000000', color: '#ffffff' }}
                   >
                     {client.name}
                   </span>
@@ -336,7 +336,7 @@ function PipelineItems({ tasks, clients, teamMembers }: Props) {
                 {client && (
                   <span
                     className="hidden sm:inline text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: client.color + '18', color: client.color }}
+                    style={{ backgroundColor: '#000000', color: '#ffffff' }}
                   >
                     {client.name}
                   </span>
