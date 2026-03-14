@@ -1086,20 +1086,18 @@ export default function KanbanBoard() {
       )}
 
       {/* Task Detail Modal */}
-      <Drawer isOpen={!!detailTask && !editTask && !archiveTaskId} onClose={() => setDetailTask(null)} title={detailTask?.title ?? ''}>
-        {detailTask && (
-          <TaskDetailModal
-            task={detailTask}
-            onClose={() => setDetailTask(null)}
-            onOpenApproval={(task) => { setDetailTask(null); openApproval(task); }}
-            onEdit={(task) => { setEditTask(task); }}
-            onArchive={(taskId) => handleArchiveTask(taskId)}
-            onStatusChange={(taskId, status) => {
-              setTaskState(prev => prev.map(t => t.id === taskId ? { ...t, status: status as Task['status'] } : t));
-            }}
-          />
-        )}
-      </Drawer>
+      {detailTask && !editTask && !archiveTaskId && (
+        <TaskDetailModal
+          task={detailTask}
+          onClose={() => setDetailTask(null)}
+          onOpenApproval={(task) => { setDetailTask(null); openApproval(task); }}
+          onEdit={(task) => { setEditTask(task); }}
+          onArchive={(taskId) => handleArchiveTask(taskId)}
+          onStatusChange={(taskId, status) => {
+            setTaskState(prev => prev.map(t => t.id === taskId ? { ...t, status: status as Task['status'] } : t));
+          }}
+        />
+      )}
 
       {/* Approval Modal */}
       {approvalTask && (
