@@ -745,7 +745,73 @@ export default function ClientPage() {
           <PaidAdsDashboard clientId={clientId} clientName={client.name} />
         )}
 
-        {(activeTab === 'overview' || activeTab === 'projects' || activeTab === 'tasks') && (
+        {activeTab === 'projects' && (
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <FolderOpen size={18} className="text-[#3B5BDB]" />
+              Projects
+            </h2>
+            {(() => {
+              const clientProjects = PROJECTS.filter(p => p.clientId === clientId);
+              if (clientProjects.length === 0) {
+                return <p className="text-gray-400">No projects for this client.</p>;
+              }
+              return (
+                <div className="space-y-2">
+                  {clientProjects.map(proj => (
+                    <div
+                      key={proj.id}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white">{proj.name}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{proj.description}</p>
+                        </div>
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                          proj.status === 'active' ? 'bg-green-100 text-green-700' :
+                          proj.status === 'planning' ? 'bg-blue-100 text-blue-600' :
+                          proj.status === 'paused' ? 'bg-amber-100 text-amber-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {proj.status.charAt(0).toUpperCase() + proj.status.slice(1)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+                        <span>{proj.progress}% progress</span>
+                        <span>{proj.startDate} to {proj.endDate}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {activeTab === 'tasks' && (
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <CheckCircle size={18} className="text-[#3B5BDB]" />
+              Tasks
+            </h2>
+            {(() => {
+              const clientTasks = TASKS.filter(t => t.clientId === clientId);
+              if (clientTasks.length === 0) {
+                return <p className="text-gray-400">No tasks for this client.</p>;
+              }
+              return (
+                <div className="space-y-1">
+                  {clientTasks.map(task => (
+                    <TaskRow key={task.id} task={task} />
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {activeTab === 'overview' && (
           <>
             {/* All Services Grid — active + unassigned */}
             <div className="mb-8">
