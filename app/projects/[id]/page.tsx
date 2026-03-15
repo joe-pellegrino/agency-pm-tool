@@ -18,7 +18,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   return (
     <div style={{ backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
       <TopBar />
-      <div style={{ padding: '24px 32px' }}>
+      <div className="px-4 py-4 sm:px-8 sm:py-6">
         <ProjectDetailClient project={project} />
       </div>
     </div>

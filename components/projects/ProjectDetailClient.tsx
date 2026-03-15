@@ -227,7 +227,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   return (
     <div>
       {/* Project Header Card */}
-      <div className="bg-white border-b border-[var(--color-border)]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)', marginLeft: '-32px', marginRight: '-32px', paddingLeft: '32px', paddingRight: '32px' }}>
+      <div className="bg-white border-b border-[var(--color-border)] -mx-4 px-4 sm:-mx-8 sm:px-8" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
         <div style={{ paddingTop: '20px' }}>
           {/* Back link */}
           <button
@@ -317,7 +317,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
       </div>
 
       {/* Tab Content */}
-      <div style={{ padding: '24px 32px' }}>
+      <div className="px-4 py-6 sm:px-8">
         {activeTab === 'overview' && (
           <OverviewTab
             project={project}
@@ -922,7 +922,7 @@ function ActivityTab({ activity }: { activity: Awaited<ReturnType<typeof getProj
   return (
     <div>
       {/* Filter tabs */}
-      <div className="flex items-center gap-2 mb-5">
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
         <Filter size={14} className="text-[#A0AAB8]" />
         {filters.map(f => (
           <button key={f} onClick={() => setFilter(f)}
@@ -1010,9 +1010,9 @@ function TasksTab({
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <h2 className="text-base font-semibold text-[#1E2A3A]">Tasks ({tasks.length})</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           {view === 'list' && (
             <select
               value={sortBy}
@@ -1042,7 +1042,7 @@ function TasksTab({
           </div>
           <button
             onClick={onCreateTask}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors sm:flex-none flex-1 justify-center"
             style={{ backgroundColor: 'var(--color-primary)' }}
           >
             <Plus size={13} />
