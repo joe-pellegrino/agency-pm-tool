@@ -32,6 +32,7 @@ export interface Task {
   title: string;
   clientId: string;
   assigneeId: string;
+  assigneeIds?: string[]; // multiple assignees (from task_assignees junction)
   status: Status;
   priority: Priority;
   dueDate: string;

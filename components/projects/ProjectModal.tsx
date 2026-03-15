@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Project } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { createProject, updateProject } from '@/lib/actions';
+import { getProjectMembers } from '@/lib/actions-projects';
 import Drawer from '@/components/ui/Drawer';
 
 const STATUSES = [
@@ -21,10 +22,11 @@ interface ProjectModalProps {
 }
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
-  const { CLIENTS = [], WORKFLOW_TEMPLATES = [], STRATEGIES = [], refresh } = useAppData();
+  const { CLIENTS = [], WORKFLOW_TEMPLATES = [], STRATEGIES = [], TEAM_MEMBERS = [], refresh } = useAppData();
   const [isOpen, setIsOpen] = useState(true);
   const handleClose = () => setIsOpen(false);
   const [isPending, startTransition] = useTransition();
+  const [memberIds, setMemberIds] = useState<string[]>([]);
   const [form, setForm] = useState({
     clientId: project?.clientId || (CLIENTS[0]?.id || ''),
     name: project?.name || '',
@@ -38,6 +40,17 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     type: project?.type || 'Project',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Load existing project members on mount
+  useEffect(() => {
+    if (project?.id) {
+      getProjectMembers(project.id).then(members => {
+        setMemberIds(members.map(m => m.teamMemberId));
+      }).catch(err => {
+        console.error('Failed to load project members:', err);
+      });
+    }
+  }, [project?.id]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -67,9 +80,21 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             pillarId: form.pillarId || undefined,
             type: form.type,
           });
+          
+          // Sync project members
+          const { addProjectMember, removeProjectMember } = await import('@/lib/actions-projects');
+          const current = await getProjectMembers(project.id);
+          const currentIds = current.map(m => m.teamMemberId);
+          const toAdd = memberIds.filter(id => !currentIds.includes(id));
+          const toRemove = currentIds.filter(id => !memberIds.includes(id));
+          await Promise.all([
+            ...toAdd.map(id => addProjectMember(project.id, id)),
+            ...toRemove.map(id => removeProjectMember(project.id, id)),
+          ]);
+          
           toast.success('Project updated');
         } else {
-          await createProject({
+          const result = await createProject({
             clientId: form.clientId,
             name: form.name,
             description: form.description,
@@ -81,6 +106,14 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             pillarId: form.pillarId || undefined,
             type: form.type,
           });
+          
+          // Add members to new project (createProject returns the new id as a string)
+          if (result && memberIds.length > 0) {
+            const newId = typeof result === 'string' ? result : (result as any).id;
+            const { addProjectMember } = await import('@/lib/actions-projects');
+            await Promise.all(memberIds.map(id => addProjectMember(newId, id)));
+          }
+          
           toast.success('Project created');
         }
         refresh();
@@ -222,6 +255,47 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             </div>
           );
         })()}
+
+        <div>
+          <label className={labelClass}>Initiative Leads</label>
+          <div className="space-y-2">
+            <select
+              onChange={e => {
+                const id = e.target.value;
+                if (id && !memberIds.includes(id)) {
+                  setMemberIds(prev => [...prev, id]);
+                }
+                e.currentTarget.value = '';
+              }}
+              className={selectClass}
+              defaultValue=""
+            >
+              <option value="" disabled>Add a lead...</option>
+              {TEAM_MEMBERS.filter(m => !memberIds.includes(m.id)).map(m => (
+                <option key={m.id} value={m.id}>{m.name} — {m.role}</option>
+              ))}
+            </select>
+            {memberIds.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {memberIds.map(id => {
+                  const m = TEAM_MEMBERS.find(tm => tm.id === id);
+                  return m ? (
+                    <span key={id} className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium border border-indigo-200">
+                      {m.name}
+                      <button
+                        type="button"
+                        onClick={() => setMemberIds(prev => prev.filter(i => i !== id))}
+                        className="hover:text-red-500 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </form>
     </Drawer>
   );
