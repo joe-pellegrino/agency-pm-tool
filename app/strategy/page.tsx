@@ -189,7 +189,7 @@ function KPIModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900 dark:text-white text-lg">{kpi ? 'Edit KPI' : 'Add KPI'}</h2>
@@ -293,7 +293,7 @@ function PillarModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900 dark:text-white text-lg">{pillar ? 'Edit Pillar' : 'Add Pillar'}</h2>
@@ -1012,7 +1012,7 @@ function StrategyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900 dark:text-white text-lg">{strategy ? 'Edit Strategy' : 'New Strategy'}</h2>
