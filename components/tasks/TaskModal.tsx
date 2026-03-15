@@ -26,7 +26,7 @@ const STATUSES = [
 const TYPES = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'];
 
 export default function TaskModal({ task, defaultStatus = 'todo', defaultProjectId, onClose, onSuccess }: TaskModalProps) {
-  const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], refresh } = useAppData();
+  const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], STRATEGIES = [], refresh } = useAppData();
   const [isOpen, setIsOpen] = useState(true);
   const handleClose = () => setIsOpen(false);
   const [isPending, startTransition] = useTransition();
@@ -43,6 +43,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
     type: task?.type || 'other',
     description: task?.description || '',
     projectId: defaultProjectId || '',
+    pillarId: task?.pillarId || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -82,6 +83,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             endDate: form.endDate,
             type: validType(form.type) as Task['type'],
             description: form.description,
+            pillarId: form.pillarId || null,
           });
           toast.success('Task updated');
           refresh();
@@ -98,6 +100,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             endDate: form.endDate,
             type: validType(form.type),
             description: form.description,
+            pillarId: form.pillarId || null,
           });
           if (form.projectId && created?.id) {
             await linkTaskToProject(form.projectId, created.id);
@@ -184,6 +187,22 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             {errors.assigneeId && <p className="text-xs text-red-500 mt-1">{errors.assigneeId}</p>}
           </div>
         </div>
+
+        {(() => {
+          const clientStrategy = STRATEGIES.find(s => s.clientId === form.clientId);
+          if (!clientStrategy || clientStrategy.pillars.length === 0) return null;
+          return (
+            <div>
+              <label className={labelClass}>Strategic Pillar</label>
+              <select value={form.pillarId} onChange={e => set('pillarId', e.target.value)} className={selectClass}>
+                <option value="">No pillar</option>
+                {clientStrategy.pillars.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          );
+        })()}
 
         <div className="grid grid-cols-2 gap-4">
           <div>

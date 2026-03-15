@@ -34,6 +34,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     endDate: project?.endDate || '',
     workflowTemplateId: project?.workflowTemplateId || '',
     strategyId: project?.strategyId || '',
+    pillarId: project?.pillarId || '',
     type: project?.type || 'Project',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,6 +64,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             endDate: form.endDate,
             workflowTemplateId: form.workflowTemplateId || undefined,
             strategyId: form.strategyId || undefined,
+            pillarId: form.pillarId || undefined,
             type: form.type,
           });
           toast.success('Project updated');
@@ -76,6 +78,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             endDate: form.endDate,
             workflowTemplateId: form.workflowTemplateId || undefined,
             strategyId: form.strategyId || undefined,
+            pillarId: form.pillarId || undefined,
             type: form.type,
           });
           toast.success('Project created');
@@ -203,6 +206,22 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             {STRATEGIES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
+
+        {(() => {
+          const selectedStrategy = STRATEGIES.find(s => s.id === form.strategyId);
+          if (!selectedStrategy || selectedStrategy.pillars.length === 0) return null;
+          return (
+            <div>
+              <label className={labelClass}>Strategic Pillar</label>
+              <select value={form.pillarId} onChange={e => set('pillarId', e.target.value)} className={selectClass}>
+                <option value="">No pillar</option>
+                {selectedStrategy.pillars.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          );
+        })()}
       </form>
     </Drawer>
   );

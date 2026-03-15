@@ -58,6 +58,9 @@ function toTask(r: Row, deps: string[], approvals: ApprovalEntry[]): Task {
     type: r.type as Task['type'],
     dependencies: deps,
     approvalHistory: approvals,
+    pillarId: (r.pillar_id as string) || undefined,
+    isAdhoc: Boolean(r.is_adhoc),
+    requestNotes: (r.request_notes as string) || undefined,
   };
 }
 

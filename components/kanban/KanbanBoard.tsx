@@ -609,13 +609,23 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
         >
           {client.name}
         </span>
-        <span
-          className="text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1"
-          style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
-          {task.priority}
-        </span>
+        <div className="flex items-center gap-2">
+          {task.isAdhoc && (
+            <span
+              className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: '#FED7AA', color: '#B45309' }}
+            >
+              Ad Hoc
+            </span>
+          )}
+          <span
+            className="text-[11px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1"
+            style={STATUS_BADGE[task.priority.toLowerCase()] || { backgroundColor: 'var(--color-donut-track)', color: '#4338CA' }}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
+            {task.priority}
+          </span>
+        </div>
       </div>
 
       {/* Blocked indicator */}

@@ -43,6 +43,8 @@ export interface Task {
   approvalHistory?: ApprovalEntry[];
   type?: 'social' | 'ad' | 'blog' | 'report' | 'meeting' | 'design' | 'other';
   pillarId?: string;
+  isAdhoc?: boolean;
+  requestNotes?: string;
 }
 
 export interface Comment {

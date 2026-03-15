@@ -20,6 +20,8 @@ export async function createTask(data: {
   description?: string;
   isMilestone?: boolean;
   pillarId?: string | null;
+  isAdhoc?: boolean;
+  requestNotes?: string;
 }) {
   const { error, data: row } = await db()
     .from('tasks')
@@ -37,6 +39,8 @@ export async function createTask(data: {
       description: data.description || '',
       is_milestone: data.isMilestone || false,
       pillar_id: data.pillarId || null,
+      is_adhoc: data.isAdhoc ? 1 : 0,
+      request_notes: data.requestNotes || '',
     })
     .select()
     .single();
@@ -60,6 +64,8 @@ export async function updateTask(id: string, data: Partial<{
   description: string;
   isMilestone: boolean;
   pillarId: string | null;
+  isAdhoc: boolean;
+  requestNotes: string;
 }>) {
   const update: Record<string, unknown> = {};
   if (data.title !== undefined) update.title = data.title;
@@ -74,6 +80,8 @@ export async function updateTask(id: string, data: Partial<{
   if (data.description !== undefined) update.description = data.description;
   if (data.isMilestone !== undefined) update.is_milestone = data.isMilestone;
   if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
+  if (data.isAdhoc !== undefined) update.is_adhoc = data.isAdhoc ? 1 : 0;
+  if (data.requestNotes !== undefined) update.request_notes = data.requestNotes;
 
   const { error } = await db().from('tasks').update(update).eq('id', id);
   if (error) throw new Error(error.message);
@@ -332,6 +340,7 @@ export async function createProject(data: {
   endDate: string;
   workflowTemplateId?: string;
   strategyId?: string;
+  pillarId?: string;
   type?: string;
 }) {
   const id = `proj-${Date.now()}`;
@@ -348,6 +357,7 @@ export async function createProject(data: {
       progress: 0,
       workflow_template_id: data.workflowTemplateId || null,
       strategy_id: data.strategyId || null,
+      pillar_id: data.pillarId || null,
       type: data.type ?? 'Project',
     });
   if (error) throw new Error(error.message);
@@ -364,6 +374,7 @@ export async function updateProject(id: string, data: Partial<{
   progress: number;
   workflowTemplateId: string;
   strategyId: string;
+  pillarId: string;
   type: string;
 }>) {
   const update: Record<string, unknown> = {};
@@ -375,6 +386,7 @@ export async function updateProject(id: string, data: Partial<{
   if (data.progress !== undefined) update.progress = data.progress;
   if (data.workflowTemplateId !== undefined) update.workflow_template_id = data.workflowTemplateId;
   if (data.strategyId !== undefined) update.strategy_id = data.strategyId;
+  if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
   if (data.type !== undefined) update.type = data.type;
   const { error } = await db().from('projects').update(update).eq('id', id);
   if (error) throw new Error(error.message);
