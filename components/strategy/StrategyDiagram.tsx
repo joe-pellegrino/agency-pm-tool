@@ -81,9 +81,9 @@ function ProjectNode({ data, onClick }: { data: any; onClick?: () => void }) {
       onClick={onClick}
     >
       <div className="font-semibold text-sm text-blue-800">{data.label}</div>
-      {data.pillarName && (
-        <div className="text-[10px] mt-0.5 px-2 py-0.5 rounded-full bg-blue-200 text-blue-600 inline-block">{data.pillarName}</div>
-      )}
+      <div className="text-[10px] mt-0.5 px-2 py-0.5 rounded-full inline-block" style={{ backgroundColor: data.pillarName ? '#BFDBFE' : '#E5E7EB', color: data.pillarName ? '#1D4ED8' : '#6B7280' }}>
+        {data.pillarName ?? 'No Pillar'}
+      </div>
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
     </div>
@@ -105,9 +105,9 @@ function TaskNode({ data, onClick }: { data: any; onClick?: () => void }) {
       onClick={onClick}
     >
       <div className="font-medium text-xs text-gray-700 leading-tight">{data.label}</div>
-      {data.pillarName && (
-        <div className="text-[9px] mt-0.5 px-1.5 py-0.5 rounded-full bg-white/60 text-gray-500 inline-block">{data.pillarName}</div>
-      )}
+      <div className="text-[9px] mt-0.5 px-1.5 py-0.5 rounded-full inline-block" style={{ backgroundColor: data.pillarName ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.06)', color: data.pillarName ? '#4338CA' : '#9CA3AF' }}>
+        {data.pillarName ?? 'No Pillar'}
+      </div>
       <div className="text-[9px] text-gray-400 mt-0.5 capitalize">{data.status}</div>
       <Handle type="target" position={Position.Top} />
     </div>
