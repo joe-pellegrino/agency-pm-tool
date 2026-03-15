@@ -1035,7 +1035,8 @@ export default function ClientPage() {
 
         {/* Tab Bar */}
         <div style={{ borderBottom: '1px solid var(--color-border)', marginBottom: '24px' }}>
-          <div className="flex items-center gap-0">
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex items-center gap-0 min-w-max sm:min-w-0">
             {TAB_CONFIG.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -1067,6 +1068,7 @@ export default function ClientPage() {
                 </button>
               );
             })}
+          </div>
           </div>
         </div>
 

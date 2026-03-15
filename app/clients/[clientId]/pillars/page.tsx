@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import TopBar from '@/components/layout/TopBar';
 import { getClientPillars, createClientPillar, updateClientPillar, deleteClientPillar } from '@/lib/actions';
@@ -8,12 +9,8 @@ import type { ClientPillar } from '@/lib/data';
 
 const COLOR_PRESETS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#10b981'];
 
-interface PageProps {
-  params: { clientId: string };
-}
-
-export default function ClientPillarsPage({ params }: PageProps) {
-  const { clientId } = params;
+export default function ClientPillarsPage() {
+  const { clientId } = useParams<{ clientId: string }>();
   const [pillars, setPillars] = useState<ClientPillar[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
