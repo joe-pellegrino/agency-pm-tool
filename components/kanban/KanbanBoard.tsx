@@ -791,7 +791,7 @@ function Column({
 
 export default function KanbanBoard() {
   const searchParams = useSearchParams();
-  const clientFilter = searchParams.get('client') || 'all';
+  const clientFilter = searchParams.get('clientId') || 'all';
   const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [], TIME_ENTRIES = [], PROJECTS = [] } = useAppData();
 
   const [taskState, setTaskState] = useState<Task[]>([]);

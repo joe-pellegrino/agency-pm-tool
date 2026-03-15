@@ -14,6 +14,7 @@ import {
   FileText,
   Settings,
   ChevronRight,
+  ChevronDown,
   Building2,
   Calendar,
   FolderOpen,
@@ -33,15 +34,12 @@ const NAV_GROUPS = [
     label: 'TOOLS',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/clients', label: 'Clients', icon: Users },
-      { href: '/services', label: 'Services', icon: Briefcase },
       { href: '/initiatives', label: 'Initiatives', icon: Layers },
       { href: '/kanban', label: 'Kanban Board', icon: Kanban },
       { href: '/timeline', label: 'Timeline', icon: GanttChart },
       { href: '/calendar', label: 'Calendar', icon: Calendar },
-      { href: '/documents', label: 'Documents', icon: FileText },
       { href: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen },
-      { href: '/assets', label: 'Assets', icon: FolderOpen },
+      { href: '/health', label: 'Client Health', icon: Activity },
     ],
   },
   {
@@ -49,8 +47,6 @@ const NAV_GROUPS = [
     items: [
       { href: '/templates', label: 'Workflow Templates', icon: LayoutTemplate },
       { href: '/automations', label: 'Automations', icon: Zap },
-      { href: '/health', label: 'Client Health', icon: Activity },
-      { href: '/strategy', label: 'Strategy', icon: Target },
       { href: '/settings', label: 'Settings', icon: Settings },
     ],
   },
@@ -102,6 +98,23 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
   const { CLIENTS = [] } = useAppData()
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [expandedClientId, setExpandedClientId] = useState<string | null>(null)
+
+  // Auto-expand the active client based on pathname
+  useEffect(() => {
+    const match = pathname.match(/^\/clients\/([^\/]+)/)
+    if (match) setExpandedClientId(match[1])
+  }, [pathname])
+
+  // Define sub-nav items for each client
+  const clientSubNav = (clientId: string) => [
+    { label: 'Services', href: `/clients/${clientId}`, icon: Briefcase },
+    { label: 'Initiatives', href: `/clients/${clientId}?tab=projects`, icon: Layers },
+    { label: 'Kanban', href: `/kanban?clientId=${clientId}`, icon: Kanban },
+    { label: 'Documents', href: `/clients/${clientId}?tab=documents`, icon: FileText },
+    { label: 'Assets', href: `/clients/${clientId}?tab=assets`, icon: FolderOpen },
+    { label: 'Health', href: `/health?clientId=${clientId}`, icon: Activity },
+  ]
 
   // Fetch logo from Supabase
   useEffect(() => {
@@ -223,62 +236,139 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
               {CLIENTS.map((client) => {
                 const href = `/clients/${client.id}`
                 const active = pathname === href || pathname.startsWith(href + '/')
+                const isExpanded = expandedClientId === client.id
+                const subItems = clientSubNav(client.id)
+
                 return (
-                  <div key={client.id} style={{ position: 'relative' }}>
-                    <Link
-                      href={href}
-                      style={{
-                        ...navItemStyle(active),
-                        height: '40px',
-                        padding: isCollapsed ? '0 8px' : '0 12px',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: isCollapsed ? '0' : '12px',
-                        textDecoration: 'none',
-                        marginBottom: '4px',
-                        transition: 'all 0.15s ease',
-                        justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      }}
-                      onMouseEnter={e => {
-                        if (!active) {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'
-                          ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        if (!active) {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                          ;(e.currentTarget as HTMLElement).style.color = '#9CA3AF'
-                        }
-                      }}
-                    >
-                      <span
+                  <div key={client.id}>
+                    {/* Client row with expand toggle */}
+                    <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                      <Link
+                        href={href}
                         style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: 700,
+                          ...navItemStyle(active),
+                          height: '40px',
+                          padding: isCollapsed ? '0 8px' : '0 12px',
+                          fontSize: '14px',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          backgroundColor: '#000000',
-                          color: '#FFFFFF',
+                          gap: isCollapsed ? '0' : '12px',
+                          textDecoration: 'none',
+                          marginBottom: '4px',
+                          transition: 'all 0.15s ease',
+                          justifyContent: isCollapsed ? 'center' : 'flex-start',
+                          flex: 1,
+                        }}
+                        onMouseEnter={e => {
+                          if (!active) {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'
+                            ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!active) {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                            ;(e.currentTarget as HTMLElement).style.color = '#9CA3AF'
+                          }
                         }}
                       >
-                        {client.logo}
-                      </span>
+                        <span
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            backgroundColor: '#000000',
+                            color: '#FFFFFF',
+                          }}
+                        >
+                          {client.logo}
+                        </span>
+                        {!isCollapsed && (
+                          <>
+                            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {client.name}
+                            </span>
+                          </>
+                        )}
+                      </Link>
                       {!isCollapsed && (
-                        <>
-                          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {client.name}
-                          </span>
-                          <ChevronRight size={12} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
-                        </>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setExpandedClientId(isExpanded ? null : client.id)
+                          }}
+                          style={{
+                            padding: '4px',
+                            color: '#9CA3AF',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            marginRight: '4px',
+                          }}
+                        >
+                          <ChevronDown
+                            size={12}
+                            style={{
+                              transform: isExpanded ? 'rotate(180deg)' : 'none',
+                              transition: 'transform 0.2s',
+                            }}
+                          />
+                        </button>
                       )}
-                    </Link>
+                    </div>
+
+                    {/* Sub-nav items */}
+                    {isExpanded && !isCollapsed && (
+                      <div style={{ paddingLeft: '16px', marginBottom: '4px' }}>
+                        {subItems.map((item) => {
+                          const subActive = pathname === item.href || (pathname + (typeof window !== 'undefined' ? window.location.search : '')) === item.href
+                          const SubIcon = item.icon
+                          return (
+                            <Link
+                              key={item.label}
+                              href={item.href}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                textDecoration: 'none',
+                                fontSize: '12px',
+                                color: subActive ? '#FFFFFF' : '#9CA3AF',
+                                backgroundColor: subActive ? 'rgba(255,255,255,0.12)' : 'transparent',
+                                marginBottom: '2px',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!subActive) {
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'
+                                  ;(e.currentTarget as HTMLElement).style.color = '#E5E7EB'
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!subActive) {
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                                  ;(e.currentTarget as HTMLElement).style.color = '#9CA3AF'
+                                }
+                              }}
+                            >
+                              <SubIcon size={12} />
+                              {item.label}
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+
                     {isCollapsed && (
                       <Tooltip text={client.name}>
                         <div />

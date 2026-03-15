@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useTransition, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useMemo, useTransition, useEffect, Suspense } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ClientService, ServiceStrategy, Project, Task, Service } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
@@ -9,7 +9,7 @@ import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, Zap, ArrowLeft,
-  X, Loader2, Megaphone, Edit2, Save, DollarSign,
+  X, Loader2, Megaphone, Edit2, Save, DollarSign, FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { upsertClientService, removeClientService, updateClient } from '@/lib/actions';
@@ -667,7 +667,7 @@ function ProjectDetailDrawer({
   );
 }
 
-type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents';
+type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
   { id: 'overview', label: 'Overview', icon: Activity },
@@ -676,6 +676,8 @@ const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentTyp
   { id: 'tasks', label: 'Tasks', icon: CheckCircle },
   { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
   { id: 'budget', label: 'Budget', icon: DollarSign },
+  { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'assets', label: 'Assets', icon: FolderOpen },
 ];
 
 // ── Client Info Editor ───────────────────────────────────────────────────────
@@ -784,10 +786,17 @@ function ClientInfoEditor({
 }
 
 export default function ClientPage() {
-  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], refresh } = useAppData();
+  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], DOCUMENTS = [], ASSETS = [], refresh } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
+  const searchParams = useSearchParams();
   const client = CLIENTS.find(c => c.id === clientId);
   const [activeTab, setActiveTab] = useState<ClientTab>('overview');
+
+  // Handle ?tab= URL query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as ClientTab | null;
+    if (tabParam) setActiveTab(tabParam);
+  }, [searchParams]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isProjectDrawerOpen, setIsProjectDrawerOpen] = useState(false);
   const [showEditClientModal, setShowEditClientModal] = useState(false);
@@ -1281,6 +1290,87 @@ export default function ClientPage() {
               </div>
             )}
           </>
+        )}
+
+        {activeTab === 'documents' && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <FileText size={18} style={{ color: 'var(--color-primary)' }} />
+              Documents
+            </h2>
+            {(() => {
+              const clientDocs = DOCUMENTS.filter((d: any) => d.clientId === clientId);
+              if (clientDocs.length === 0) {
+                return (
+                  <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                    <FileText size={32} className="mx-auto mb-3 opacity-30 text-gray-400" />
+                    <p className="text-sm font-medium text-gray-400">No documents for this client</p>
+                    <a href="/documents" className="text-sm text-[#3B5BDB] hover:underline mt-2 block">Go to Documents →</a>
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-2">
+                  {clientDocs.map((doc: any) => (
+                    <a
+                      key={doc.id}
+                      href={`/documents/${doc.id}`}
+                      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-[#3B5BDB] hover:shadow-sm transition-all"
+                    >
+                      <FileText size={16} className="text-gray-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm text-gray-900 dark:text-white truncate">{doc.title || doc.name || 'Untitled'}</div>
+                        {doc.createdAt && <div className="text-xs text-gray-400 mt-0.5">{new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {activeTab === 'assets' && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <FolderOpen size={18} style={{ color: 'var(--color-primary)' }} />
+              Assets
+            </h2>
+            {(() => {
+              const clientAssets = (ASSETS as any[]).filter((a: any) => a.clientId === clientId);
+              if (clientAssets.length === 0) {
+                return (
+                  <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                    <FolderOpen size={32} className="mx-auto mb-3 opacity-30 text-gray-400" />
+                    <p className="text-sm font-medium text-gray-400">No assets for this client</p>
+                    <a href="/assets" className="text-sm text-[#3B5BDB] hover:underline mt-2 block">Go to Assets →</a>
+                  </div>
+                );
+              }
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {clientAssets.map((asset: any) => {
+                    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(asset.filename);
+                    return (
+                      <div key={asset.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-sm transition-shadow">
+                        {isImage && asset.url ? (
+                          <img src={asset.url} alt={asset.filename} className="w-full h-24 object-cover" />
+                        ) : (
+                          <div className="w-full h-24 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                            <FolderOpen size={24} className="text-gray-300" />
+                          </div>
+                        )}
+                        <div className="p-2">
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{asset.filename}</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">{asset.size || asset.fileType || ''}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
         )}
       </div>
     </div>
