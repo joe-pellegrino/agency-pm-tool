@@ -358,7 +358,6 @@ export async function createProject(data: {
       workflow_template_id: data.workflowTemplateId || null,
       strategy_id: data.strategyId || null,
       pillar_id: data.pillarId || null,
-      type: data.type ?? 'Project',
     });
   if (error) throw new Error(error.message);
   revalidatePath('/initiatives');
@@ -387,7 +386,7 @@ export async function updateProject(id: string, data: Partial<{
   if (data.workflowTemplateId !== undefined) update.workflow_template_id = data.workflowTemplateId;
   if (data.strategyId !== undefined) update.strategy_id = data.strategyId;
   if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
-  if (data.type !== undefined) update.type = data.type;
+  // type column: pending DB migration (ALTER TABLE projects ADD COLUMN type TEXT NOT NULL DEFAULT 'Project')
   const { error } = await db().from('projects').update(update).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/initiatives');
