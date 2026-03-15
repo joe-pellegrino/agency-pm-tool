@@ -4,7 +4,7 @@
  */
 import { createServerClient } from './client';
 import type {
-  Client, ClientPillar, TeamMember, Task, ApprovalEntry, Document, Comment, DocumentVersion,
+  Client, ClientPillar, ClientPillarKpi, TeamMember, Task, ApprovalEntry, Document, Comment, DocumentVersion,
   DocumentFolder,
   TaskTemplate, Automation, TimeEntry, Asset, WorkflowTemplate,
   WorkflowStep, Strategy, StrategyPillar, KPI, Project, Service,
@@ -50,6 +50,17 @@ function toClientPillar(r: Row): ClientPillar {
     color: r.color as string,
     description: r.description as string,
     createdAt: r.created_at as string,
+  };
+}
+
+function toClientPillarKpi(r: Row): ClientPillarKpi {
+  return {
+    id: r.id as string,
+    clientPillarId: r.client_pillar_id as string,
+    name: r.name as string,
+    target: parseFloat(r.target as string) || 0,
+    current: parseFloat(r.current as string) || 0,
+    unit: (r.unit as string) || '',
   };
 }
 
@@ -360,6 +371,8 @@ function toKBArticle(r: Row): KBArticle {
 export interface AppData {
   CLIENTS: Client[];
   CLIENT_PILLARS: ClientPillar[];
+  CLIENT_PILLAR_KPIS: ClientPillarKpi[];
+  STRATEGY_TARGETED_PILLARS: Row[];
   TEAM_MEMBERS: TeamMember[];
   TASKS: Task[];
   DOCUMENTS: Document[];
@@ -392,12 +405,12 @@ export async function getAllData(): Promise<AppData> {
   // Fetch all tables in parallel
   const [
     clientsRes, teamRes, tasksRes, taskDepsRes, approvalsRes,
-    clientPillarsRes,
+    clientPillarsRes, clientPillarKpisRes,
     docsRes, docCollabRes, docVersionsRes, commentsRes,
     templatesRes, automationsRes, timeRes,
     assetsRes, assetVersionsRes, assetTagsRes,
     wfTemplatesRes, wfStepsRes, wfStepDepsRes,
-    strategiesRes, stratPillarsRes, stratKpisRes, stratPillarProjectsRes,
+    strategiesRes, stratPillarsRes, stratKpisRes, stratPillarProjectsRes, strategyTargetedPillarsRes,
     projectsRes, projectTasksRes,
     servicesRes, clientServicesRes, csProjectsRes,
     ssRes, ssPillarsRes, ssKpisRes,
@@ -410,6 +423,7 @@ export async function getAllData(): Promise<AppData> {
     db.from('task_dependencies').select('*'),
     db.from('approval_history').select('*'),
     db.from('client_pillars').select('*'),
+    db.from('client_pillar_kpis').select('*'),
     db.from('documents').select('*'),
     db.from('document_collaborators').select('*'),
     db.from('document_versions').select('*'),
@@ -427,6 +441,7 @@ export async function getAllData(): Promise<AppData> {
     db.from('strategy_pillars').select('*').is('archived_at', null),
     db.from('strategy_kpis').select('*').is('archived_at', null),
     db.from('strategy_pillar_projects').select('*'),
+    db.from('strategy_targeted_pillars').select('*'),
     db.from('projects').select('*').is('archived_at', null),
     db.from('project_task_links').select('*'),
     db.from('services').select('*'),
@@ -446,6 +461,7 @@ export async function getAllData(): Promise<AppData> {
   const taskDeps = taskDepsRes.data ?? [];
   const approvalRows = approvalsRes.data ?? [];
   const clientPillarRows = clientPillarsRes.data ?? [];
+  const clientPillarKpiRows = clientPillarKpisRes.data ?? [];
   const docRows = docsRes.data ?? [];
   const docCollabs = docCollabRes.data ?? [];
   const docVersionRows = docVersionsRes.data ?? [];
@@ -463,6 +479,7 @@ export async function getAllData(): Promise<AppData> {
   const stratPillarRows = stratPillarsRes.data ?? [];
   const stratKpiRows = stratKpisRes.data ?? [];
   const stratPillarProjectRows = stratPillarProjectsRes.data ?? [];
+  const strategyTargetedPillarRows = strategyTargetedPillarsRes.data ?? [];
   const projectRows = projectsRes.data ?? [];
   const projectTaskRows = projectTasksRes.data ?? [];
   const serviceRows = servicesRes.data ?? [];
@@ -594,6 +611,8 @@ export async function getAllData(): Promise<AppData> {
   return {
     CLIENTS: clients.map(toClient),
     CLIENT_PILLARS: clientPillarRows.map(toClientPillar),
+    CLIENT_PILLAR_KPIS: clientPillarKpiRows.map(toClientPillarKpi),
+    STRATEGY_TARGETED_PILLARS: strategyTargetedPillarRows,
     TEAM_MEMBERS: teamMembers.map(toTeamMember),
     TASKS,
     DOCUMENTS,

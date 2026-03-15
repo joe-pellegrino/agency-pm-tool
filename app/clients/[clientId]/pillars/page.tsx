@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import TopBar from '@/components/layout/TopBar';
 import { getClientPillars, createClientPillar, updateClientPillar, deleteClientPillar } from '@/lib/actions';
 import type { ClientPillar } from '@/lib/data';
 
@@ -94,15 +95,19 @@ export default function ClientPillarsPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading pillars...</div>
-      </div>
+      <>
+        <TopBar breadcrumb={['Clients', 'Pillars']} />
+        <div className="flex items-center justify-center p-6">
+          <div className="text-gray-500">Loading pillars...</div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+    <>
+      <TopBar breadcrumb={['Clients', 'Pillars']} />
+      <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -167,8 +172,8 @@ export default function ClientPillarsPage({ params }: PageProps) {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onMouseDown={(e) => e.target === e.currentTarget && (() => { setShowModal(false); resetForm(); })()}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="border-b border-[var(--color-border)] px-6 py-4">
               <h2 className="text-xl font-semibold">
                 {editingId ? 'Edit Pillar' : 'Create New Pillar'}
@@ -253,6 +258,6 @@ export default function ClientPillarsPage({ params }: PageProps) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

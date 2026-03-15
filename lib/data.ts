@@ -28,6 +28,15 @@ export interface ClientPillar {
   createdAt: string;
 }
 
+export interface ClientPillarKpi {
+  id: string;
+  clientPillarId: string;
+  name: string;
+  target: number;
+  current: number;
+  unit: string;
+}
+
 export interface ApprovalEntry {
   id: string;
   action: 'approved' | 'rejected';

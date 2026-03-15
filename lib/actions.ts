@@ -1361,3 +1361,47 @@ export async function deleteClientPillar(id: string): Promise<void> {
   if (error) throw new Error(error.message);
   revalidatePath('/clients');
 }
+
+// ─── CLIENT PILLAR KPIs ─────────────────────────────────────────────────────
+
+export async function createClientPillarKpi(clientPillarId: string, data: { name: string; target: number; current: number; unit: string }): Promise<void> {
+  const id = `cpkpi-${Date.now()}`;
+  const { error } = await db().from('client_pillar_kpis').insert({
+    id,
+    client_pillar_id: clientPillarId,
+    name: data.name,
+    target: data.target,
+    current: data.current,
+    unit: data.unit,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+}
+
+export async function updateClientPillarKpi(id: string, data: { name?: string; target?: number; current?: number; unit?: string }): Promise<void> {
+  const update: Record<string, unknown> = {};
+  if (data.name !== undefined) update.name = data.name;
+  if (data.target !== undefined) update.target = data.target;
+  if (data.current !== undefined) update.current = data.current;
+  if (data.unit !== undefined) update.unit = data.unit;
+  const { error } = await db().from('client_pillar_kpis').update(update).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+}
+
+export async function deleteClientPillarKpi(id: string): Promise<void> {
+  const { error } = await db().from('client_pillar_kpis').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+}
+
+// ─── STRATEGY TARGETED PILLARS ──────────────────────────────────────────────
+
+export async function setStrategyTargetedPillars(strategyId: string, clientPillarIds: string[]): Promise<void> {
+  await db().from('strategy_targeted_pillars').delete().eq('strategy_id', strategyId);
+  if (clientPillarIds.length === 0) return;
+  const rows = clientPillarIds.map(id => ({ strategy_id: strategyId, client_pillar_id: id }));
+  const { error } = await db().from('strategy_targeted_pillars').insert(rows);
+  if (error) throw new Error(error.message);
+  revalidatePath('/strategy');
+}
