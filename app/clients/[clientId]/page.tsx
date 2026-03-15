@@ -18,6 +18,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Drawer from '@/components/ui/Drawer';
 import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
 import BudgetMatrix from '@/components/budget/BudgetMatrix';
+import ClientModal from '@/components/clients/ClientModal';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -788,6 +789,7 @@ export default function ClientPage() {
   const [activeTab, setActiveTab] = useState<ClientTab>('overview');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isProjectDrawerOpen, setIsProjectDrawerOpen] = useState(false);
+  const [showEditClientModal, setShowEditClientModal] = useState(false);
   const [budgetProgress, setBudgetProgress] = useState<{ totalBudget: number; spentToDate: number; percentage: number } | null>(null);
   const [budgetLoading, setBudgetLoading] = useState(false);
 
@@ -881,6 +883,17 @@ export default function ClientPage() {
         onClose={() => setIsProjectDrawerOpen(false)}
       />
 
+      {/* Edit Client Modal */}
+      {showEditClientModal && client && (
+        <ClientModal
+          client={client}
+          onClose={() => {
+            setShowEditClientModal(false);
+            refresh?.();
+          }}
+        />
+      )}
+
       <div style={{ padding: '24px 32px' }}>
         <div className="mb-6">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{client.name}</h1>
@@ -908,7 +921,7 @@ export default function ClientPage() {
                   <p className="text-sm text-gray-500 mt-0.5">{client.industry} · {client.location}</p>
                 </div>
                 <button
-                  onClick={() => {}}
+                  onClick={() => setShowEditClientModal(true)}
                   className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                   title="Edit client info"
                 >
