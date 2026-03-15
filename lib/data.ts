@@ -26,6 +26,7 @@ export interface ClientPillar {
   color: string;
   description: string;
   createdAt: string;
+  document?: Record<string, unknown> | null;
 }
 
 export interface ClientPillarKpi {

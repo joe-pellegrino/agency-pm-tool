@@ -19,6 +19,9 @@ import Drawer from '@/components/ui/Drawer';
 import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
 import BudgetMatrix from '@/components/budget/BudgetMatrix';
 import ClientModal from '@/components/clients/ClientModal';
+import ProjectModal from '@/components/projects/ProjectModal';
+import TaskModal from '@/components/tasks/TaskModal';
+import { TaskDetailModal } from '@/components/kanban/KanbanBoard';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -802,6 +805,20 @@ export default function ClientPage() {
   const [showEditClientModal, setShowEditClientModal] = useState(false);
   const [budgetProgress, setBudgetProgress] = useState<{ totalBudget: number; spentToDate: number; percentage: number } | null>(null);
   const [budgetLoading, setBudgetLoading] = useState(false);
+  const [showNewInitiative, setShowNewInitiative] = useState(false);
+  const [showNewTask, setShowNewTask] = useState(false);
+  const [selectedClientTask, setSelectedClientTask] = useState<Task | null>(null);
+  const [taskView, setTaskView] = useState<'list' | 'kanban'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem(`client-task-view-${clientId}`) as 'list' | 'kanban') ?? 'list';
+    }
+    return 'list';
+  });
+
+  const handleTaskViewChange = (v: 'list' | 'kanban') => {
+    setTaskView(v);
+    localStorage.setItem(`client-task-view-${clientId}`, v);
+  };
 
   // Fetch budget progress on mount
   useEffect(() => {
@@ -1080,10 +1097,20 @@ export default function ClientPage() {
 
         {activeTab === 'projects' && (
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-              <FolderOpen size={18} style={{ color: 'var(--color-primary)' }} />
-              Initiatives
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <FolderOpen size={18} style={{ color: 'var(--color-primary)' }} />
+                Initiatives
+              </h2>
+              <button
+                onClick={() => setShowNewInitiative(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+              >
+                <Plus size={14} />
+                New Initiative
+              </button>
+            </div>
             {(() => {
               const clientProjects = PROJECTS.filter(p => p.clientId === clientId);
               if (clientProjects.length === 0) {
@@ -1120,6 +1147,15 @@ export default function ClientPage() {
                 </div>
               );
             })()}
+            {showNewInitiative && (
+              <ProjectModal
+                project={{ clientId } as any}
+                onClose={() => {
+                  setShowNewInitiative(false);
+                  refresh?.();
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -1205,23 +1241,141 @@ export default function ClientPage() {
 
         {activeTab === 'tasks' && (
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-              <CheckCircle size={18} style={{ color: 'var(--color-primary)' }} />
-              Tasks
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <CheckCircle size={18} style={{ color: 'var(--color-primary)' }} />
+                Tasks
+              </h2>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                  <button
+                    onClick={() => handleTaskViewChange('list')}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${taskView === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500'}`}
+                  >
+                    List
+                  </button>
+                  <button
+                    onClick={() => handleTaskViewChange('kanban')}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${taskView === 'kanban' ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500'}`}
+                  >
+                    Kanban
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowNewTask(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                  <Plus size={14} />
+                  New Task
+                </button>
+              </div>
+            </div>
             {(() => {
               const clientTasks = TASKS.filter(t => t.clientId === clientId);
               if (clientTasks.length === 0) {
                 return <p className="text-gray-400">No tasks for this client.</p>;
               }
-              return (
-                <div className="space-y-1">
-                  {clientTasks.map(task => (
-                    <TaskRow key={task.id} task={task} />
-                  ))}
-                </div>
-              );
+              if (taskView === 'list') {
+                return (
+                  <div className="space-y-1">
+                    {clientTasks.map(task => (
+                      <button
+                        key={task.id}
+                        onClick={() => setSelectedClientTask(task)}
+                        className="w-full text-left flex items-center gap-3 py-2 px-3 rounded border border-gray-200 dark:border-gray-700 mb-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        style={{ backgroundColor: 'white' }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-gray-700 dark:text-gray-300 truncate block">{task.title}</span>
+                        </div>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${
+                          {
+                            todo: 'bg-gray-100 text-gray-600',
+                            inprogress: 'bg-blue-100 text-blue-700',
+                            review: 'bg-amber-100 text-amber-700',
+                            done: 'bg-green-100 text-green-700',
+                          }[task.status] || ''
+                        }`}>
+                          {{
+                            todo: 'To Do',
+                            inprogress: 'In Progress',
+                            review: 'Review',
+                            done: 'Done',
+                          }[task.status] || task.status}
+                        </span>
+                        <span className="text-[10px] text-gray-500 flex-shrink-0 whitespace-nowrap">{task.dueDate}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              } else {
+                // Kanban view
+                const statuses = ['todo', 'inprogress', 'review', 'done'];
+                const statusLabels: Record<string, string> = {
+                  todo: 'To Do',
+                  inprogress: 'In Progress',
+                  review: 'Review',
+                  done: 'Done',
+                };
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {statuses.map(status => {
+                      const statusTasks = clientTasks.filter(t => t.status === status);
+                      return (
+                        <div
+                          key={status}
+                          className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
+                        >
+                          <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                            {statusLabels[status]} ({statusTasks.length})
+                          </h3>
+                          <div className="space-y-2">
+                            {statusTasks.map(task => (
+                              <button
+                                key={task.id}
+                                onClick={() => setSelectedClientTask(task)}
+                                className="w-full text-left bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-[#3B5BDB] dark:hover:border-[#3B5BDB] transition-all cursor-pointer"
+                              >
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1 line-clamp-2">
+                                  {task.title}
+                                </h4>
+                                {task.dueDate && (
+                                  <p className="text-[10px] text-gray-500">{task.dueDate}</p>
+                                )}
+                              </button>
+                            ))}
+                            {statusTasks.length === 0 && (
+                              <p className="text-xs text-gray-400 py-4 text-center">No tasks</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
             })()}
+            {selectedClientTask && (
+              <TaskDetailModal
+                task={selectedClientTask}
+                onClose={() => setSelectedClientTask(null)}
+                onOpenApproval={() => {}}
+                onEdit={() => {}}
+                onArchive={() => {}}
+                onStatusChange={() => {}}
+              />
+            )}
+            {showNewTask && (
+              <TaskModal
+                defaultStatus="todo"
+                onClose={() => setShowNewTask(false)}
+                onSuccess={() => {
+                  setShowNewTask(false);
+                  refresh?.();
+                }}
+              />
+            )}
           </div>
         )}
 

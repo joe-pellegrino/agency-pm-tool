@@ -1395,6 +1395,12 @@ export async function deleteClientPillarKpi(id: string): Promise<void> {
   revalidatePath('/clients');
 }
 
+export async function updateClientPillarDocument(pillarId: string, document: Record<string, unknown>): Promise<void> {
+  const { error } = await db().from('client_pillars').update({ document }).eq('id', pillarId);
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+}
+
 // ─── STRATEGY TARGETED PILLARS ──────────────────────────────────────────────
 
 export async function setStrategyTargetedPillars(strategyId: string, clientPillarIds: string[]): Promise<void> {

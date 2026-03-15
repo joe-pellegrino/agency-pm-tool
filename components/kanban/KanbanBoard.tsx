@@ -201,7 +201,7 @@ function ApprovalModal({
   );
 }
 
-function TaskDetailModal({
+export function TaskDetailModal({
   task,
   onClose,
   onOpenApproval,

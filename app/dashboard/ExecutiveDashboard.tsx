@@ -1,7 +1,11 @@
+'use client';
+
+import { useState } from 'react';
 import { Client, Task, TeamMember } from '@/lib/data';
 import { PRIORITY_DOT } from '@/lib/supabase/queries';
 import { AlertTriangle, CheckCircle2, Clock, Flame, Inbox, ShieldCheck, Users } from 'lucide-react';
 import Link from 'next/link';
+import { TaskDetailModal } from '@/components/kanban/KanbanBoard';
 
 /* ─── Types ───────────────────────────────────────────────────────────── */
 
@@ -66,6 +70,7 @@ function relativeAgo(dateStr: string | null | undefined): string {
 /* ─── Section: Pressing Items ─────────────────────────────────────────── */
 
 function PressingItems({ tasks, clients, teamMembers }: Props) {
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const items = tasks
     .filter(t => !t.isMilestone && t.status !== 'done')
     .sort((a, b) => {
@@ -94,10 +99,10 @@ function PressingItems({ tasks, clients, teamMembers }: Props) {
             const assignee = teamMembers.find(m => m.id === task.assigneeId);
             const due = relativeDate(task.dueDate);
             return (
-              <Link
+              <button
                 key={task.id}
-                href={`/kanban?task=${task.id}`}
-                className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                onClick={() => setSelectedTask(task)}
+                className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group text-left"
               >
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${PRIORITY_COLORS[task.priority]}`}>
                   {task.priority}
@@ -127,10 +132,20 @@ function PressingItems({ tasks, clients, teamMembers }: Props) {
                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLORS[task.status]}`}>
                   {STATUS_LABELS[task.status]}
                 </span>
-              </Link>
+              </button>
             );
           })}
         </div>
+      )}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onOpenApproval={() => {}}
+          onEdit={() => {}}
+          onArchive={() => {}}
+          onStatusChange={() => {}}
+        />
       )}
     </div>
   );
@@ -296,6 +311,7 @@ function RecentCompletions({ tasks, clients, teamMembers }: Props) {
 /* ─── Section: Pipeline ───────────────────────────────────────────────── */
 
 function PipelineItems({ tasks, clients, teamMembers }: Props) {
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const items = tasks
     .filter(t => t.status === 'todo' && !t.isMilestone)
     .sort((a, b) => {
@@ -322,10 +338,10 @@ function PipelineItems({ tasks, clients, teamMembers }: Props) {
             const client = clients.find(c => c.id === task.clientId);
             const assignee = teamMembers.find(m => m.id === task.assigneeId);
             return (
-              <Link
+              <button
                 key={task.id}
-                href={`/kanban?task=${task.id}`}
-                className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                onClick={() => setSelectedTask(task)}
+                className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group text-left"
               >
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${PRIORITY_COLORS[task.priority]}`}>
                   {task.priority}
@@ -356,10 +372,20 @@ function PipelineItems({ tasks, clients, teamMembers }: Props) {
                     starts {new Date(task.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 )}
-              </Link>
+              </button>
             );
           })}
         </div>
+      )}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onOpenApproval={() => {}}
+          onEdit={() => {}}
+          onArchive={() => {}}
+          onStatusChange={() => {}}
+        />
       )}
     </div>
   );
@@ -427,7 +453,7 @@ function TeamCapacity({ tasks, teamMembers }: Pick<Props, 'tasks' | 'teamMembers
 
 /* ─── Main Executive Dashboard ────────────────────────────────────────── */
 
-export default function ExecutiveDashboard({ tasks, clients, teamMembers }: Props) {
+function ExecutiveDashboardContent({ tasks, clients, teamMembers }: Props) {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Top row: Pressing + Client Health */}
@@ -447,3 +473,5 @@ export default function ExecutiveDashboard({ tasks, clients, teamMembers }: Prop
     </div>
   );
 }
+
+export default ExecutiveDashboardContent;

@@ -50,6 +50,7 @@ function toClientPillar(r: Row): ClientPillar {
     color: r.color as string,
     description: r.description as string,
     createdAt: r.created_at as string,
+    document: r.document as Record<string, unknown> | null,
   };
 }
 
