@@ -909,15 +909,6 @@ export default function ClientPage() {
           <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{client.name}</h1>
           <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{client.industry} · {client.location}</p>
         </div>
-        {/* Back nav */}
-        <Link
-          href="/services"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-5 transition-colors"
-        >
-          <ArrowLeft size={14} />
-          All Services
-        </Link>
-
         {/* Client header card */}
         <div
           className="rounded-lg p-6 mb-6 border"
