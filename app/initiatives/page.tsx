@@ -562,8 +562,8 @@ export default function ProjectsPage() {
 
       <div style={{ padding: '24px 32px' }}>
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Projects</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Manage client projects and track progress</p>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Initiatives</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Manage client initiatives and track progress</p>
         </div>
         {selectedProject && !editProject && !archiveId && !addTaskForProject && (
           <ProjectDetailModal
@@ -698,7 +698,7 @@ export default function ProjectsPage() {
           <div className="text-center py-20 text-gray-400">
             <FolderOpen size={40} className="mx-auto mb-4 opacity-30" />
             <p className="font-medium">No initiatives found</p>
-            <p className="text-sm mt-1">Adjust your filters to see more projects</p>
+            <p className="text-sm mt-1">Adjust your filters to see more initiatives</p>
           </div>
         )}
       </div>

@@ -326,7 +326,7 @@ function ServiceTile({
           <p className="text-xs text-gray-500 mb-2 truncate">{clientService.monthlyCadence}</p>
         )}
         <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-          <span>{projs.length} project{projs.length !== 1 ? 's' : ''} · {openTasks} open tasks</span>
+          <span>{projs.length} initiative{projs.length !== 1 ? 's' : ''} · {openTasks} open tasks</span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowAssign(true)}
@@ -457,7 +457,7 @@ function ServiceCard({
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-2 py-2">
               <div className="text-sm font-bold text-gray-900 dark:text-white">{linkedProjects.length}</div>
-              <div className="text-[10px] text-gray-500">projects</div>
+              <div className="text-[10px] text-gray-500">initiatives</div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-2 py-2">
               <div className="text-sm font-bold text-gray-900 dark:text-white">{allTasks.length}</div>
@@ -532,12 +532,12 @@ function ServiceCard({
             </div>
           </div>
 
-          {/* Projects */}
+          {/* Initiatives */}
           {linkedProjects.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
                 <FolderOpen size={11} />
-                Projects
+                Initiatives
               </h4>
               <div className="space-y-1.5">
                 {linkedProjects.map(proj => (
@@ -1079,12 +1079,12 @@ export default function ClientPage() {
           <div>
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
               <FolderOpen size={18} style={{ color: 'var(--color-primary)' }} />
-              Projects
+              Initiatives
             </h2>
             {(() => {
               const clientProjects = PROJECTS.filter(p => p.clientId === clientId);
               if (clientProjects.length === 0) {
-                return <p className="text-gray-400">No projects for this client.</p>;
+                return <p className="text-gray-400">No initiatives for this client.</p>;
               }
               return (
                 <div className="space-y-2">

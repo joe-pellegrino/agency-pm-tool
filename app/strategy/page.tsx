@@ -402,7 +402,7 @@ function ServiceStrategyCard({ ss, clientColor }: { ss: ServiceStrategy; clientC
           {projs.length > 0 && (
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                <FolderOpen size={11} /> Linked Projects
+                <FolderOpen size={11} /> Linked Initiatives
               </div>
               <div className="space-y-1.5">
                 {projs.map(proj => {
