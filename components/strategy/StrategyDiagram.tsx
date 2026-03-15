@@ -154,7 +154,7 @@ export default function StrategyDiagram({
   const nodeTypes: NodeTypes = useMemo(() => ({
     strategy: StrategyNode,
     service: ServiceNode,
-    project: (props: any) => <ProjectNode {...props} onClick={() => router.push(`/projects/${props.data.projectId}`)} />,
+    project: (props: any) => <ProjectNode {...props} onClick={() => router.push(`/initiatives/${props.data.projectId}`)} />,
     task: (props: any) => <TaskNode {...props} onClick={() => {
       const t = tasks.find(t => t.id === props.data.taskId);
       if (t) setSelectedTask(t);

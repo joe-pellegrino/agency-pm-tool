@@ -34,6 +34,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     endDate: project?.endDate || '',
     workflowTemplateId: project?.workflowTemplateId || '',
     strategyId: project?.strategyId || '',
+    type: project?.type || 'Project',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -62,6 +63,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             endDate: form.endDate,
             workflowTemplateId: form.workflowTemplateId || undefined,
             strategyId: form.strategyId || undefined,
+            type: form.type,
           });
           toast.success('Project updated');
         } else {
@@ -74,6 +76,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             endDate: form.endDate,
             workflowTemplateId: form.workflowTemplateId || undefined,
             strategyId: form.strategyId || undefined,
+            type: form.type,
           });
           toast.success('Project created');
         }
@@ -94,7 +97,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
       isOpen={isOpen}
       onClose={handleClose}
       onAfterLeave={onClose}
-      title={project ? 'Edit Project' : 'New Project'}
+      title={project ? 'Edit Initiative' : 'New Initiative'}
       subtitle="Fill in the information below to create your new project."
       variant="create"
       footer={
@@ -113,7 +116,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             className="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors flex items-center gap-2"
           >
             {isPending && <Loader2 size={14} className="animate-spin" />}
-            {project ? 'Save Changes' : 'Create Project'}
+            {project ? 'Save Changes' : 'Create Initiative'}
           </button>
         </div>
       }
@@ -129,16 +132,25 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
         )}
 
         <div>
-          <label className={labelClass}>Project Name *</label>
+          <label className={labelClass}>Initiative Name *</label>
           <input
             type="text"
             value={form.name}
             onChange={e => set('name', e.target.value)}
-            placeholder="Project name..."
+            placeholder="Initiative name..."
             className={`${inputClass} ${errors.name ? 'border-red-400' : ''}`}
             autoFocus
           />
           {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+        </div>
+
+        <div>
+          <label className={labelClass}>Type</label>
+          <select value={form.type} onChange={e => set('type', e.target.value)} className={selectClass}>
+            {['Campaign', 'Project', 'Retainer', 'Content Series', 'Event', 'Audit', 'Other'].map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
 
         <div>

@@ -211,7 +211,7 @@ export default function ClientsPage() {
                   <div className="grid grid-cols-4 gap-2 text-center">
                     {[
                       { label: 'Services', value: activeServices, icon: Zap },
-                      { label: 'Projects', value: activeProjects, icon: FolderOpen },
+                      { label: 'Initiatives', value: activeProjects, icon: FolderOpen },
                       { label: 'Open Tasks', value: openTasks, icon: CheckCircle },
                       { label: 'Planning', value: planningServices, icon: Activity },
                     ].map(({ label, value, icon: Icon }) => (

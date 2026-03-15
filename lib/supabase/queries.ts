@@ -257,6 +257,7 @@ function toProject(r: Row, taskIds: string[]): Project {
     progress: r.progress as number,
     workflowTemplateId: r.workflow_template_id as string | undefined,
     taskIds,
+    type: r.type as string | undefined,
   };
 }
 

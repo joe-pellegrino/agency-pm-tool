@@ -671,7 +671,7 @@ type ClientTab = 'overview' | 'projects' | 'tasks' | 'paid-ads' | 'budget' | 'do
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
   { id: 'overview', label: 'Overview', icon: Activity },
-  { id: 'projects', label: 'Projects', icon: FolderOpen },
+  { id: 'projects', label: 'Initiatives', icon: FolderOpen },
   { id: 'tasks', label: 'Tasks', icon: CheckCircle },
   { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
   { id: 'budget', label: 'Budget', icon: DollarSign },
@@ -979,7 +979,7 @@ export default function ClientPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
             {[
               { label: 'Active Services', value: activeServices.filter(cs => cs.status === 'active').length, icon: Zap },
-              { label: 'Active Projects', value: PROJECTS.filter(p => p.clientId === clientId && p.status === 'active').length, icon: FolderOpen },
+              { label: 'Active Initiatives', value: PROJECTS.filter(p => p.clientId === clientId && p.status === 'active').length, icon: FolderOpen },
               { label: 'Open Tasks', value: TASKS.filter(t => t.clientId === clientId && t.status !== 'done').length, icon: CheckCircle },
               { label: 'Completed Tasks', value: TASKS.filter(t => t.clientId === clientId && t.status === 'done').length, icon: TrendingUp },
             ].map(({ label, value, icon: Icon }) => (

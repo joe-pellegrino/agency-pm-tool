@@ -35,7 +35,7 @@ const NAV_GROUPS = [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/clients', label: 'Clients', icon: Users },
       { href: '/services', label: 'Services', icon: Briefcase },
-      { href: '/projects', label: 'Projects', icon: Layers },
+      { href: '/initiatives', label: 'Initiatives', icon: Layers },
       { href: '/kanban', label: 'Kanban Board', icon: Kanban },
       { href: '/timeline', label: 'Timeline', icon: GanttChart },
       { href: '/calendar', label: 'Calendar', icon: Calendar },

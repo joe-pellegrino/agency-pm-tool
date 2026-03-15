@@ -332,6 +332,7 @@ export async function createProject(data: {
   endDate: string;
   workflowTemplateId?: string;
   strategyId?: string;
+  type?: string;
 }) {
   const id = `proj-${Date.now()}`;
   const { error } = await db()
@@ -347,9 +348,10 @@ export async function createProject(data: {
       progress: 0,
       workflow_template_id: data.workflowTemplateId || null,
       strategy_id: data.strategyId || null,
+      type: data.type ?? 'Project',
     });
   if (error) throw new Error(error.message);
-  revalidatePath('/projects');
+  revalidatePath('/initiatives');
   return id;
 }
 
@@ -362,6 +364,7 @@ export async function updateProject(id: string, data: Partial<{
   progress: number;
   workflowTemplateId: string;
   strategyId: string;
+  type: string;
 }>) {
   const update: Record<string, unknown> = {};
   if (data.name !== undefined) update.name = data.name;
@@ -372,9 +375,10 @@ export async function updateProject(id: string, data: Partial<{
   if (data.progress !== undefined) update.progress = data.progress;
   if (data.workflowTemplateId !== undefined) update.workflow_template_id = data.workflowTemplateId;
   if (data.strategyId !== undefined) update.strategy_id = data.strategyId;
+  if (data.type !== undefined) update.type = data.type;
   const { error } = await db().from('projects').update(update).eq('id', id);
   if (error) throw new Error(error.message);
-  revalidatePath('/projects');
+  revalidatePath('/initiatives');
 }
 
 export async function archiveProject(id: string) {

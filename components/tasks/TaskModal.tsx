@@ -230,9 +230,9 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
 
         {!task && (
           <div>
-            <label className={labelClass}>Project (optional)</label>
+            <label className={labelClass}>Initiative (optional)</label>
             <select value={form.projectId} onChange={e => set('projectId', e.target.value)} className={selectClass}>
-              <option value="">No project</option>
+              <option value="">No initiative</option>
               {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>

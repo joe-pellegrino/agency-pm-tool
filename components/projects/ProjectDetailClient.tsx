@@ -231,11 +231,11 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
         <div style={{ paddingTop: '20px' }}>
           {/* Back link */}
           <button
-            onClick={() => router.push('/projects')}
+            onClick={() => router.push('/initiatives')}
             className="flex items-center gap-1 text-sm text-[#5A6A7E] hover:text-[#1E2A3A] mb-4 transition-colors"
           >
             <ChevronLeft size={14} />
-            All Projects
+            All Initiatives
           </button>
 
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -417,7 +417,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
             onArchive={async () => {
               await archiveProjectById(project.id);
               toast.success('Project archived');
-              router.push('/projects');
+              router.push('/initiatives');
             }}
           />
         )}

@@ -1255,6 +1255,7 @@ export interface Project {
   progress: number;
   workflowTemplateId?: string;
   taskIds: string[];
+  type?: string;
 }
 
 export interface WorkflowStep {

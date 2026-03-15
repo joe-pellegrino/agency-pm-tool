@@ -1089,7 +1089,7 @@ export default function KanbanBoard() {
             { label: 'Client', value: filterClient, onChange: setFilterClient, options: [{ value: 'all', label: 'All Clients' }, ...CLIENTS.map(c => ({ value: c.id, label: c.name }))] },
             { label: 'Assignee', value: filterAssignee, onChange: setFilterAssignee, options: [{ value: 'all', label: 'All Assignees' }, ...TEAM_MEMBERS.map(m => ({ value: m.id, label: m.name }))] },
             { label: 'Priority', value: filterPriority, onChange: setFilterPriority, options: [{ value: 'all', label: 'All Priorities' }, ...['Urgent','High','Medium','Low'].map(p => ({ value: p, label: p }))] },
-            { label: 'Project', value: filterProject, onChange: setFilterProject, options: [{ value: 'all', label: 'All Projects' }, ...PROJECTS.map(p => ({ value: p.id, label: p.name }))] },
+            { label: 'Initiative', value: filterProject, onChange: setFilterProject, options: [{ value: 'all', label: 'All Initiatives' }, ...PROJECTS.map(p => ({ value: p.id, label: p.name }))] },
           ].map(({ label, value, onChange, options }) => (
             <div key={label}>
               <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>{label}</label>
