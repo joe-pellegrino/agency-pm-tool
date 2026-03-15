@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 import {
   Clock, CheckSquare, Users, Pencil, Plus, ChevronLeft,
   Trash2, Download, Upload, X, Check, List, LayoutGrid,
@@ -10,6 +11,7 @@ import {
   CheckCircle, RefreshCw, ImageIcon, Video, Paperclip, Archive,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { linkTaskToProject } from '@/lib/actions';
 import type { ProjectDetail } from '@/lib/actions-projects';
 import {
   getProjectMembers, getProjectTasks, getProjectBudget,
@@ -153,6 +155,7 @@ function ProgressBar({ value, color = 'var(--color-primary)' }: { value: number;
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ProjectDetailClient({ project: initialProject }: { project: ProjectDetail }) {
   const router = useRouter();
+  const { TASKS = [] } = useAppData();
   const [project, setProject] = useState(initialProject);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [, startTransition] = useTransition();
@@ -383,6 +386,7 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
           <TasksTab
             project={project}
             tasks={tasks}
+            allTasks={TASKS}
             onCreateTask={() => setShowCreateTask(true)}
             onRefresh={async () => {
               const t = await getProjectTasks(project.id);
@@ -973,10 +977,11 @@ function ActivityTab({ activity }: { activity: Awaited<ReturnType<typeof getProj
 
 // ─── Tasks Tab ────────────────────────────────────────────────────────────────
 function TasksTab({
-  project, tasks, onCreateTask, onRefresh
+  project, tasks, allTasks, onCreateTask, onRefresh
 }: {
   project: ProjectDetail;
   tasks: Awaited<ReturnType<typeof getProjectTasks>>;
+  allTasks: any[];
   onCreateTask: () => void;
   onRefresh: () => Promise<void>;
 }) {
@@ -987,6 +992,9 @@ function TasksTab({
     return 'list';
   });
   const [sortBy, setSortBy] = useState<'status' | 'dueDate' | 'priority'>('status');
+  const [showLinkTask, setShowLinkTask] = useState(false);
+  const [linkTaskSearch, setLinkTaskSearch] = useState('');
+  const [linkingTaskId, setLinkingTaskId] = useState<string | null>(null);
 
   const setViewAndSave = (v: 'list' | 'kanban') => {
     setView(v);
@@ -1130,6 +1138,74 @@ function TasksTab({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Link existing task button */}
+      <button
+        onClick={() => setShowLinkTask(!showLinkTask)}
+        className="mt-4 flex items-center gap-2 text-sm text-[#3B5BDB] hover:text-[#2F4AC2] font-medium transition-colors"
+      >
+        <Plus size={14} />
+        Link existing task
+      </button>
+
+      {showLinkTask && (
+        <div className="mt-3 border border-gray-200 rounded-xl bg-white p-4 shadow-sm">
+          <input
+            type="text"
+            value={linkTaskSearch}
+            onChange={e => setLinkTaskSearch(e.target.value)}
+            placeholder="Search tasks by name..."
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B5BDB] mb-3"
+            autoFocus
+          />
+          <div className="space-y-1 max-h-48 overflow-y-auto">
+            {allTasks
+              .filter(t =>
+                t.clientId === project.clientId &&
+                !tasks.some(existing => existing.id === t.id) &&
+                t.title.toLowerCase().includes(linkTaskSearch.toLowerCase())
+              )
+              .slice(0, 10)
+              .map(t => (
+                <button
+                  key={t.id}
+                  disabled={linkingTaskId === t.id}
+                  onClick={async () => {
+                    setLinkingTaskId(t.id);
+                    try {
+                      await linkTaskToProject(project.id, t.id);
+                      toast.success('Task linked');
+                      setShowLinkTask(false);
+                      setLinkTaskSearch('');
+                      // Reload tasks
+                      await onRefresh();
+                    } catch (err) {
+                      toast.error('Failed: ' + (err as Error).message);
+                    } finally {
+                      setLinkingTaskId(null);
+                    }
+                  }}
+                  className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
+                >
+                  <span className="text-gray-800 truncate flex-1">{t.title}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ml-2 flex-shrink-0 ${
+                    t.status === 'done' ? 'bg-green-100 text-green-600' :
+                    t.status === 'inprogress' ? 'bg-blue-100 text-blue-600' :
+                    t.status === 'review' ? 'bg-purple-100 text-purple-600' :
+                    'bg-gray-100 text-gray-500'
+                  }`}>{t.status === 'inprogress' ? 'In Progress' : t.status.charAt(0).toUpperCase() + t.status.slice(1)}</span>
+                </button>
+              ))}
+            {allTasks.filter(t =>
+              t.clientId === project.clientId &&
+              !tasks.some(existing => existing.id === t.id) &&
+              t.title.toLowerCase().includes(linkTaskSearch.toLowerCase())
+            ).length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-3">No tasks found</p>
+            )}
+          </div>
         </div>
       )}
     </div>
