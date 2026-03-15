@@ -359,7 +359,7 @@ function TaskDetailModal({
   const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
 
   return (
-    <Drawer isOpen={isOpen} onClose={handleClose} onAfterLeave={onClose} title={task.title} variant="details">
+    <Drawer isOpen={isOpen} onClose={handleClose} onAfterLeave={onClose} title="Task Details" variant="details">
       <div className="pb-16 space-y-6">
         {/* Task title + client + priority badge */}
         <div>
@@ -379,7 +379,18 @@ function TaskDetailModal({
 
         {/* Information - definition list */}
         <div>
-          <h3 className="font-medium" style={{ color: 'var(--color-text-primary)' }}>Information</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium" style={{ color: 'var(--color-text-primary)' }}>Information</h3>
+            {onEdit && (
+              <button
+                onClick={() => onEdit(task)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                title="Edit task"
+              >
+                <Pencil size={13} style={{ color: 'var(--color-text-muted)' }} />
+              </button>
+            )}
+          </div>
           <dl className="mt-2 border-t border-b" style={{ borderColor: 'var(--color-border)' }}>
             <div className="py-3 flex justify-between text-sm font-medium" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <dt style={{ color: 'var(--color-text-muted)' }}>Status</dt>
