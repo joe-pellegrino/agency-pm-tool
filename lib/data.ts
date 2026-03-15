@@ -19,6 +19,15 @@ export interface Client {
   logo: string;
 }
 
+export interface ClientPillar {
+  id: string;
+  clientId: string;
+  name: string;
+  color: string;
+  description: string;
+  createdAt: string;
+}
+
 export interface ApprovalEntry {
   id: string;
   action: 'approved' | 'rejected';
@@ -44,6 +53,7 @@ export interface Task {
   approvalHistory?: ApprovalEntry[];
   type?: 'social' | 'ad' | 'blog' | 'report' | 'meeting' | 'design' | 'other';
   pillarId?: string;
+  clientPillarId?: string | null;
   isAdhoc?: boolean;
   requestNotes?: string;
 }
@@ -1250,6 +1260,7 @@ export interface Project {
   clientId: string;
   strategyId?: string;
   pillarId?: string;
+  clientPillarId?: string | null;
   name: string;
   description: string;
   status: 'planning' | 'active' | 'complete' | 'on-hold';

@@ -20,6 +20,7 @@ export async function createTask(data: {
   description?: string;
   isMilestone?: boolean;
   pillarId?: string | null;
+  clientPillarId?: string | null;
   isAdhoc?: boolean;
   requestNotes?: string;
 }) {
@@ -39,6 +40,7 @@ export async function createTask(data: {
       description: data.description || '',
       is_milestone: data.isMilestone || false,
       pillar_id: data.pillarId || null,
+      client_pillar_id: data.clientPillarId || null,
       is_adhoc: data.isAdhoc ? 1 : 0,
       request_notes: data.requestNotes || '',
     })
@@ -64,6 +66,7 @@ export async function updateTask(id: string, data: Partial<{
   description: string;
   isMilestone: boolean;
   pillarId: string | null;
+  clientPillarId: string | null;
   isAdhoc: boolean;
   requestNotes: string;
 }>) {
@@ -80,6 +83,7 @@ export async function updateTask(id: string, data: Partial<{
   if (data.description !== undefined) update.description = data.description;
   if (data.isMilestone !== undefined) update.is_milestone = data.isMilestone;
   if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
+  if (data.clientPillarId !== undefined) update.client_pillar_id = data.clientPillarId;
   if (data.isAdhoc !== undefined) update.is_adhoc = data.isAdhoc ? 1 : 0;
   if (data.requestNotes !== undefined) update.request_notes = data.requestNotes;
 
@@ -341,6 +345,7 @@ export async function createProject(data: {
   workflowTemplateId?: string;
   strategyId?: string;
   pillarId?: string;
+  clientPillarId?: string | null;
   type?: string;
 }) {
   const id = `proj-${Date.now()}`;
@@ -358,6 +363,7 @@ export async function createProject(data: {
       workflow_template_id: data.workflowTemplateId || null,
       strategy_id: data.strategyId || null,
       pillar_id: data.pillarId || null,
+      client_pillar_id: data.clientPillarId || null,
       type: data.type ?? 'Project',
     });
   if (error) throw new Error(error.message);
@@ -375,6 +381,7 @@ export async function updateProject(id: string, data: Partial<{
   workflowTemplateId: string;
   strategyId: string;
   pillarId: string;
+  clientPillarId: string | null;
   type: string;
 }>) {
   const update: Record<string, unknown> = {};
@@ -387,6 +394,7 @@ export async function updateProject(id: string, data: Partial<{
   if (data.workflowTemplateId !== undefined) update.workflow_template_id = data.workflowTemplateId;
   if (data.strategyId !== undefined) update.strategy_id = data.strategyId;
   if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
+  if (data.clientPillarId !== undefined) update.client_pillar_id = data.clientPillarId;
   if (data.type !== undefined) update.type = data.type;
   const { error } = await db().from('projects').update(update).eq('id', id);
   if (error) throw new Error(error.message);
@@ -1307,4 +1315,49 @@ export async function updateServiceStrategySummary(id: string, summary: string):
     .eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/strategy');
+}
+
+// ─── CLIENT PILLARS ────────────────────────────────────────────────────────────
+
+export async function getClientPillars(clientId: string) {
+  const { data, error } = await db()
+    .from('client_pillars')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(r => ({
+    id: r.id as string,
+    clientId: r.client_id as string,
+    name: r.name as string,
+    color: r.color as string,
+    description: r.description as string,
+    createdAt: r.created_at as string,
+  }));
+}
+
+export async function createClientPillar(clientId: string, data: { name: string; color?: string; description?: string }): Promise<string> {
+  const id = `cpillar-${Date.now()}`;
+  const { error } = await db()
+    .from('client_pillars')
+    .insert({ id, client_id: clientId, name: data.name, color: data.color ?? '#6366f1', description: data.description ?? '' });
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+  return id;
+}
+
+export async function updateClientPillar(id: string, data: { name?: string; color?: string; description?: string }): Promise<void> {
+  const update: Record<string, unknown> = {};
+  if (data.name !== undefined) update.name = data.name;
+  if (data.color !== undefined) update.color = data.color;
+  if (data.description !== undefined) update.description = data.description;
+  const { error } = await db().from('client_pillars').update(update).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+}
+
+export async function deleteClientPillar(id: string): Promise<void> {
+  const { error } = await db().from('client_pillars').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
 }

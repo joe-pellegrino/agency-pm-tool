@@ -4,7 +4,7 @@
  */
 import { createServerClient } from './client';
 import type {
-  Client, TeamMember, Task, ApprovalEntry, Document, Comment, DocumentVersion,
+  Client, ClientPillar, TeamMember, Task, ApprovalEntry, Document, Comment, DocumentVersion,
   DocumentFolder,
   TaskTemplate, Automation, TimeEntry, Asset, WorkflowTemplate,
   WorkflowStep, Strategy, StrategyPillar, KPI, Project, Service,
@@ -42,6 +42,17 @@ function toTeamMember(r: Row): TeamMember {
   };
 }
 
+function toClientPillar(r: Row): ClientPillar {
+  return {
+    id: r.id as string,
+    clientId: r.client_id as string,
+    name: r.name as string,
+    color: r.color as string,
+    description: r.description as string,
+    createdAt: r.created_at as string,
+  };
+}
+
 function toTask(r: Row, deps: string[], approvals: ApprovalEntry[]): Task {
   return {
     id: r.id as string,
@@ -59,6 +70,7 @@ function toTask(r: Row, deps: string[], approvals: ApprovalEntry[]): Task {
     dependencies: deps,
     approvalHistory: approvals,
     pillarId: (r.pillar_id as string) || undefined,
+    clientPillarId: (r.client_pillar_id as string) || null,
     isAdhoc: Boolean(r.is_adhoc),
     requestNotes: (r.request_notes as string) || undefined,
   };
@@ -252,6 +264,7 @@ function toProject(r: Row, taskIds: string[]): Project {
     clientId: r.client_id as string,
     strategyId: r.strategy_id as string | undefined,
     pillarId: r.pillar_id as string | undefined,
+    clientPillarId: (r.client_pillar_id as string) || null,
     name: r.name as string,
     description: r.description as string,
     status: r.status as Project['status'],
@@ -346,6 +359,7 @@ function toKBArticle(r: Row): KBArticle {
 
 export interface AppData {
   CLIENTS: Client[];
+  CLIENT_PILLARS: ClientPillar[];
   TEAM_MEMBERS: TeamMember[];
   TASKS: Task[];
   DOCUMENTS: Document[];
@@ -378,6 +392,7 @@ export async function getAllData(): Promise<AppData> {
   // Fetch all tables in parallel
   const [
     clientsRes, teamRes, tasksRes, taskDepsRes, approvalsRes,
+    clientPillarsRes,
     docsRes, docCollabRes, docVersionsRes, commentsRes,
     templatesRes, automationsRes, timeRes,
     assetsRes, assetVersionsRes, assetTagsRes,
@@ -394,6 +409,7 @@ export async function getAllData(): Promise<AppData> {
     db.from('tasks').select('*').is('archived_at', null),
     db.from('task_dependencies').select('*'),
     db.from('approval_history').select('*'),
+    db.from('client_pillars').select('*'),
     db.from('documents').select('*'),
     db.from('document_collaborators').select('*'),
     db.from('document_versions').select('*'),
@@ -429,6 +445,7 @@ export async function getAllData(): Promise<AppData> {
   const taskRows = tasksRes.data ?? [];
   const taskDeps = taskDepsRes.data ?? [];
   const approvalRows = approvalsRes.data ?? [];
+  const clientPillarRows = clientPillarsRes.data ?? [];
   const docRows = docsRes.data ?? [];
   const docCollabs = docCollabRes.data ?? [];
   const docVersionRows = docVersionsRes.data ?? [];
@@ -576,6 +593,7 @@ export async function getAllData(): Promise<AppData> {
 
   return {
     CLIENTS: clients.map(toClient),
+    CLIENT_PILLARS: clientPillarRows.map(toClientPillar),
     TEAM_MEMBERS: teamMembers.map(toTeamMember),
     TASKS,
     DOCUMENTS,

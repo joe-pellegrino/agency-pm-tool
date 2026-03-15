@@ -3,9 +3,9 @@
 import { useState, useTransition, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Project } from '@/lib/data';
+import type { Project, ClientPillar } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { createProject, updateProject } from '@/lib/actions';
+import { createProject, updateProject, getClientPillars } from '@/lib/actions';
 import { getProjectMembers } from '@/lib/actions-projects';
 import Drawer from '@/components/ui/Drawer';
 
@@ -37,9 +37,11 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     workflowTemplateId: project?.workflowTemplateId || '',
     strategyId: project?.strategyId || '',
     pillarId: project?.pillarId || '',
+    clientPillarId: project?.clientPillarId || '',
     type: project?.type || 'Project',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [clientPillars, setClientPillars] = useState<ClientPillar[]>([]);
 
   // Load existing project members on mount
   useEffect(() => {
@@ -51,6 +53,15 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
       });
     }
   }, [project?.id]);
+
+  // Fetch client pillars when clientId changes
+  useEffect(() => {
+    if (form.clientId) {
+      getClientPillars(form.clientId)
+        .then(setClientPillars)
+        .catch(err => console.error('Failed to fetch client pillars:', err));
+    }
+  }, [form.clientId]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -78,6 +89,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             workflowTemplateId: form.workflowTemplateId || undefined,
             strategyId: form.strategyId || undefined,
             pillarId: form.pillarId || undefined,
+            clientPillarId: form.clientPillarId || null,
             type: form.type,
           });
           
@@ -104,6 +116,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
             workflowTemplateId: form.workflowTemplateId || undefined,
             strategyId: form.strategyId || undefined,
             pillarId: form.pillarId || undefined,
+            clientPillarId: form.clientPillarId || null,
             type: form.type,
           });
           
@@ -240,21 +253,17 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           </select>
         </div>
 
-        {(() => {
-          const selectedStrategy = STRATEGIES.find(s => s.id === form.strategyId);
-          if (!selectedStrategy || selectedStrategy.pillars.length === 0) return null;
-          return (
-            <div>
-              <label className={labelClass}>Strategic Pillar</label>
-              <select value={form.pillarId} onChange={e => set('pillarId', e.target.value)} className={selectClass}>
-                <option value="">No pillar</option>
-                {selectedStrategy.pillars.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-          );
-        })()}
+        {clientPillars.length > 0 && (
+          <div>
+            <label className={labelClass}>Client Pillar</label>
+            <select value={form.clientPillarId} onChange={e => set('clientPillarId', e.target.value)} className={selectClass}>
+              <option value="">No pillar</option>
+              {clientPillars.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className={labelClass}>Initiative Leads</label>

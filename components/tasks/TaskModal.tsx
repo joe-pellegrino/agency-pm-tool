@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Task } from '@/lib/data';
+import type { Task, ClientPillar } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { createTask, updateTask, linkTaskToProject } from '@/lib/actions';
+import { createTask, updateTask, linkTaskToProject, getClientPillars } from '@/lib/actions';
 import Drawer from '@/components/ui/Drawer';
 
 interface TaskModalProps {
@@ -44,9 +44,20 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
     description: task?.description || '',
     projectId: defaultProjectId || '',
     pillarId: task?.pillarId || '',
+    clientPillarId: task?.clientPillarId || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [clientPillars, setClientPillars] = useState<ClientPillar[]>([]);
+
+  // Fetch client pillars when clientId changes
+  useEffect(() => {
+    if (form.clientId) {
+      getClientPillars(form.clientId)
+        .then(setClientPillars)
+        .catch(err => console.error('Failed to fetch client pillars:', err));
+    }
+  }, [form.clientId]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -84,6 +95,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             type: validType(form.type) as Task['type'],
             description: form.description,
             pillarId: form.pillarId || null,
+            clientPillarId: form.clientPillarId || null,
           });
           toast.success('Task updated');
           refresh();
@@ -101,6 +113,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             type: validType(form.type),
             description: form.description,
             pillarId: form.pillarId || null,
+            clientPillarId: form.clientPillarId || null,
           });
           if (form.projectId && created?.id) {
             await linkTaskToProject(form.projectId, created.id);
@@ -188,21 +201,17 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
           </div>
         </div>
 
-        {(() => {
-          const clientStrategy = STRATEGIES.find(s => s.clientId === form.clientId);
-          if (!clientStrategy || clientStrategy.pillars.length === 0) return null;
-          return (
-            <div>
-              <label className={labelClass}>Strategic Pillar</label>
-              <select value={form.pillarId} onChange={e => set('pillarId', e.target.value)} className={selectClass}>
-                <option value="">No pillar</option>
-                {clientStrategy.pillars.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-          );
-        })()}
+        {clientPillars.length > 0 && (
+          <div>
+            <label className={labelClass}>Client Pillar</label>
+            <select value={form.clientPillarId} onChange={e => set('clientPillarId', e.target.value)} className={selectClass}>
+              <option value="">No pillar</option>
+              {clientPillars.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
