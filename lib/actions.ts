@@ -19,6 +19,7 @@ export async function createTask(data: {
   type?: string;
   description?: string;
   isMilestone?: boolean;
+  pillarId?: string | null;
 }) {
   const { error, data: row } = await db()
     .from('tasks')
@@ -35,6 +36,7 @@ export async function createTask(data: {
       type: data.type || 'other',
       description: data.description || '',
       is_milestone: data.isMilestone || false,
+      pillar_id: data.pillarId || null,
     })
     .select()
     .single();
@@ -57,6 +59,7 @@ export async function updateTask(id: string, data: Partial<{
   type: string;
   description: string;
   isMilestone: boolean;
+  pillarId: string | null;
 }>) {
   const update: Record<string, unknown> = {};
   if (data.title !== undefined) update.title = data.title;
@@ -70,6 +73,7 @@ export async function updateTask(id: string, data: Partial<{
   if (data.type !== undefined) update.type = data.type;
   if (data.description !== undefined) update.description = data.description;
   if (data.isMilestone !== undefined) update.is_milestone = data.isMilestone;
+  if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
 
   const { error } = await db().from('tasks').update(update).eq('id', id);
   if (error) throw new Error(error.message);

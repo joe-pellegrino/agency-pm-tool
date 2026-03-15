@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState, useMemo, useEffect, useTransition, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -18,6 +19,8 @@ import {
   addServiceToStrategy, removeServiceFromStrategy, updateServiceStrategySummary,
 } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+
+const StrategyDiagram = dynamic(() => import('@/components/strategy/StrategyDiagram'), { ssr: false });
 
 const STATUS_CONFIG = {
   planning: { label: 'Planning', color: 'bg-gray-100 text-gray-600', icon: Clock },
@@ -656,13 +659,14 @@ function StrategyView({
   onEdit: () => void;
   onArchive: () => void;
 }) {
-  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], CLIENTS = [], PROJECTS = [], refresh } = useAppData();
+  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], CLIENTS = [], PROJECTS = [], TASKS = [], refresh } = useAppData();
   const client = CLIENTS.find(c => c.id === strategy.clientId)!;
   const statusCfg = STATUS_CONFIG[strategy.status];
   const allProjects = strategy.pillars.flatMap(p => PROJECTS.filter(proj => p.projectIds.includes(proj.id)));
   const uniqueProjects = [...new Map(allProjects.map(p => [p.id, p])).values()];
   const serviceStrategies = SERVICE_STRATEGIES.filter(ss => ss.clientStrategyId === strategy.id);
   const [, startTransition] = useTransition();
+  const [showDiagram, setShowDiagram] = useState(false);
 
   // Pillar modal state
   const [pillarModal, setPillarModal] = useState<{ open: boolean; pillar?: StrategyPillar | null }>({ open: false });
@@ -829,6 +833,13 @@ function StrategyView({
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
             <button
+              onClick={() => setShowDiagram(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-gray-900 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <TrendingUp size={13} />
+              Strategy Overview
+            </button>
+            <button
               onClick={onEdit}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#3B5BDB] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
             >
@@ -937,6 +948,19 @@ function StrategyView({
           </div>
         )}
       </div>
+
+      {showDiagram && (
+        <StrategyDiagram
+          strategy={strategy}
+          serviceStrategies={serviceStrategies}
+          clientServices={CLIENT_SERVICES.filter(cs => cs.clientId === strategy.clientId)}
+          services={SERVICES}
+          projects={PROJECTS}
+          tasks={TASKS}
+          pillars={strategy.pillars}
+          onClose={() => setShowDiagram(false)}
+        />
+      )}
     </div>
   );
 }

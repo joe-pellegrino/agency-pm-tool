@@ -42,6 +42,7 @@ export interface Task {
   isMilestone?: boolean;
   approvalHistory?: ApprovalEntry[];
   type?: 'social' | 'ad' | 'blog' | 'report' | 'meeting' | 'design' | 'other';
+  pillarId?: string;
 }
 
 export interface Comment {
