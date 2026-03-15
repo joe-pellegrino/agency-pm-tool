@@ -22,6 +22,8 @@ interface ProjectModalProps {
 
 export default function ProjectModal({ project, onClose }: ProjectModalProps) {
   const { CLIENTS = [], WORKFLOW_TEMPLATES = [], STRATEGIES = [], refresh } = useAppData();
+  const [isOpen, setIsOpen] = useState(true);
+  const handleClose = () => setIsOpen(false);
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState({
     clientId: project?.clientId || (CLIENTS[0]?.id || ''),
@@ -76,7 +78,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
           toast.success('Project created');
         }
         refresh();
-        onClose();
+        handleClose();
       } catch (err) {
         toast.error('Failed: ' + (err as Error).message);
       }
@@ -89,8 +91,9 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
   return (
     <Drawer
-      isOpen={true}
-      onClose={onClose}
+      isOpen={isOpen}
+      onClose={handleClose}
+      onAfterLeave={onClose}
       title={project ? 'Edit Project' : 'New Project'}
       subtitle="Fill in the information below to create your new project."
       variant="create"
@@ -98,7 +101,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
         <div className="px-6 py-4 flex justify-end gap-3">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancel

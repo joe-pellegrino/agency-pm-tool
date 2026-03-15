@@ -216,6 +216,8 @@ function TaskDetailModal({
   onArchive?: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: string) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(true);
+  const handleClose = () => setIsOpen(false);
   const { CLIENTS = [], TEAM_MEMBERS = [], TASKS = [], TIME_ENTRIES = [], refresh } = useAppData();
   // Use fallbacks for unknown client/assignee so modal always renders
   const client = CLIENTS.find(c => c.id === task.clientId) ?? { id: task.clientId, name: 'Unknown Client', color: '#9ca3af', logo: '?' };
@@ -357,7 +359,7 @@ function TaskDetailModal({
   const overdue = new Date(task.dueDate) < new Date() && task.status !== 'done';
 
   return (
-    <Drawer isOpen={true} onClose={onClose} title={task.title} variant="details">
+    <Drawer isOpen={isOpen} onClose={handleClose} onAfterLeave={onClose} title={task.title} variant="details">
       <div className="pb-16 space-y-6">
         {/* Task title + client + priority badge */}
         <div>

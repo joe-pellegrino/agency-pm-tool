@@ -7,6 +7,7 @@ import { X } from 'lucide-react';
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onAfterLeave?: () => void;
   title: string;
   subtitle?: string;
   children: ReactNode;
@@ -17,6 +18,7 @@ interface DrawerProps {
 export default function Drawer({
   isOpen,
   onClose,
+  onAfterLeave,
   title,
   subtitle,
   children,
@@ -26,7 +28,7 @@ export default function Drawer({
   const isCreate = variant === 'create';
 
   return (
-    <Transition show={isOpen} appear>
+    <Transition show={isOpen} appear afterLeave={onAfterLeave}>
       <Dialog onClose={onClose} className="relative z-[200]">
         <TransitionChild>
           <DialogBackdrop

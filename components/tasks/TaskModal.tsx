@@ -27,6 +27,8 @@ const TYPES = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'];
 
 export default function TaskModal({ task, defaultStatus = 'todo', defaultProjectId, onClose, onSuccess }: TaskModalProps) {
   const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], refresh } = useAppData();
+  const [isOpen, setIsOpen] = useState(true);
+  const handleClose = () => setIsOpen(false);
   const [isPending, startTransition] = useTransition();
 
   const [form, setForm] = useState({
@@ -104,7 +106,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
           refresh();
           onSuccess?.(null);
         }
-        onClose();
+        handleClose();
       } catch (err) {
         toast.error('Failed: ' + (err as Error).message);
       }
@@ -117,8 +119,9 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
 
   return (
     <Drawer
-      isOpen={true}
-      onClose={onClose}
+      isOpen={isOpen}
+      onClose={handleClose}
+      onAfterLeave={onClose}
       title={task ? 'Edit Task' : 'New Task'}
       subtitle="Add a new task to your workflow."
       variant="create"
@@ -126,7 +129,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
         <div className="px-6 py-4 flex justify-end gap-3">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancel
