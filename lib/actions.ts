@@ -38,9 +38,9 @@ export async function createTask(data: {
       type: data.type || 'other',
       description: data.description || '',
       is_milestone: data.isMilestone || false,
-      // pillar_id: pending DB migration
-      // is_adhoc, request_notes: pending DB migration
-
+      pillar_id: data.pillarId || null,
+      is_adhoc: data.isAdhoc ? 1 : 0,
+      request_notes: data.requestNotes || '',
     })
     .select()
     .single();
@@ -79,7 +79,7 @@ export async function updateTask(id: string, data: Partial<{
   if (data.type !== undefined) update.type = data.type;
   if (data.description !== undefined) update.description = data.description;
   if (data.isMilestone !== undefined) update.is_milestone = data.isMilestone;
-  // pillarId, isAdhoc, requestNotes: pending DB migrations
+  if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
   if (data.isAdhoc !== undefined) update.is_adhoc = data.isAdhoc ? 1 : 0;
   if (data.requestNotes !== undefined) update.request_notes = data.requestNotes;
 
@@ -358,6 +358,7 @@ export async function createProject(data: {
       workflow_template_id: data.workflowTemplateId || null,
       strategy_id: data.strategyId || null,
       pillar_id: data.pillarId || null,
+      type: data.type ?? 'Project',
     });
   if (error) throw new Error(error.message);
   revalidatePath('/initiatives');
@@ -386,7 +387,7 @@ export async function updateProject(id: string, data: Partial<{
   if (data.workflowTemplateId !== undefined) update.workflow_template_id = data.workflowTemplateId;
   if (data.strategyId !== undefined) update.strategy_id = data.strategyId;
   if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
-  // type column: pending DB migration (ALTER TABLE projects ADD COLUMN type TEXT NOT NULL DEFAULT 'Project')
+  if (data.type !== undefined) update.type = data.type;
   const { error } = await db().from('projects').update(update).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/initiatives');
