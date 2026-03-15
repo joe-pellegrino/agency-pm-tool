@@ -30,7 +30,7 @@ import {
 
 const NAV_GROUPS = [
   {
-    label: 'PAGES',
+    label: 'TOOLS',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/clients', label: 'Clients', icon: Users },
@@ -198,79 +198,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label}>
-            {/* Section label - hidden when collapsed */}
-            {!isCollapsed && (
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#6B7280',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  padding: '16px 24px 8px 24px',
-                }}
-              >
-                {group.label}
-              </div>
-            )}
-
-            {/* Nav items */}
-            <div style={{ paddingLeft: isCollapsed ? '8px' : '12px', paddingRight: isCollapsed ? '8px' : '12px' }}>
-              {group.items.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
-                return (
-                  <div key={href} style={{ position: 'relative' }}>
-                    <Link
-                      href={href}
-                      className="flex items-center"
-                      style={{
-                        ...navItemStyle(active),
-                        height: '40px',
-                        padding: isCollapsed ? '0 8px' : '0 12px',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: isCollapsed ? '0' : '12px',
-                        textDecoration: 'none',
-                        marginBottom: '4px',
-                        transition: 'all 0.15s ease',
-                        justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      }}
-                      onMouseEnter={e => {
-                        if (!active) {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'
-                          ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        if (!active) {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                          ;(e.currentTarget as HTMLElement).style.color = '#9CA3AF'
-                        }
-                      }}
-                    >
-                      <Icon size={18} color={getIconColor(active)} strokeWidth={1.5} style={{ flexShrink: 0 }} />
-                      {!isCollapsed && (
-                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {label}
-                        </span>
-                      )}
-                    </Link>
-                    {isCollapsed && (
-                      <Tooltip text={label}>
-                        <div />
-                      </Tooltip>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* Clients section */}
+        {/* Clients section - FIRST */}
         {CLIENTS.length > 0 && (
           <div>
             {!isCollapsed && (
@@ -360,8 +288,84 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
                 )
               })}
             </div>
+
+            {/* Visual separator between CLIENTS and TOOLS */}
+            <div style={{ margin: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} />
           </div>
         )}
+
+        {/* TOOLS section */}
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label}>
+            {/* Section label - hidden when collapsed */}
+            {!isCollapsed && (
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#6B7280',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  padding: '16px 24px 8px 24px',
+                }}
+              >
+                {group.label}
+              </div>
+            )}
+
+            {/* Nav items */}
+            <div style={{ paddingLeft: isCollapsed ? '8px' : '12px', paddingRight: isCollapsed ? '8px' : '12px' }}>
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+                return (
+                  <div key={href} style={{ position: 'relative' }}>
+                    <Link
+                      href={href}
+                      className="flex items-center"
+                      style={{
+                        ...navItemStyle(active),
+                        height: '40px',
+                        padding: isCollapsed ? '0 8px' : '0 12px',
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: isCollapsed ? '0' : '12px',
+                        textDecoration: 'none',
+                        marginBottom: '4px',
+                        transition: 'all 0.15s ease',
+                        justifyContent: isCollapsed ? 'center' : 'flex-start',
+                      }}
+                      onMouseEnter={e => {
+                        if (!active) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'
+                          ;(e.currentTarget as HTMLElement).style.color = getHoverTextColor()
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!active) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                          ;(e.currentTarget as HTMLElement).style.color = '#9CA3AF'
+                        }
+                      }}
+                    >
+                      <Icon size={18} color={getIconColor(active)} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                      {!isCollapsed && (
+                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {label}
+                        </span>
+                      )}
+                    </Link>
+                    {isCollapsed && (
+                      <Tooltip text={label}>
+                        <div />
+                      </Tooltip>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
     </div>

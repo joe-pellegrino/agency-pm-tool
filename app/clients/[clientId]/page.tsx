@@ -667,11 +667,12 @@ function ProjectDetailDrawer({
   );
 }
 
-type ClientTab = 'overview' | 'projects' | 'tasks' | 'paid-ads' | 'budget' | 'documents';
+type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
   { id: 'overview', label: 'Overview', icon: Activity },
   { id: 'projects', label: 'Initiatives', icon: FolderOpen },
+  { id: 'pillars', label: 'Pillars', icon: Target },
   { id: 'tasks', label: 'Tasks', icon: CheckCircle },
   { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
   { id: 'budget', label: 'Budget', icon: DollarSign },
@@ -1114,6 +1115,96 @@ export default function ClientPage() {
                       </div>
                     </button>
                   ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {activeTab === 'pillars' && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <Target size={18} style={{ color: 'var(--color-primary)' }} />
+              Strategy Pillars
+            </h2>
+            {(() => {
+              const clientStrategy = STRATEGIES.find(s => s.clientId === clientId);
+              if (!clientStrategy) {
+                return (
+                  <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                    <Target size={32} className="mx-auto mb-3 opacity-30 text-gray-400" />
+                    <p className="text-sm font-medium text-gray-400 mb-3">No strategy yet for this client</p>
+                    <a href="/strategy" className="text-sm text-[#3B5BDB] hover:underline">Create a strategy →</a>
+                  </div>
+                );
+              }
+              if (clientStrategy.pillars.length === 0) {
+                return <p className="text-gray-400 text-sm">No pillars defined yet. <a href="/strategy" className="text-[#3B5BDB] hover:underline">Add pillars in Strategy →</a></p>;
+              }
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {clientStrategy.pillars.map(pillar => {
+                    // Count initiatives linked to this pillar
+                    const linkedInitiatives = PROJECTS.filter(p => p.pillarId === pillar.id && p.clientId === clientId);
+                    // Count tasks linked to this pillar
+                    const linkedTasks = TASKS.filter(t => t.pillarId === pillar.id && t.clientId === clientId);
+
+                    return (
+                      <div
+                        key={pillar.id}
+                        className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                      >
+                        <div
+                          className="px-4 py-3 border-b border-gray-100 dark:border-gray-700"
+                          style={{ backgroundColor: 'var(--color-primary)' + '10' }}
+                        >
+                          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{pillar.name}</h3>
+                          {pillar.description && (
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{pillar.description}</p>
+                          )}
+                        </div>
+                        <div className="px-4 py-3 space-y-3">
+                          {/* KPIs */}
+                          {pillar.kpis.length > 0 && (
+                            <div>
+                              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">KPIs</div>
+                              <div className="space-y-2">
+                                {pillar.kpis.map(kpi => {
+                                  const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('cpc');
+                                  const pct = lb
+                                    ? Math.max(0, Math.min(100, (kpi.target / Math.max(kpi.current, 0.01)) * 100))
+                                    : Math.max(0, Math.min(100, (kpi.current / kpi.target) * 100));
+                                  const barColor = pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-400';
+                                  return (
+                                    <div key={kpi.id} className="space-y-1">
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{kpi.name}</span>
+                                        <span className="text-gray-500 flex-shrink-0 ml-2">{Math.round(pct)}%</span>
+                                      </div>
+                                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div className={`h-1.5 rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {/* Linked work */}
+                          <div className="flex items-center gap-4 text-xs text-gray-500 pt-1 border-t border-gray-100 dark:border-gray-700">
+                            <span className="flex items-center gap-1">
+                              <FolderOpen size={11} />
+                              {linkedInitiatives.length} initiatives
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <CheckCircle size={11} />
+                              {linkedTasks.length} tasks
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })()}
