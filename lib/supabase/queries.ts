@@ -214,6 +214,7 @@ function toStrategy(r: Row, pillars: StrategyPillar[]): Strategy {
     id: r.id as string,
     clientId: r.client_id as string,
     name: r.name as string,
+    description: r.description as string ?? '',
     quarter: r.quarter as string,
     startDate: r.start_date as string,
     endDate: r.end_date as string,

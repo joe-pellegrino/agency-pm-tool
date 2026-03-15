@@ -191,6 +191,7 @@ interface StrategyRow {
   id: string;
   client_id: string;
   name: string;
+  description?: string;
   quarter: string;
   start_date: string;
   end_date: string;
@@ -469,6 +470,7 @@ function mapStrategy(row: StrategyRow, pillars: StrategyPillar[]): Strategy {
     id: row.id,
     clientId: row.client_id,
     name: row.name,
+    description: row.description as string ?? '',
     quarter: row.quarter,
     startDate: row.start_date,
     endDate: row.end_date,

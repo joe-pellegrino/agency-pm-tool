@@ -405,6 +405,7 @@ export async function unlinkTaskFromProject(projectId: string, taskId: string) {
 export async function createStrategy(data: {
   clientId: string;
   name: string;
+  description?: string;
   quarter: string;
   startDate: string;
   endDate: string;
@@ -417,6 +418,7 @@ export async function createStrategy(data: {
       id,
       client_id: data.clientId,
       name: data.name,
+      description: data.description ?? '',
       quarter: data.quarter,
       start_date: data.startDate,
       end_date: data.endDate,
@@ -429,6 +431,7 @@ export async function createStrategy(data: {
 
 export async function updateStrategy(id: string, data: Partial<{
   name: string;
+  description: string;
   quarter: string;
   startDate: string;
   endDate: string;
@@ -436,6 +439,7 @@ export async function updateStrategy(id: string, data: Partial<{
 }>) {
   const update: Record<string, unknown> = {};
   if (data.name !== undefined) update.name = data.name;
+  if (data.description !== undefined) update.description = data.description;
   if (data.quarter !== undefined) update.quarter = data.quarter;
   if (data.startDate !== undefined) update.start_date = data.startDate;
   if (data.endDate !== undefined) update.end_date = data.endDate;
@@ -1247,4 +1251,40 @@ export async function moveDocumentToFolder(documentId: string, folderId: string 
     .eq('id', documentId);
   if (error) throw new Error(error.message);
   revalidatePath('/documents');
+}
+
+// ─── SERVICE STRATEGIES ─────────────────────────────────────────────────────
+
+export async function addServiceToStrategy(clientServiceId: string, strategyId: string): Promise<string> {
+  const id = `ss-${Date.now()}`;
+  const { error } = await db()
+    .from('service_strategies')
+    .insert({
+      id,
+      client_service_id: clientServiceId,
+      client_strategy_id: strategyId,
+      name: '',
+      summary: '',
+    });
+  if (error) throw new Error(error.message);
+  revalidatePath('/strategy');
+  return id;
+}
+
+export async function removeServiceFromStrategy(serviceStrategyId: string): Promise<void> {
+  const { error } = await db()
+    .from('service_strategies')
+    .delete()
+    .eq('id', serviceStrategyId);
+  if (error) throw new Error(error.message);
+  revalidatePath('/strategy');
+}
+
+export async function updateServiceStrategySummary(id: string, summary: string): Promise<void> {
+  const { error } = await db()
+    .from('service_strategies')
+    .update({ summary, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/strategy');
 }

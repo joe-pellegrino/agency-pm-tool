@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useTransition, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Strategy, StrategyPillar, KPI, ServiceStrategy } from '@/lib/data';
+import { Strategy, StrategyPillar, KPI, ServiceStrategy, Service, ClientService } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
@@ -15,6 +15,7 @@ import {
   createStrategy, updateStrategy, archiveStrategy,
   createStrategyPillar, updateStrategyPillar, archiveStrategyPillar,
   createStrategyKPI, updateStrategyKPI, archiveStrategyKPI,
+  addServiceToStrategy, removeServiceFromStrategy, updateServiceStrategySummary,
 } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
@@ -527,6 +528,123 @@ function PillarCard({
   );
 }
 
+// ─── Service Strategy Item ───────────────────────────────────────────────────
+
+function ServiceStrategyItem({
+  cs,
+  service,
+  linked,
+  strategyId,
+  onRefresh,
+}: {
+  cs: ClientService;
+  service?: Service;
+  linked?: ServiceStrategy;
+  strategyId: string;
+  onRefresh: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [summary, setSummary] = useState(linked?.summary ?? '');
+  const [isEditingSummary, setIsEditingSummary] = useState(false);
+
+  // Sync summary when linked changes
+  useEffect(() => {
+    setSummary(linked?.summary ?? '');
+  }, [linked?.summary]);
+
+  const handleLink = () => {
+    startTransition(async () => {
+      try {
+        await addServiceToStrategy(cs.id, strategyId);
+        toast.success(`${service?.name ?? 'Service'} linked to strategy`);
+        onRefresh();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  const handleUnlink = () => {
+    if (!linked) return;
+    startTransition(async () => {
+      try {
+        await removeServiceFromStrategy(linked.id);
+        toast.success(`${service?.name ?? 'Service'} removed from strategy`);
+        onRefresh();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  const handleSaveSummary = () => {
+    if (!linked) return;
+    setIsEditingSummary(false);
+    startTransition(async () => {
+      try {
+        await updateServiceStrategySummary(linked.id, summary);
+        onRefresh();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  return (
+    <div className={`rounded-xl border p-4 transition-all ${linked ? 'border-[#3B5BDB] bg-[#EEF2FF]/30 dark:bg-indigo-900/10' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 opacity-70'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+            style={{ backgroundColor: linked ? '#3B5BDB' : '#9ca3af' }}
+          >
+            {(service?.name ?? 'S').charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{service?.name ?? 'Service'}</div>
+            <div className="text-xs text-gray-400">{service?.category ?? ''}</div>
+          </div>
+        </div>
+        <button
+          onClick={linked ? handleUnlink : handleLink}
+          disabled={isPending}
+          className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60 ${
+            linked
+              ? 'text-red-500 hover:bg-red-50 border border-red-200'
+              : 'text-[#3B5BDB] hover:bg-[#EEF2FF] border border-[#C7D2FE]'
+          }`}
+        >
+          {isPending ? '...' : linked ? 'Remove' : 'Add'}
+        </button>
+      </div>
+
+      {linked && (
+        <div className="mt-3">
+          <label className="block text-xs font-semibold text-gray-500 mb-1">Relevance to Strategy</label>
+          {isEditingSummary ? (
+            <textarea
+              value={summary}
+              onChange={e => setSummary(e.target.value)}
+              onBlur={handleSaveSummary}
+              autoFocus
+              rows={3}
+              placeholder="How does this service contribute to the strategy?"
+              className="w-full text-xs border border-[#3B5BDB] rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none resize-none"
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditingSummary(true)}
+              className="w-full text-left text-xs text-gray-500 italic hover:text-gray-700 transition-colors min-h-[40px]"
+            >
+              {summary || 'Click to add relevance note...'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Strategy View ────────────────────────────────────────────────────────────
 
 function StrategyView({
@@ -553,6 +671,9 @@ function StrategyView({
   // Delete confirm state
   const [deletePillarId, setDeletePillarId] = useState<string | null>(null);
   const [deleteKpiId, setDeleteKpiId] = useState<string | null>(null);
+  // Description edit state
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState(strategy.description);
 
   const overallHealth = (() => {
     if (strategy.pillars.length === 0) return 'on-track';
@@ -586,6 +707,18 @@ function StrategyView({
       try {
         await archiveStrategyKPI(id);
         toast.success('KPI removed');
+        refresh?.();
+      } catch (err) {
+        toast.error('Failed: ' + (err as Error).message);
+      }
+    });
+  };
+
+  const handleSaveDescription = () => {
+    setIsEditingDesc(false);
+    startTransition(async () => {
+      try {
+        await updateStrategy(strategy.id, { description: descValue });
         refresh?.();
       } catch (err) {
         toast.error('Failed: ' + (err as Error).message);
@@ -654,6 +787,23 @@ function StrategyView({
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{strategy.name}</h2>
+            {isEditingDesc ? (
+              <textarea
+                value={descValue}
+                onChange={(e) => setDescValue(e.target.value)}
+                onBlur={handleSaveDescription}
+                autoFocus
+                rows={2}
+                className="w-full mt-2 text-sm border border-[#3B5BDB] rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none resize-none"
+              />
+            ) : (
+              <button
+                onClick={() => setIsEditingDesc(true)}
+                className="mt-1 text-sm text-gray-500 italic hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-left"
+              >
+                {descValue || 'Add a strategy description...'}
+              </button>
+            )}
             <div className="flex items-center gap-3 mt-1.5 text-sm text-gray-500 flex-wrap">
               <div className="flex items-center gap-1">
                 <Calendar size={13} />
@@ -702,23 +852,42 @@ function StrategyView({
         </div>
       </div>
 
-      {/* Service Strategies */}
-      {serviceStrategies.length > 0 && (
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
+      {/* Services Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
             <Zap size={16} className="text-[#3B5BDB]" />
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">Service Strategies</h3>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white">Services</h3>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-              {serviceStrategies.length} services
+              {serviceStrategies.length} linked
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {serviceStrategies.map(ss => (
-              <ServiceStrategyCard key={ss.id} ss={ss} clientColor={'#000000'} />
-            ))}
-          </div>
         </div>
-      )}
+
+        {(() => {
+          const allClientServices = CLIENT_SERVICES.filter(cs => cs.clientId === strategy.clientId);
+          return allClientServices.length === 0 ? (
+            <p className="text-sm text-gray-400 italic">No services added to this client yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {allClientServices.map(cs => {
+                const service = SERVICES.find(s => s.id === cs.serviceId);
+                const linked = serviceStrategies.find(ss => ss.clientServiceId === cs.id);
+                return (
+                  <ServiceStrategyItem
+                    key={cs.id}
+                    cs={cs}
+                    service={service}
+                    linked={linked}
+                    strategyId={strategy.id}
+                    onRefresh={refresh}
+                  />
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
 
       {/* Core Strategy Pillars */}
       <div>
@@ -788,6 +957,7 @@ function StrategyModal({
   const [selectedClientId, setSelectedClientId] = useState(clientId || strategy?.clientId || CLIENTS[0]?.id || '');
   const [form, setForm] = useState({
     name: strategy?.name || 'Q1 2025 Strategy',
+    description: strategy?.description || '',
     quarter: strategy?.quarter || 'Q1 2025',
     startDate: strategy?.startDate || new Date().toISOString().split('T')[0],
     endDate: strategy?.endDate || (() => { const d = new Date(); d.setMonth(d.getMonth() + 3); return d.toISOString().split('T')[0]; })(),
@@ -845,6 +1015,16 @@ function StrategyModal({
           <div>
             <label className={labelClass}>Name</label>
             <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className={inputClass} autoFocus={!!clientId} />
+          </div>
+          <div>
+            <label className={labelClass}>Description</label>
+            <textarea 
+              value={form.description} 
+              onChange={e => setForm(p => ({ ...p, description: e.target.value }))} 
+              placeholder="Describe the overall strategy direction and goals..."
+              rows={3}
+              className={`${inputClass} resize-none`}
+            />
           </div>
           <div>
             <label className={labelClass}>Quarter</label>

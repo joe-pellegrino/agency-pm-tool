@@ -1233,6 +1233,7 @@ export interface Strategy {
   id: string;
   clientId: string;
   name: string;
+  description: string;
   quarter: string;
   startDate: string;
   endDate: string;
@@ -1520,6 +1521,7 @@ export const STRATEGIES: Strategy[] = [
     id: 'strat-hd-1',
     clientId: 'happy-days',
     name: 'Q2 2026 Growth Strategy',
+    description: '',
     quarter: 'Q2 2026',
     startDate: '2026-04-01',
     endDate: '2026-06-30',
@@ -1561,6 +1563,7 @@ export const STRATEGIES: Strategy[] = [
     id: 'strat-kp-1',
     clientId: 'k-pacho',
     name: 'Q2 2026 Engagement Strategy',
+    description: '',
     quarter: 'Q2 2026',
     startDate: '2026-04-01',
     endDate: '2026-06-30',
@@ -1592,6 +1595,7 @@ export const STRATEGIES: Strategy[] = [
     id: 'strat-tr-1',
     clientId: 'the-refuge',
     name: 'Q2 2026 Launch Strategy',
+    description: '',
     quarter: 'Q2 2026',
     startDate: '2026-04-01',
     endDate: '2026-06-30',
