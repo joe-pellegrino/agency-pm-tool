@@ -1411,3 +1411,234 @@ export async function setStrategyTargetedPillars(strategyId: string, clientPilla
   if (error) throw new Error(error.message);
   revalidatePath('/strategy');
 }
+
+// ─── RECURRING TASK TEMPLATES ──────────────────────────────────────────────────
+
+export async function createRecurringTemplate(data: {
+  clientId: string;
+  pillarId?: string | null;
+  clientPillarId?: string | null;
+  title: string;
+  description?: string;
+  assigneeId?: string;
+  priority: string;
+  type: string;
+  recurrenceType: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  recurrenceDays?: number[];
+  recurrenceDayOfMonth?: number;
+  advanceDays?: number;
+}) {
+  const id = `rtemplate-${Date.now()}`;
+  const { error, data: row } = await db()
+    .from('recurring_task_templates')
+    .insert({
+      id,
+      client_id: data.clientId,
+      pillar_id: data.pillarId || null,
+      client_pillar_id: data.clientPillarId || null,
+      title: data.title,
+      description: data.description || '',
+      assignee_id: data.assigneeId || null,
+      priority: data.priority,
+      type: data.type,
+      recurrence_type: data.recurrenceType,
+      recurrence_days: data.recurrenceDays || null,
+      recurrence_day_of_month: data.recurrenceDayOfMonth || null,
+      advance_days: data.advanceDays || 3,
+      active: true,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+  revalidatePath('/kanban');
+  return row;
+}
+
+export async function updateRecurringTemplate(
+  id: string,
+  data: Partial<{
+    title: string;
+    description: string;
+    assigneeId: string;
+    priority: string;
+    type: string;
+    recurrenceType: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+    recurrenceDays: number[];
+    recurrenceDayOfMonth: number;
+    advanceDays: number;
+    active: boolean;
+  }>
+) {
+  const update: Record<string, unknown> = {};
+  if (data.title !== undefined) update.title = data.title;
+  if (data.description !== undefined) update.description = data.description;
+  if (data.assigneeId !== undefined) update.assignee_id = data.assigneeId;
+  if (data.priority !== undefined) update.priority = data.priority;
+  if (data.type !== undefined) update.type = data.type;
+  if (data.recurrenceType !== undefined) update.recurrence_type = data.recurrenceType;
+  if (data.recurrenceDays !== undefined) update.recurrence_days = data.recurrenceDays;
+  if (data.recurrenceDayOfMonth !== undefined) update.recurrence_day_of_month = data.recurrenceDayOfMonth;
+  if (data.advanceDays !== undefined) update.advance_days = data.advanceDays;
+  if (data.active !== undefined) update.active = data.active;
+  update.updated_at = new Date().toISOString();
+
+  const { error } = await db().from('recurring_task_templates').update(update).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+  revalidatePath('/kanban');
+}
+
+export async function deleteRecurringTemplate(id: string) {
+  const { error } = await db().from('recurring_task_templates').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+  revalidatePath('/kanban');
+}
+
+export async function getRecurringTemplates(clientId: string) {
+  const { data, error } = await db()
+    .from('recurring_task_templates')
+    .select('*')
+    .eq('client_id', clientId)
+    .eq('active', true)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(r => ({
+    id: r.id as string,
+    clientId: r.client_id as string,
+    pillarId: r.pillar_id as string | null,
+    clientPillarId: r.client_pillar_id as string | null,
+    title: r.title as string,
+    description: r.description as string,
+    assigneeId: r.assignee_id as string | null,
+    priority: r.priority as string,
+    type: r.type as string,
+    recurrenceType: r.recurrence_type as string,
+    recurrenceDays: r.recurrence_days as number[] | null,
+    recurrenceDayOfMonth: r.recurrence_day_of_month as number | null,
+    advanceDays: r.advance_days as number,
+    active: r.active as boolean,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  }));
+}
+
+export async function generateRecurringTaskInstances() {
+  try {
+    const templates = await db()
+      .from('recurring_task_templates')
+      .select('*')
+      .eq('active', true);
+    
+    if (!templates.data) {
+      return { created: 0, skipped: 0 };
+    }
+
+    let created = 0;
+    let skipped = 0;
+    const today = new Date();
+    const futureDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days ahead
+
+    for (const template of templates.data) {
+      const instances = calculateRecurrenceInstances(
+        today,
+        futureDate,
+        template.recurrence_type,
+        template.recurrence_days,
+        template.recurrence_day_of_month
+      );
+
+      for (const instanceDate of instances) {
+        // Check if task already exists for this date
+        const { data: existing } = await db()
+          .from('tasks')
+          .select('id')
+          .eq('recurring_template_id', template.id)
+          .eq('recurrence_instance_date', instanceDate.toISOString().split('T')[0])
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          skipped++;
+          continue;
+        }
+
+        // Create task instance
+        const advanceDays = template.advance_days || 3;
+        const dueDate = new Date(instanceDate.getTime() - advanceDays * 24 * 60 * 60 * 1000);
+        const dueeDateStr = dueDate.toISOString().split('T')[0];
+        const instanceDateStr = instanceDate.toISOString().split('T')[0];
+
+        const { error } = await db()
+          .from('tasks')
+          .insert({
+            id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            client_id: template.client_id,
+            pillar_id: template.pillar_id,
+            client_pillar_id: template.client_pillar_id,
+            title: template.title,
+            description: template.description,
+            assignee_id: template.assignee_id,
+            priority: template.priority,
+            type: template.type,
+            status: 'To Do',
+            due_date: dueeDateStr,
+            start_date: dueeDateStr,
+            end_date: instanceDateStr,
+            recurring_template_id: template.id,
+            recurrence_instance_date: instanceDateStr,
+            is_milestone: false,
+            is_adhoc: 0,
+          });
+
+        if (!error) {
+          created++;
+        }
+      }
+    }
+
+    revalidatePath('/kanban');
+    revalidatePath('/clients');
+    return { created, skipped, nextRun: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString() };
+  } catch (error) {
+    console.error('Error generating recurring task instances:', error);
+    throw error;
+  }
+}
+
+function calculateRecurrenceInstances(
+  startDate: Date,
+  endDate: Date,
+  recurrenceType: string,
+  recurrenceDays: number[] | null,
+  recurrenceDayOfMonth: number | null
+): Date[] {
+  const instances: Date[] = [];
+  const current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+
+  while (current <= endDate) {
+    let shouldInclude = false;
+
+    if (recurrenceType === 'daily') {
+      shouldInclude = true;
+    } else if (recurrenceType === 'weekly') {
+      const dayOfWeek = current.getDay();
+      shouldInclude = recurrenceDays ? recurrenceDays.includes(dayOfWeek) : false;
+    } else if (recurrenceType === 'biweekly') {
+      const dayOfWeek = current.getDay();
+      const weekNum = Math.floor((current.getDate() - 1) / 7);
+      shouldInclude = recurrenceDays ? recurrenceDays.includes(dayOfWeek) && weekNum % 2 === 0 : false;
+    } else if (recurrenceType === 'monthly') {
+      shouldInclude = current.getDate() === recurrenceDayOfMonth;
+    }
+
+    if (shouldInclude && current >= startDate) {
+      instances.push(new Date(current));
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return instances;
+}

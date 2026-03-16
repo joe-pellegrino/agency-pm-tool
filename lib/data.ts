@@ -66,6 +66,27 @@ export interface Task {
   clientPillarId?: string | null;
   isAdhoc?: boolean;
   requestNotes?: string;
+  recurringTemplateId?: string | null;
+  recurrenceInstanceDate?: string | null;
+}
+
+export interface RecurringTemplate {
+  id: string;
+  clientId: string;
+  pillarId?: string | null;
+  clientPillarId?: string | null;
+  title: string;
+  description: string;
+  assigneeId?: string | null;
+  priority: string;
+  type: string;
+  recurrenceType: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  recurrenceDays?: number[] | null;
+  recurrenceDayOfMonth?: number | null;
+  advanceDays: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Comment {

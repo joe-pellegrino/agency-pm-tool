@@ -9,10 +9,10 @@ import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, Zap, ArrowLeft,
-  X, Loader2, Megaphone, Edit2, Save, DollarSign, FileText,
+  X, Loader2, Megaphone, Edit2, Save, DollarSign, FileText, RefreshCw, Pause, Play, Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { upsertClientService, removeClientService, updateClient } from '@/lib/actions';
+import { upsertClientService, removeClientService, updateClient, updateRecurringTemplate, deleteRecurringTemplate } from '@/lib/actions';
 import { getBudgetProgress } from '@/lib/actions-budget';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Drawer from '@/components/ui/Drawer';
@@ -788,6 +788,133 @@ function ClientInfoEditor({
   );
 }
 
+function RecurringTemplatesSection({ clientId }: { clientId: string }) {
+  const { RECURRING_TEMPLATES = [], TEAM_MEMBERS = [], refresh } = useAppData();
+  const [isPending, startTransition] = useTransition();
+  const clientRecurringTemplates = RECURRING_TEMPLATES.filter(t => t.clientId === clientId && t.active);
+  const [showNewTask, setShowNewTask] = useState(false);
+
+  if (clientRecurringTemplates.length === 0) {
+    return (
+      <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+            <RefreshCw size={18} style={{ color: 'var(--color-primary)' }} />
+            Recurring Templates
+          </h2>
+          <button
+            onClick={() => setShowNewTask(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          >
+            <Plus size={14} />
+            New Recurring Task
+          </button>
+        </div>
+        <p className="text-gray-400">No recurring tasks for this client.</p>
+        {showNewTask && (
+          <TaskModal
+            defaultStatus="todo"
+            onClose={() => setShowNewTask(false)}
+            onSuccess={() => {
+              setShowNewTask(false);
+              refresh?.();
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+          <RefreshCw size={18} style={{ color: 'var(--color-primary)' }} />
+          Recurring Templates
+        </h2>
+        <button
+          onClick={() => setShowNewTask(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors"
+          style={{ backgroundColor: 'var(--color-primary)' }}
+        >
+          <Plus size={14} />
+          New Recurring Task
+        </button>
+      </div>
+      <div className="space-y-2">
+        {clientRecurringTemplates.map(template => {
+          const cadenceLabel = template.recurrenceType === 'daily' ? 'Daily'
+            : template.recurrenceType === 'weekly' ? `Every ${template.recurrenceDays?.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(' & ')}`
+            : template.recurrenceType === 'biweekly' ? `Bi-weekly on ${template.recurrenceDays?.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(' & ')}`
+            : `Monthly on day ${template.recurrenceDayOfMonth}`;
+          const assignee = TEAM_MEMBERS.find(m => m.id === template.assigneeId)?.name || 'Unassigned';
+          return (
+            <div
+              key={template.id}
+              className="flex items-center gap-3 py-2 px-3 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+            >
+              <RefreshCw size={14} className="text-indigo-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{template.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{cadenceLabel} • {assignee}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        await updateRecurringTemplate(template.id, { active: false });
+                        toast.success('Recurring task paused');
+                        refresh?.();
+                      } catch (err) {
+                        toast.error('Failed: ' + (err as Error).message);
+                      }
+                    });
+                  }}
+                  disabled={isPending}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  title="Pause template"
+                >
+                  <Pause size={14} className="text-gray-500" />
+                </button>
+                <button
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        await deleteRecurringTemplate(template.id);
+                        toast.success('Recurring task deleted');
+                        refresh?.();
+                      } catch (err) {
+                        toast.error('Failed: ' + (err as Error).message);
+                      }
+                    });
+                  }}
+                  disabled={isPending}
+                  className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                  title="Delete template"
+                >
+                  <Trash2 size={14} className="text-red-500" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {showNewTask && (
+        <TaskModal
+          defaultStatus="todo"
+          onClose={() => setShowNewTask(false)}
+          onSuccess={() => {
+            setShowNewTask(false);
+            refresh?.();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function ClientPage() {
   const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], DOCUMENTS = [], ASSETS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], refresh } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
@@ -1376,6 +1503,10 @@ export default function ClientPage() {
                 }}
               />
             )}
+
+            {/* Recurring Templates Section */}
+            <RecurringTemplatesSection clientId={clientId} />
+            
           </div>
         )}
 

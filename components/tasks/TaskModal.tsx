@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Task, ClientPillar } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { createTask, updateTask, linkTaskToProject, getClientPillars } from '@/lib/actions';
+import { createTask, updateTask, linkTaskToProject, getClientPillars, createRecurringTemplate, generateRecurringTaskInstances } from '@/lib/actions';
 import Drawer from '@/components/ui/Drawer';
 
 interface TaskModalProps {
@@ -45,6 +45,11 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
     projectId: defaultProjectId || '',
     pillarId: task?.pillarId || '',
     clientPillarId: task?.clientPillarId || '',
+    isRecurring: false,
+    recurrenceType: 'weekly',
+    recurrenceDays: [1, 3, 5],
+    recurrenceDayOfMonth: 15,
+    advanceDays: 3,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -82,7 +87,30 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
 
     startTransition(async () => {
       try {
-        if (task) {
+        if (form.isRecurring && !task) {
+          // Create recurring template
+          await createRecurringTemplate({
+            clientId: form.clientId,
+            pillarId: form.pillarId || null,
+            clientPillarId: form.clientPillarId || null,
+            title: form.title,
+            description: form.description,
+            assigneeId: form.assigneeId,
+            priority: form.priority,
+            type: form.type,
+            recurrenceType: form.recurrenceType as 'daily' | 'weekly' | 'biweekly' | 'monthly',
+            recurrenceDays: form.recurrenceType === 'weekly' || form.recurrenceType === 'biweekly' ? form.recurrenceDays : undefined,
+            recurrenceDayOfMonth: form.recurrenceType === 'monthly' ? form.recurrenceDayOfMonth : undefined,
+            advanceDays: form.advanceDays,
+          });
+          
+          // Generate first batch of instances
+          const result = await generateRecurringTaskInstances();
+          const endDate = new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString();
+          toast.success(`Recurring task created — ${result.created} instances generated through ${endDate}`);
+          refresh();
+          onSuccess?.(null);
+        } else if (task) {
           await updateTask(task.id, {
             title: form.title,
             clientId: form.clientId,
@@ -276,6 +304,105 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             className={`${inputClass} resize-none`}
           />
         </div>
+
+        {!task && (
+          <>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.isRecurring}
+                  onChange={e => setForm(prev => ({ ...prev, isRecurring: e.target.checked }))}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                  <RefreshCw size={14} />
+                  This task repeats
+                </span>
+              </label>
+            </div>
+
+            {form.isRecurring && (
+              <div className="space-y-4 bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                <div>
+                  <label className={labelClass}>Recurrence</label>
+                  <div className="flex gap-2 mt-2">
+                    {['daily', 'weekly', 'biweekly', 'monthly'].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, recurrenceType: type }))}
+                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                          form.recurrenceType === type
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'
+                        }`}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {(form.recurrenceType === 'weekly' || form.recurrenceType === 'biweekly') && (
+                  <div>
+                    <label className={labelClass}>Days of Week</label>
+                    <div className="grid grid-cols-7 gap-2 mt-2">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setForm(prev => ({
+                              ...prev,
+                              recurrenceDays: prev.recurrenceDays.includes(i)
+                                ? prev.recurrenceDays.filter(d => d !== i)
+                                : [...prev.recurrenceDays, i].sort()
+                            }));
+                          }}
+                          className={`px-2 py-1 rounded text-sm font-medium transition-colors ${
+                            form.recurrenceDays.includes(i)
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {form.recurrenceType === 'monthly' && (
+                  <div>
+                    <label className={labelClass}>Day of Month</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={form.recurrenceDayOfMonth}
+                      onChange={e => setForm(prev => ({ ...prev, recurrenceDayOfMonth: parseInt(e.target.value) }))}
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className={labelClass}>Create in Advance (days)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="30"
+                    value={form.advanceDays}
+                    onChange={e => setForm(prev => ({ ...prev, advanceDays: parseInt(e.target.value) }))}
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Tasks will be created this many days before the due date</p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </form>
     </Drawer>
   );

@@ -5,7 +5,7 @@
 import { createServerClient } from './client';
 import type {
   Client, ClientPillar, ClientPillarKpi, TeamMember, Task, ApprovalEntry, Document, Comment, DocumentVersion,
-  DocumentFolder,
+  DocumentFolder, RecurringTemplate,
   TaskTemplate, Automation, TimeEntry, Asset, WorkflowTemplate,
   WorkflowStep, Strategy, StrategyPillar, KPI, Project, Service,
   ClientService, ServiceStrategy, ServiceStrategyPillar, ServiceStrategyKPI,
@@ -85,6 +85,29 @@ function toTask(r: Row, deps: string[], approvals: ApprovalEntry[]): Task {
     clientPillarId: (r.client_pillar_id as string) || null,
     isAdhoc: Boolean(r.is_adhoc),
     requestNotes: (r.request_notes as string) || undefined,
+    recurringTemplateId: (r.recurring_template_id as string) || null,
+    recurrenceInstanceDate: (r.recurrence_instance_date as string) || null,
+  };
+}
+
+function toRecurringTemplate(r: Row): RecurringTemplate {
+  return {
+    id: r.id as string,
+    clientId: r.client_id as string,
+    pillarId: (r.pillar_id as string) || null,
+    clientPillarId: (r.client_pillar_id as string) || null,
+    title: r.title as string,
+    description: r.description as string,
+    assigneeId: (r.assignee_id as string) || null,
+    priority: r.priority as string,
+    type: r.type as string,
+    recurrenceType: r.recurrence_type as 'daily' | 'weekly' | 'biweekly' | 'monthly',
+    recurrenceDays: (r.recurrence_days as number[] | null) || null,
+    recurrenceDayOfMonth: (r.recurrence_day_of_month as number) || null,
+    advanceDays: r.advance_days as number,
+    active: r.active as boolean,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
   };
 }
 
@@ -378,6 +401,7 @@ export interface AppData {
   TASKS: Task[];
   DOCUMENTS: Document[];
   DOCUMENT_FOLDERS: DocumentFolder[];
+  RECURRING_TEMPLATES: RecurringTemplate[];
   TASK_TEMPLATES: TaskTemplate[];
   AUTOMATIONS: Automation[];
   TIME_ENTRIES: TimeEntry[];
@@ -417,6 +441,7 @@ export async function getAllData(): Promise<AppData> {
     ssRes, ssPillarsRes, ssKpisRes,
     kbCategoriesRes, kbArticlesRes,
     docFoldersRes,
+    recurringTemplatesRes,
   ] = await Promise.all([
     db.from('clients').select('*').is('archived_at', null),
     db.from('team_members').select('*').is('archived_at', null),
@@ -454,6 +479,7 @@ export async function getAllData(): Promise<AppData> {
     db.from('kb_categories').select('*').is('archived_at', null),
     db.from('kb_articles').select('*').is('archived_at', null),
     db.from('document_folders').select('*').is('archived_at', null),
+    db.from('recurring_task_templates').select('*').eq('active', true),
   ]);
 
   const clients = clientsRes.data ?? [];
@@ -618,6 +644,7 @@ export async function getAllData(): Promise<AppData> {
     TASKS,
     DOCUMENTS,
     DOCUMENT_FOLDERS: docFolderRows.map(toDocumentFolder),
+    RECURRING_TEMPLATES: recurringTemplatesRes.data?.map(toRecurringTemplate) ?? [],
     TASK_TEMPLATES: templateRows.map(toTaskTemplate),
     AUTOMATIONS: automationRows.map(toAutomation),
     TIME_ENTRIES: timeRows.map(toTimeEntry),

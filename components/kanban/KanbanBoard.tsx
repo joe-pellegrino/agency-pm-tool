@@ -21,7 +21,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PRIORITY_COLORS, PRIORITY_DOT, Status, Task, ApprovalEntry, TimeEntry } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight, Archive, Pencil, Loader2 } from 'lucide-react';
+import { CalendarDays, Plus, ChevronDown, Filter, X, CheckCircle, XCircle, Clock, History, Play, Square, Timer, Edit3, Lock, ArrowRight, Archive, Pencil, Loader2, RefreshCw } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { updateTaskStatus, updateTask, archiveTask, createTimeEntry } from '@/lib/actions';
@@ -636,10 +636,15 @@ function TaskCard({ task, isDragging = false, onOpenApproval, onOpenDetail }: { 
         </div>
       )}
 
-      {/* Title */}
-      <p className="text-sm font-medium leading-snug mb-3" style={{ color: isBlocked ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}>
-        {task.title}
-      </p>
+      {/* Title and Recurring Badge */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <p className="text-sm font-medium leading-snug flex-1" style={{ color: isBlocked ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}>
+          {task.title}
+        </p>
+        {task.recurringTemplateId && (
+          <RefreshCw size={12} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+        )}
+      </div>
 
       {/* Review action area */}
       {task.status === 'review' && !isDragging && (
