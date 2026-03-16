@@ -142,7 +142,7 @@ function QuickAssignModal({
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl">{service.icon}</span>
+              {service.icon && <span className="text-2xl">{service.icon}</span>}
               <h2 className="font-semibold text-gray-900 dark:text-white text-base">Assign Service</h2>
             </div>
             <p className="text-sm text-gray-500">
@@ -272,7 +272,7 @@ function ServiceTile({
           className="w-full text-left bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 hover:border-indigo-300 dark:hover:border-[#3B5BDB] hover:bg-[#EEF2FF]/30 dark:hover:bg-indigo-900/10 transition-all group"
         >
           <div className="flex items-center gap-3">
-            <span className="text-xl opacity-50 group-hover:opacity-100 transition-opacity">{service.icon}</span>
+            {service.icon && <span className="text-xl opacity-50 group-hover:opacity-100 transition-opacity">{service.icon}</span>}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400 truncate">{service.name}</div>
               <div className="text-[10px] text-gray-300 dark:text-gray-600">{service.category}</div>
@@ -312,7 +312,7 @@ function ServiceTile({
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl flex-shrink-0">{service.icon}</span>
+            {service.icon && <span className="text-xl flex-shrink-0">{service.icon}</span>}
             <div className="min-w-0">
               <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{service.name}</div>
               <div className="text-[10px] text-gray-400">{service.category}</div>
@@ -419,7 +419,7 @@ function ServiceCard({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="text-2xl flex-shrink-0">{service.icon}</span>
+            {service.icon && <span className="text-2xl flex-shrink-0">{service.icon}</span>}
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{service.name}</h3>
@@ -1381,6 +1381,91 @@ export default function ClientPage() {
 
         {activeTab === 'overview' && (
           <>
+            {/* Pillar Cards Strip */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                  <Target size={18} style={{ color: 'var(--color-primary)' }} />
+                  Pillars
+                </h2>
+                <a href={`/clients/${clientId}/pillars`} className="text-sm text-[#3B5BDB] hover:underline font-medium">
+                  View All →
+                </a>
+              </div>
+              {(() => {
+                const pillars = CLIENT_PILLARS.filter(p => p.clientId === clientId);
+                if (pillars.length === 0) {
+                  return (
+                    <div className="text-center py-4 px-4 border border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/30">
+                      <p className="text-sm text-gray-400">No pillars yet</p>
+                      <a href={`/clients/${clientId}/pillars`} className="text-sm text-[#3B5BDB] hover:underline mt-1 block">
+                        Add Pillars →
+                      </a>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {pillars.map(pillar => {
+                      const kpis = CLIENT_PILLAR_KPIS.filter(k => k.clientPillarId === pillar.id);
+                      const linkedInitiatives = PROJECTS.filter(p => p.clientPillarId === pillar.id && p.clientId === clientId);
+                      const linkedTasks = TASKS.filter(t => t.clientPillarId === pillar.id && t.clientId === clientId);
+                      return (
+                        <Link
+                          key={pillar.id}
+                          href={`/clients/${clientId}/pillars/${pillar.id}`}
+                          className="block"
+                        >
+                          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-[#3B5BDB] dark:hover:border-[#3B5BDB] transition-all h-full cursor-pointer"
+                            style={{ borderLeft: `4px solid ${pillar.color}` }}
+                          >
+                            <div className="px-4 py-3">
+                              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{pillar.name}</h3>
+                              {pillar.description && (
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">{pillar.description}</p>
+                              )}
+                            </div>
+                            {kpis.length > 0 && (
+                              <div className="px-4 py-2 space-y-2 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700">
+                                {kpis.slice(0, 2).map(kpi => {
+                                  const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('cpc');
+                                  const pct = lb
+                                    ? Math.max(0, Math.min(100, (kpi.target / Math.max(kpi.current, 0.01)) * 100))
+                                    : Math.max(0, Math.min(100, (kpi.current / kpi.target) * 100));
+                                  const barColor = pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-400';
+                                  return (
+                                    <div key={kpi.id} className="space-y-0.5">
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{kpi.name}</span>
+                                        <span className="text-gray-500 flex-shrink-0 ml-2">{Math.round(pct)}%</span>
+                                      </div>
+                                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1">
+                                        <div className={`h-1 rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {kpis.length > 2 && (
+                                  <p className="text-xs text-gray-400 pt-1">+{kpis.length - 2} more KPIs</p>
+                                )}
+                              </div>
+                            )}
+                            {kpis.length === 0 && (
+                              <div className="px-4 py-2 text-xs text-gray-400">No KPIs</div>
+                            )}
+                            <div className="px-4 py-2 flex items-center gap-3 text-xs text-gray-500 border-t border-gray-100 dark:border-gray-700">
+                              <span className="flex items-center gap-1"><FolderOpen size={11} />{linkedInitiatives.length}</span>
+                              <span className="flex items-center gap-1"><CheckCircle size={11} />{linkedTasks.length}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+
             {/* All Services Grid — active + unassigned */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-1 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
