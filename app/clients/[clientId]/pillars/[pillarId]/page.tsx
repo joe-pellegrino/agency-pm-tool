@@ -382,46 +382,58 @@ export default function PillarDetailPage() {
                       if (isEditing && editingKpi) {
                         return (
                           <div key={kpi.id} className="border border-[var(--color-border)] rounded-lg p-4 space-y-3">
-                            <input
-                              type="text"
-                              value={editingKpi.name}
-                              onChange={(e) => setEditingKpi({ ...editingKpi, name: e.target.value })}
-                              placeholder="KPI name"
-                              className="w-full text-sm font-medium px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
-                            />
-                            <div className="grid grid-cols-3 gap-2">
-                              <input
-                                type="number"
-                                value={editingKpi.target}
-                                onChange={(e) => setEditingKpi({ ...editingKpi, target: parseFloat(e.target.value) || 0 })}
-                                placeholder="Target"
-                                className="text-xs px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
-                              />
-                              <input
-                                type="number"
-                                value={editingKpi.current}
-                                onChange={(e) => setEditingKpi({ ...editingKpi, current: parseFloat(e.target.value) || 0 })}
-                                placeholder="Current"
-                                className="text-xs px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
-                              />
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">KPI Name *</label>
                               <input
                                 type="text"
-                                value={editingKpi.unit}
-                                onChange={(e) => setEditingKpi({ ...editingKpi, unit: e.target.value })}
-                                placeholder="Unit"
-                                className="text-xs px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                                value={editingKpi.name}
+                                onChange={(e) => setEditingKpi({ ...editingKpi, name: e.target.value })}
+                                placeholder="e.g. Monthly Leads, Bounce Rate..."
+                                className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
                               />
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Target</label>
+                                <input
+                                  type="number"
+                                  value={editingKpi.target}
+                                  onChange={(e) => setEditingKpi({ ...editingKpi, target: parseFloat(e.target.value) || 0 })}
+                                  placeholder="0"
+                                  className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Current</label>
+                                <input
+                                  type="number"
+                                  value={editingKpi.current}
+                                  onChange={(e) => setEditingKpi({ ...editingKpi, current: parseFloat(e.target.value) || 0 })}
+                                  placeholder="0"
+                                  className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Unit</label>
+                                <input
+                                  type="text"
+                                  value={editingKpi.unit}
+                                  onChange={(e) => setEditingKpi({ ...editingKpi, unit: e.target.value })}
+                                  placeholder="%  $  k"
+                                  className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                                />
+                              </div>
                             </div>
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => { setEditingKpiId(null); setEditingKpi(null); }}
-                                className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                               >
                                 Cancel
                               </button>
                               <button
                                 onClick={handleUpdateKpi}
-                                className="px-2 py-1 text-xs font-medium text-white bg-[var(--color-primary)] rounded hover:opacity-90 transition-opacity"
+                                className="px-3 py-2 text-xs font-medium text-white bg-[var(--color-primary)] rounded-lg hover:opacity-90 transition-opacity"
                               >
                                 Save
                               </button>
@@ -460,47 +472,59 @@ export default function PillarDetailPage() {
 
                     {showNewKpiForm && (
                       <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-3 bg-gray-50 dark:bg-gray-700/50">
-                        <input
-                          type="text"
-                          value={newKpiForm.name}
-                          onChange={(e) => setNewKpiForm({ ...newKpiForm, name: e.target.value })}
-                          placeholder="KPI name"
-                          className="w-full text-sm font-medium px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
-                          autoFocus
-                        />
-                        <div className="grid grid-cols-3 gap-2">
-                          <input
-                            type="number"
-                            value={newKpiForm.target}
-                            onChange={(e) => setNewKpiForm({ ...newKpiForm, target: parseFloat(e.target.value) || 0 })}
-                            placeholder="Target"
-                            className="text-xs px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
-                          />
-                          <input
-                            type="number"
-                            value={newKpiForm.current}
-                            onChange={(e) => setNewKpiForm({ ...newKpiForm, current: parseFloat(e.target.value) || 0 })}
-                            placeholder="Current"
-                            className="text-xs px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
-                          />
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">KPI Name *</label>
                           <input
                             type="text"
-                            value={newKpiForm.unit}
-                            onChange={(e) => setNewKpiForm({ ...newKpiForm, unit: e.target.value })}
-                            placeholder="Unit"
-                            className="text-xs px-2 py-1 border border-[var(--color-border)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                            value={newKpiForm.name}
+                            onChange={(e) => setNewKpiForm({ ...newKpiForm, name: e.target.value })}
+                            placeholder="e.g. Monthly Leads, Bounce Rate..."
+                            className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                            autoFocus
                           />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Target</label>
+                            <input
+                              type="number"
+                              value={newKpiForm.target}
+                              onChange={(e) => setNewKpiForm({ ...newKpiForm, target: parseFloat(e.target.value) || 0 })}
+                              placeholder="0"
+                              className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Current</label>
+                            <input
+                              type="number"
+                              value={newKpiForm.current}
+                              onChange={(e) => setNewKpiForm({ ...newKpiForm, current: parseFloat(e.target.value) || 0 })}
+                              placeholder="0"
+                              className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Unit</label>
+                            <input
+                              type="text"
+                              value={newKpiForm.unit}
+                              onChange={(e) => setNewKpiForm({ ...newKpiForm, unit: e.target.value })}
+                              placeholder="%  $  k"
+                              className="w-full text-sm px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white"
+                            />
+                          </div>
                         </div>
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => { setShowNewKpiForm(false); setNewKpiForm({ name: '', target: 0, current: 0, unit: '' }); }}
-                            className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                            className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={handleAddKpi}
-                            className="px-2 py-1 text-xs font-medium text-white bg-[var(--color-primary)] rounded hover:opacity-90 transition-opacity"
+                            className="px-3 py-2 text-xs font-medium text-white bg-[var(--color-primary)] rounded-lg hover:opacity-90 transition-opacity"
                           >
                             Add KPI
                           </button>
