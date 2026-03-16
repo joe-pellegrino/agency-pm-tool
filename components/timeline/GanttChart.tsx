@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Task } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Flag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Flag, FolderOpen } from 'lucide-react';
 import { addDays, addWeeks, addMonths, format, startOfWeek, differenceInDays, eachDayOfInterval, eachWeekOfInterval, isSameDay, parseISO, isWithinInterval, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 
 type ZoomLevel = 'day' | 'week' | 'month';
@@ -33,6 +33,8 @@ export default function GanttChart() {
   const [filterClient, setFilterClient] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
+  const [showInitiatives, setShowInitiatives] = useState(true);
+  const [showTasks, setShowTasks] = useState(true);
 
   // Config per zoom level
   const zoomConfig: Record<ZoomLevel, { days: number; colWidth: number; label: string }> = {
@@ -94,14 +96,30 @@ export default function GanttChart() {
       return s <= viewEnd && e >= viewStart;
     });
 
-  // Group by client
+  // Build grouped structure: client > initiatives > tasks
   const grouped = CLIENTS
     .filter(c => filterClient === 'all' || c.id === filterClient)
-    .map(client => ({
-      client,
-      tasks: displayTasks.filter(t => t.clientId === client.id),
-    }))
-    .filter(g => g.tasks.length > 0);
+    .map(client => {
+      const clientTasks = displayTasks.filter(t => t.clientId === client.id);
+      const clientProjects = PROJECTS.filter(p =>
+        p.clientId === client.id &&
+        (filterProject === 'all' || p.id === filterProject) &&
+        parseISO(p.startDate) <= viewEnd &&
+        parseISO(p.endDate) >= viewStart
+      );
+
+      const initiatives = clientProjects.map(project => ({
+        project,
+        tasks: clientTasks.filter(t => project.taskIds?.includes(t.id) || false),
+      }));
+
+      // Tasks not linked to any initiative
+      const linkedTaskIds = new Set(clientProjects.flatMap(p => p.taskIds || []));
+      const standaloneTasks = clientTasks.filter(t => !linkedTaskIds.has(t.id));
+
+      return { client, initiatives, standaloneTasks };
+    })
+    .filter(g => g.initiatives.length > 0 || g.standaloneTasks.length > 0);
 
   const ROW_HEIGHT = 44;
   const LABEL_WIDTH = 220;
@@ -156,6 +174,24 @@ export default function GanttChart() {
         </button>
 
         <div className="ml-auto flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showInitiatives}
+              onChange={e => setShowInitiatives(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-[#3B5BDB]"
+            />
+            Initiatives
+          </label>
+          <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showTasks}
+              onChange={e => setShowTasks(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-[#3B5BDB]"
+            />
+            Tasks
+          </label>
           <select
             value={filterProject}
             onChange={e => setFilterProject(e.target.value)}
@@ -194,7 +230,7 @@ export default function GanttChart() {
           {/* Header row */}
           <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80">
             <div className="flex-shrink-0 px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700" style={{ width: LABEL_WIDTH }}>
-              Task
+              Initiative / Task
             </div>
             <div className="flex-1 relative flex">
               {headerColumns.map((col, i) => (
@@ -210,7 +246,7 @@ export default function GanttChart() {
           </div>
 
           {/* Rows */}
-          {grouped.map(({ client, tasks }) => (
+          {grouped.map(({ client, initiatives, standaloneTasks }) => (
             <div key={client.id}>
               {/* Client group header */}
               <div className="flex items-center border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-800/60">
@@ -236,8 +272,165 @@ export default function GanttChart() {
                 </div>
               </div>
 
-              {/* Task rows */}
-              {tasks.map(task => {
+              {/* Initiative rows with nested tasks */}
+              {showInitiatives && initiatives.map(({ project, tasks: initTasks }) => {
+                const projStart = parseISO(project.startDate);
+                const projEnd = parseISO(project.endDate);
+                const x = dayX(projStart);
+                const w = barWidth(projStart, projEnd);
+                const color = getClientColor(project.clientId, CLIENTS);
+
+                return (
+                  <React.Fragment key={project.id}>
+                    {/* Initiative row */}
+                    <div className="flex items-center border-b border-gray-200 dark:border-gray-700/50 bg-indigo-50/30 dark:bg-indigo-900/10" style={{ height: ROW_HEIGHT }}>
+                      <div className="flex-shrink-0 px-4 py-2 flex items-center gap-2 border-r border-gray-200 dark:border-gray-700" style={{ width: LABEL_WIDTH }}>
+                        <FolderOpen size={12} className="text-indigo-500 flex-shrink-0" />
+                        <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{project.name}</span>
+                      </div>
+                      <div className="flex-1 relative" style={{ height: ROW_HEIGHT }}>
+                        {/* Today line */}
+                        {showTodayLine && (
+                          <div
+                            className="absolute top-0 bottom-0 w-px bg-red-400 z-10"
+                            style={{ left: `${todayPct}%` }}
+                          />
+                        )}
+
+                        {/* Grid lines */}
+                        {headerColumns.map((col, i) => {
+                          const colX = (differenceInDays(col.date, viewStart) / totalDays) * 100;
+                          return (
+                            <div
+                              key={i}
+                              className="absolute top-0 bottom-0 w-px bg-gray-100 dark:bg-gray-700/50"
+                              style={{ left: `${colX}%` }}
+                            />
+                          );
+                        })}
+
+                        {/* Initiative bar */}
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2 rounded h-5 opacity-90"
+                          style={{ left: `${x}%`, width: `${Math.max(w, 1)}%`, backgroundColor: color }}
+                          title={project.name}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Task rows under this initiative */}
+                    {showTasks && initTasks.map(task => {
+                      const s = parseISO(task.startDate);
+                      const e = parseISO(task.endDate);
+                      const x = dayX(s);
+                      const w = barWidth(s, e);
+                      const color = getClientColor(task.clientId, CLIENTS);
+                      const isHovered = hoveredTask === task.id;
+                      const isBlocked = task.status !== 'done' && (task.dependencies || []).some(depId => {
+                        const dep = displayTasks.find(t => t.id === depId);
+                        return dep && dep.status !== 'done';
+                      });
+
+                      return (
+                        <div
+                          key={task.id}
+                          className="flex items-center border-b border-gray-100 dark:border-gray-700/30 hover:bg-gray-50/80 dark:hover:bg-gray-700/20 transition-colors group"
+                          style={{ height: ROW_HEIGHT }}
+                          onMouseEnter={() => setHoveredTask(task.id)}
+                          onMouseLeave={() => setHoveredTask(null)}
+                        >
+                          {/* Label with indentation */}
+                          <div
+                            className="flex-shrink-0 flex items-center gap-2 px-4 border-r border-gray-200 dark:border-gray-700"
+                            style={{ width: LABEL_WIDTH, height: ROW_HEIGHT, paddingLeft: '2rem' }}
+                          >
+                          {task.isMilestone ? (
+                            <Flag size={12} className="text-orange-500 flex-shrink-0" />
+                          ) : (
+                            <Avatar assigneeId={task.assigneeId} size={20} teamMembers={TEAM_MEMBERS} />
+                          )}
+                          <span className={`text-xs leading-tight truncate ${task.isMilestone ? 'font-semibold text-orange-600 dark:text-orange-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                            {task.title}
+                          </span>
+                        </div>
+
+                        {/* Bar area */}
+                        <div className="flex-1 relative" style={{ height: ROW_HEIGHT }}>
+                          {/* Today line */}
+                          {showTodayLine && (
+                            <div
+                              className="absolute top-0 bottom-0 w-px bg-red-400 z-10"
+                              style={{ left: `${todayPct}%` }}
+                            />
+                          )}
+
+                          {/* Grid lines */}
+                          {headerColumns.map((col, i) => {
+                            const colX = (differenceInDays(col.date, viewStart) / totalDays) * 100;
+                            return (
+                              <div
+                                key={i}
+                                className="absolute top-0 bottom-0 w-px bg-gray-100 dark:bg-gray-700/50"
+                                style={{ left: `${colX}%` }}
+                              />
+                            );
+                          })}
+
+                          {/* Milestone diamond */}
+                          {task.isMilestone ? (
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center"
+                              style={{ left: `calc(${dayX(s)}% - 8px)` }}
+                              title={task.title}
+                            >
+                              <div
+                                className="w-4 h-4 rotate-45 border-2 shadow-sm"
+                                style={{ backgroundColor: '#f97316', borderColor: '#ea580c' }}
+                              />
+                            </div>
+                          ) : (
+                            /* Task bar */
+                            <div
+                              className={`absolute top-1/2 -translate-y-1/2 rounded-md gantt-bar flex items-center px-2 z-10 cursor-pointer ${isBlocked ? 'opacity-40' : ''}`}
+                              style={{
+                                left: `${x}%`,
+                                width: `${w}%`,
+                                backgroundColor: isBlocked ? '#9ca3af' : color,
+                                opacity: isBlocked ? 0.5 : isHovered ? 1 : 0.85,
+                                height: 26,
+                                minWidth: 4,
+                                boxShadow: isHovered && !isBlocked ? `0 2px 8px ${color}60` : 'none',
+                                backgroundImage: isBlocked ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.25) 4px, rgba(255,255,255,0.25) 8px)' : 'none',
+                              }}
+                              title={`${task.title}\n${format(s, 'MMM d')} → ${format(e, 'MMM d')}${isBlocked ? '\n⚠ Blocked' : ''}`}
+                            >
+                              {w > 8 && (
+                                <span className="text-white text-[10px] font-medium truncate leading-none">
+                                  {task.title}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Dependency arrows (visual hint) */}
+                          {task.dependencies && task.dependencies.length > 0 && isHovered && (
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 z-30"
+                              style={{ left: `${x}%`, transform: 'translateX(-100%)' }}
+                            >
+                              <div className="w-4 h-px bg-gray-400 border-dashed border border-gray-400 opacity-60" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                    })}
+                  </React.Fragment>
+                );
+              })}
+
+              {/* Standalone tasks (not linked to any initiative) */}
+              {showTasks && standaloneTasks.map(task => {
                 const s = parseISO(task.startDate);
                 const e = parseISO(task.endDate);
                 const x = dayX(s);
