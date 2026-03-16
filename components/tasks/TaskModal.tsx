@@ -12,6 +12,8 @@ interface TaskModalProps {
   task?: Task;
   defaultStatus?: string;
   defaultProjectId?: string;
+  defaultClientId?: string;
+  defaultClientPillarId?: string;
   onClose: () => void;
   onSuccess?: (task: Task | null) => void;
 }
@@ -25,7 +27,7 @@ const STATUSES = [
 ];
 const TYPES = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'];
 
-export default function TaskModal({ task, defaultStatus = 'todo', defaultProjectId, onClose, onSuccess }: TaskModalProps) {
+export default function TaskModal({ task, defaultStatus = 'todo', defaultProjectId, defaultClientId, defaultClientPillarId, onClose, onSuccess }: TaskModalProps) {
   const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], STRATEGIES = [], refresh } = useAppData();
   const [isOpen, setIsOpen] = useState(true);
   const handleClose = () => setIsOpen(false);
@@ -33,7 +35,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
 
   const [form, setForm] = useState({
     title: task?.title || '',
-    clientId: task?.clientId || (CLIENTS[0]?.id || ''),
+    clientId: task?.clientId || defaultClientId || (CLIENTS[0]?.id || ''),
     assigneeId: task?.assigneeId || (TEAM_MEMBERS[0]?.id || ''),
     status: task?.status || defaultStatus,
     priority: task?.priority || 'Medium',
@@ -44,7 +46,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
     description: task?.description || '',
     projectId: defaultProjectId || '',
     pillarId: task?.pillarId || '',
-    clientPillarId: task?.clientPillarId || '',
+    clientPillarId: task?.clientPillarId || defaultClientPillarId || '',
     isRecurring: false,
     recurrenceType: 'weekly',
     recurrenceDays: [1, 3, 5],

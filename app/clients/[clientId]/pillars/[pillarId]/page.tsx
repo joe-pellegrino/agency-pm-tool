@@ -14,9 +14,11 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { toast } from 'sonner';
 import TopBar from '@/components/layout/TopBar';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { updateClientPillarDocument, createClientPillarKpi, updateClientPillarKpi, deleteClientPillarKpi, createProject, createTask } from '@/lib/actions';
+import { updateClientPillarDocument, createClientPillarKpi, updateClientPillarKpi, deleteClientPillarKpi } from '@/lib/actions';
 import type { ClientPillar, ClientPillarKpi } from '@/lib/data';
 import type { Editor } from '@tiptap/react';
+import TaskModal from '@/components/tasks/TaskModal';
+import ProjectModal from '@/components/projects/ProjectModal';
 import {
   Bold, Italic, Strikethrough, List, ListOrdered,
   Heading1, Heading2, Heading3, Quote, Code, Table2, Link2,
@@ -111,10 +113,6 @@ export default function PillarDetailPage() {
   const [editingKpi, setEditingKpi] = useState<ClientPillarKpi | null>(null);
   const [showNewInitiativeModal, setShowNewInitiativeModal] = useState(false);
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
-  const [initiativeForm, setInitiativeForm] = useState({ name: '', description: '', status: 'planning', startDate: '', endDate: '' });
-  const [taskForm, setTaskForm] = useState({ title: '', assigneeId: '', priority: 'Medium', dueDate: '' });
-  const [creatingInitiative, setCreatingInitiative] = useState(false);
-  const [creatingTask, setCreatingTask] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null as any);
 
   const editor = useEditor({
@@ -216,80 +214,6 @@ export default function PillarDetailPage() {
     } catch (err) {
       toast.error('Failed to delete KPI');
       console.error(err);
-    }
-  };
-
-  const handleCreateInitiative = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!initiativeForm.name.trim()) {
-      toast.error('Initiative name is required');
-      return;
-    }
-    if (!initiativeForm.startDate || !initiativeForm.endDate) {
-      toast.error('Start and end dates are required');
-      return;
-    }
-
-    setCreatingInitiative(true);
-    try {
-      await createProject({
-        clientId,
-        name: initiativeForm.name,
-        description: initiativeForm.description,
-        status: initiativeForm.status,
-        startDate: initiativeForm.startDate,
-        endDate: initiativeForm.endDate,
-        clientPillarId: pillarId,
-      });
-      toast.success('Initiative created');
-      setShowNewInitiativeModal(false);
-      setInitiativeForm({ name: '', description: '', status: 'planning', startDate: '', endDate: '' });
-      refresh();
-    } catch (err) {
-      toast.error('Failed to create initiative');
-      console.error(err);
-    } finally {
-      setCreatingInitiative(false);
-    }
-  };
-
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!taskForm.title.trim()) {
-      toast.error('Task title is required');
-      return;
-    }
-    if (!taskForm.assigneeId) {
-      toast.error('Assignee is required');
-      return;
-    }
-    if (!taskForm.dueDate) {
-      toast.error('Due date is required');
-      return;
-    }
-
-    setCreatingTask(true);
-    try {
-      await createTask({
-        title: taskForm.title,
-        clientId,
-        assigneeId: taskForm.assigneeId,
-        status: 'todo',
-        priority: taskForm.priority,
-        dueDate: taskForm.dueDate,
-        startDate: taskForm.dueDate,
-        endDate: taskForm.dueDate,
-        clientPillarId: pillarId,
-      });
-      toast.success('Task created');
-      setShowNewTaskModal(false);
-      setTaskForm({ title: '', assigneeId: '', priority: 'Medium', dueDate: '' });
-      refresh();
-    } catch (err) {
-      toast.error('Failed to create task');
-      console.error(err);
-    } finally {
-      setCreatingTask(false);
     }
   };
 
@@ -644,166 +568,29 @@ export default function PillarDetailPage() {
               </div>
             </div>
 
-            {/* New Initiative Modal */}
+            {/* New Initiative — shared ProjectModal */}
             {showNewInitiativeModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-lg">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">New Initiative</h2>
-                  <form onSubmit={handleCreateInitiative} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-                      <input
-                        type="text"
-                        value={initiativeForm.name}
-                        onChange={(e) => setInitiativeForm({ ...initiativeForm, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                        placeholder="Initiative name"
-                        autoFocus
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                      <textarea
-                        value={initiativeForm.description}
-                        onChange={(e) => setInitiativeForm({ ...initiativeForm, description: e.target.value })}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                        placeholder="Optional description"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                      <select
-                        value={initiativeForm.status}
-                        onChange={(e) => setInitiativeForm({ ...initiativeForm, status: e.target.value })}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                      >
-                        <option value="planning">Planning</option>
-                        <option value="active">Active</option>
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
-                        <input
-                          type="date"
-                          value={initiativeForm.startDate}
-                          onChange={(e) => setInitiativeForm({ ...initiativeForm, startDate: e.target.value })}
-                          className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
-                        <input
-                          type="date"
-                          value={initiativeForm.endDate}
-                          onChange={(e) => setInitiativeForm({ ...initiativeForm, endDate: e.target.value })}
-                          className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowNewInitiativeModal(false);
-                          setInitiativeForm({ name: '', description: '', status: 'Planning', startDate: '', endDate: '' });
-                        }}
-                        className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={creatingInitiative}
-                        className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
-                      >
-                        {creatingInitiative && <Loader2 size={14} className="animate-spin" />}
-                        Create
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+              <ProjectModal
+                project={{ clientId, clientPillarId: pillarId } as any}
+                onClose={() => {
+                  setShowNewInitiativeModal(false);
+                  refresh();
+                }}
+              />
             )}
 
-            {/* New Task Modal */}
+            {/* New Task — shared TaskModal */}
             {showNewTaskModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-lg">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">New Task</h2>
-                  <form onSubmit={handleCreateTask} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-                      <input
-                        type="text"
-                        value={taskForm.title}
-                        onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                        placeholder="Task title"
-                        autoFocus
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee</label>
-                      <select
-                        value={taskForm.assigneeId}
-                        onChange={(e) => setTaskForm({ ...taskForm, assigneeId: e.target.value })}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                      >
-                        <option value="">Select assignee</option>
-                        {TEAM_MEMBERS.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
-                      <select
-                        value={taskForm.priority}
-                        onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                      >
-                        <option>Low</option>
-                        <option>Medium</option>
-                        <option>High</option>
-                        <option>Urgent</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
-                      <input
-                        type="date"
-                        value={taskForm.dueDate}
-                        onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:bg-gray-700 dark:text-white text-sm"
-                      />
-                    </div>
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowNewTaskModal(false);
-                          setTaskForm({ title: '', assigneeId: '', priority: 'Medium', dueDate: '' });
-                        }}
-                        className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={creatingTask}
-                        className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
-                      >
-                        {creatingTask && <Loader2 size={14} className="animate-spin" />}
-                        Create
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+              <TaskModal
+                defaultStatus="todo"
+                defaultClientId={clientId}
+                defaultClientPillarId={pillarId}
+                onClose={() => setShowNewTaskModal(false)}
+                onSuccess={() => {
+                  setShowNewTaskModal(false);
+                  refresh();
+                }}
+              />
             )}
           </div>
         </div>
