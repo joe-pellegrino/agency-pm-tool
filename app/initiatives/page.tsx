@@ -16,6 +16,7 @@ import ProjectModal from '@/components/projects/ProjectModal';
 import TaskModal from '@/components/tasks/TaskModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { archiveProject, updateTaskStatus } from '@/lib/actions';
+import ProjectComments from '@/components/projects/ProjectComments';
 
 const STATUS_CONFIG = {
   planning: { label: 'Planning', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', icon: Clock },
@@ -325,6 +326,11 @@ function ProjectDetailModal({ project, onClose, onEdit, onAddTask }: { project: 
                 );
               })}
             </div>
+          </div>
+
+          {/* Comments */}
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-5">
+            <ProjectComments projectId={project.id} />
           </div>
 
           {/* Workflow template steps */}

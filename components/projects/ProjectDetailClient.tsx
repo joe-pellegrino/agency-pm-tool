@@ -22,9 +22,10 @@ import {
   archiveProjectById,
 } from '@/lib/actions-projects';
 import TaskModal from '@/components/tasks/TaskModal';
+import ProjectComments from '@/components/projects/ProjectComments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type Tab = 'overview' | 'team' | 'members' | 'budget' | 'activity' | 'tasks' | 'files' | 'settings';
+type Tab = 'overview' | 'team' | 'members' | 'budget' | 'activity' | 'comments' | 'tasks' | 'files' | 'settings';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -32,6 +33,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'members', label: 'Members' },
   { id: 'budget', label: 'Budget' },
   { id: 'activity', label: 'Activity' },
+  { id: 'comments', label: 'Comments' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'files', label: 'Files' },
   { id: 'settings', label: 'Settings' },
@@ -381,6 +383,11 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
         )}
         {activeTab === 'activity' && (
           <ActivityTab activity={activity} />
+        )}
+        {activeTab === 'comments' && (
+          <div className="max-w-3xl">
+            <ProjectComments projectId={project.id} />
+          </div>
         )}
         {activeTab === 'tasks' && (
           <TasksTab

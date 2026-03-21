@@ -644,3 +644,63 @@ export async function deleteProjectAsset(assetId: string, projectId: string, ass
 
   revalidatePath(`/projects/${projectId}`);
 }
+
+// ─── Project Comments ──────────────────────────────────────────────────────────
+
+export type ProjectComment = {
+  id: string;
+  project_id: string;
+  author_id: string;
+  text: string;
+  parent_comment_id: string | null;
+  created_at: string;
+  resolved: boolean;
+};
+
+export async function createProjectComment(data: {
+  projectId: string;
+  authorId: string;
+  text: string;
+  parentCommentId?: string;
+}): Promise<ProjectComment> {
+  const { data: row, error } = await db()
+    .from('project_comments')
+    .insert({
+      project_id: data.projectId,
+      author_id: data.authorId,
+      text: data.text,
+      parent_comment_id: data.parentCommentId || null,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath(`/initiatives/${data.projectId}`);
+  return row as ProjectComment;
+}
+
+export async function getProjectComments(projectId: string): Promise<ProjectComment[]> {
+  const { data, error } = await db()
+    .from('project_comments')
+    .select('*')
+    .eq('project_id', projectId)
+    .is('archived_at', null)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data || []) as ProjectComment[];
+}
+
+export async function updateProjectComment(data: { id: string; text: string }): Promise<void> {
+  const { error } = await db()
+    .from('project_comments')
+    .update({ text: data.text })
+    .eq('id', data.id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteProjectComment(id: string): Promise<void> {
+  const { error } = await db()
+    .from('project_comments')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
