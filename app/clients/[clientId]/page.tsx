@@ -587,11 +587,33 @@ function ProjectDetailDrawer({
   onClose: () => void;
 }) {
   const { TASKS = [] } = useAppData();
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [showProjectModal, setShowProjectModal] = useState(false);
 
   if (!project) return null;
 
   const projectTasks = TASKS.filter(t => project.taskIds.includes(t.id));
   const completedTasks = projectTasks.filter(t => t.status === 'done').length;
+  
+  // Calculate actual task progress from task data
+  const taskProgress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
+
+  // Calculate remaining time progress
+  const today = new Date();
+  const startDate = new Date(project.startDate);
+  const endDate = new Date(project.endDate);
+  
+  let remainingTimePercent = 0;
+  if (today < startDate) {
+    remainingTimePercent = 0;
+  } else if (today > endDate) {
+    remainingTimePercent = 100;
+  } else {
+    const elapsed = today.getTime() - startDate.getTime();
+    const total = endDate.getTime() - startDate.getTime();
+    remainingTimePercent = Math.round((elapsed / total) * 100);
+    remainingTimePercent = Math.max(0, Math.min(100, remainingTimePercent));
+  }
 
   const statusConfig: Record<string, { label: string; color: string; dot: string }> = {
     planning: { label: 'Planning', color: 'bg-blue-100 text-blue-600', dot: 'bg-blue-400' },
@@ -601,73 +623,112 @@ function ProjectDetailDrawer({
   };
 
   const statusCfg = statusConfig[project.status];
+  const selectedTask = selectedTaskId ? projectTasks.find(t => t.id === selectedTaskId) : null;
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} title={project.name}>
-      <div className="space-y-6">
-        {/* Status Badge */}
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1.5 ${statusCfg.color}`}>
-            <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
-            {statusCfg.label}
-          </span>
-        </div>
+    <>
+      {showProjectModal && (
+        <ProjectModal project={project} onClose={() => setShowProjectModal(false)} />
+      )}
+      {selectedTask && (
+        <TaskModal task={selectedTask} onClose={() => setSelectedTaskId(null)} />
+      )}
+      <Drawer isOpen={isOpen} onClose={onClose} title={project.name}>
+        <div className="space-y-6">
+          {/* Header with Status Badge and Edit Button */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className={`text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1.5 ${statusCfg.color}`}>
+                <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
+                {statusCfg.label}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowProjectModal(true)}
+              className="flex items-center gap-1.5 text-sm text-[#3B5BDB] hover:text-[#3B5BDB] hover:bg-[#EEF2FF] px-2 py-1 rounded transition-colors"
+              title="Edit initiative"
+            >
+              <Edit2 size={14} />
+              Edit
+            </button>
+          </div>
 
-        {/* Description */}
-        {project.description && (
-          <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Description</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{project.description}</p>
-          </div>
-        )}
-
-        {/* Dates */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</h4>
-            <p className="text-sm text-gray-700 dark:text-gray-300">{project.startDate}</p>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">End Date</h4>
-            <p className="text-sm text-gray-700 dark:text-gray-300">{project.endDate}</p>
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Progress</h4>
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{project.progress}%</span>
-          </div>
-          <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-            <div
-              className="h-2 rounded-full bg-[#3B5BDB] transition-all"
-              style={{ width: `${project.progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Tasks Summary */}
-        <div>
-          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1">
-            <CheckCircle size={11} />
-            Tasks ({completedTasks}/{projectTasks.length})
-          </h4>
-          {projectTasks.length === 0 ? (
-            <p className="text-sm text-gray-400">No tasks yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {projectTasks.slice(0, 10).map(task => (
-                <TaskRow key={task.id} task={task} />
-              ))}
-              {projectTasks.length > 10 && (
-                <p className="text-xs text-gray-400 pt-2">...and {projectTasks.length - 10} more</p>
-              )}
+          {/* Description */}
+          {project.description && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Description</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{project.description}</p>
             </div>
           )}
+
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</h4>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{project.startDate}</p>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">End Date</h4>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{project.endDate}</p>
+            </div>
+          </div>
+
+          {/* Task Progress */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Task Progress</h4>
+              <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{taskProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-2 rounded-full bg-[#3B5BDB] transition-all"
+                style={{ width: `${taskProgress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Remaining Time Progress */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Remaining Time</h4>
+              <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{remainingTimePercent}%</span>
+            </div>
+            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-2 rounded-full bg-amber-500 transition-all"
+                style={{ width: `${remainingTimePercent}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Tasks Summary */}
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1">
+              <CheckCircle size={11} />
+              Tasks ({completedTasks}/{projectTasks.length})
+            </h4>
+            {projectTasks.length === 0 ? (
+              <p className="text-sm text-gray-400">No tasks yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {projectTasks.slice(0, 10).map(task => (
+                  <div
+                    key={task.id}
+                    onClick={() => setSelectedTaskId(task.id)}
+                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded transition-colors"
+                  >
+                    <TaskRow task={task} />
+                  </div>
+                ))}
+                {projectTasks.length > 10 && (
+                  <p className="text-xs text-gray-400 pt-2">...and {projectTasks.length - 10} more</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </Drawer>
+      </Drawer>
+    </>
   );
 }
 
