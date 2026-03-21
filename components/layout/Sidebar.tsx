@@ -117,6 +117,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
     { label: 'Documents', href: `/clients/${clientId}?tab=documents`, icon: FileText },
     { label: 'Assets', href: `/clients/${clientId}?tab=assets`, icon: FolderOpen },
     { label: 'Health', href: `/health?clientId=${clientId}`, icon: Activity },
+    { label: 'Settings', href: `/clients/${clientId}?tab=settings`, icon: Settings },
   ]
 
   // Fetch logos from Supabase
