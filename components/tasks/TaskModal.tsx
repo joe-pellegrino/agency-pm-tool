@@ -5,7 +5,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Task, ClientPillar } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
-import { createTask, updateTask, linkTaskToProject, getClientPillars, createRecurringTemplate, generateRecurringTaskInstances } from '@/lib/actions';
+import { createTask, updateTask, linkTaskToProject, getClientPillars, createRecurringTemplate, generateRecurringTaskInstances, addTaskDependency, removeTaskDependency } from '@/lib/actions';
 import Drawer from '@/components/ui/Drawer';
 
 interface TaskModalProps {
@@ -28,11 +28,11 @@ const STATUSES = [
 const TYPES = ['social', 'ad', 'blog', 'report', 'meeting', 'design', 'other'];
 
 export default function TaskModal({ task, defaultStatus = 'todo', defaultProjectId, defaultClientId, defaultClientPillarId, onClose, onSuccess }: TaskModalProps) {
-  const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], STRATEGIES = [], refresh } = useAppData();
+  const { CLIENTS = [], TEAM_MEMBERS = [], PROJECTS = [], STRATEGIES = [], TASKS = [], refresh } = useAppData();
   const [isOpen, setIsOpen] = useState(true);
   const handleClose = () => setIsOpen(false);
   const [isPending, startTransition] = useTransition();
-
+  
   const [form, setForm] = useState({
     title: task?.title || '',
     clientId: task?.clientId || defaultClientId || (CLIENTS[0]?.id || ''),
@@ -47,6 +47,7 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
     projectId: defaultProjectId || '',
     pillarId: task?.pillarId || '',
     clientPillarId: task?.clientPillarId || defaultClientPillarId || '',
+    dependencies: task?.dependencies || [],
     isRecurring: false,
     recurrenceType: 'weekly',
     recurrenceDays: [1, 3, 5],
@@ -127,6 +128,25 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             pillarId: form.pillarId || null,
             clientPillarId: form.clientPillarId || null,
           });
+          
+          // Handle dependency changes (compare old vs new)
+          const oldDeps = task.dependencies || [];
+          const newDeps = form.dependencies;
+          
+          // Find additions and removals
+          const added = newDeps.filter(dep => !oldDeps.includes(dep));
+          const removed = oldDeps.filter(dep => !newDeps.includes(dep));
+          
+          // Add new dependencies
+          for (const depId of added) {
+            await addTaskDependency(task.id, depId);
+          }
+          
+          // Remove old dependencies
+          for (const depId of removed) {
+            await removeTaskDependency(task.id, depId);
+          }
+          
           toast.success('Task updated');
           refresh();
           onSuccess?.(null);
@@ -145,6 +165,14 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             pillarId: form.pillarId || null,
             clientPillarId: form.clientPillarId || null,
           });
+          
+          // Add dependencies for newly created task
+          if (created?.id && form.dependencies.length > 0) {
+            for (const depId of form.dependencies) {
+              await addTaskDependency(created.id, depId);
+            }
+          }
+          
           if (form.projectId && created?.id) {
             await linkTaskToProject(form.projectId, created.id);
           }
@@ -295,6 +323,71 @@ export default function TaskModal({ task, defaultStatus = 'todo', defaultProject
             </select>
           </div>
         )}
+
+        {/* Dependencies Section */}
+        <div>
+          <label className={labelClass}>Depends On</label>
+          
+          {/* Dependency Dropdown */}
+          <div className="mt-2">
+            <select
+              onChange={e => {
+                const depId = e.target.value;
+                if (depId && !form.dependencies.includes(depId)) {
+                  setForm(prev => ({
+                    ...prev,
+                    dependencies: [...prev.dependencies, depId]
+                  }));
+                }
+                // Reset dropdown
+                setTimeout(() => {
+                  const select = e.target as HTMLSelectElement;
+                  select.value = '';
+                }, 0);
+              }}
+              className={selectClass}
+            >
+              <option value="">+ Add dependency</option>
+              {TASKS.filter(t => 
+                t.clientId === form.clientId && 
+                t.id !== task?.id &&
+                !form.dependencies.includes(t.id)
+              ).map(t => (
+                <option key={t.id} value={t.id}>{t.title}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Selected Dependencies as Chips */}
+          {form.dependencies.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {form.dependencies.map(depId => {
+                const depTask = TASKS.find(t => t.id === depId);
+                return (
+                  <div
+                    key={depId}
+                    className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-sm border border-indigo-200 dark:border-indigo-700"
+                  >
+                    <span>{depTask?.title || depId}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForm(prev => ({
+                          ...prev,
+                          dependencies: prev.dependencies.filter(id => id !== depId)
+                        }));
+                      }}
+                      className="ml-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 font-bold text-lg leading-none"
+                      title="Remove dependency"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         <div>
           <label className={labelClass}>Description</label>

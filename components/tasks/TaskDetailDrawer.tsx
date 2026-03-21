@@ -40,7 +40,7 @@ export default function TaskDetailDrawer({
   defaultProjectId,
   defaultStatus = 'todo',
 }: TaskDetailDrawerProps) {
-  const { TEAM_MEMBERS = [], CLIENTS = [] } = useAppData();
+  const { TEAM_MEMBERS = [], CLIENTS = [], TASKS = [] } = useAppData();
   const [showEditModal, setShowEditModal] = useState(false);
 
   if (!task && !defaultClientId) {
@@ -163,6 +163,28 @@ export default function TaskDetailDrawer({
             <div>
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Description</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+            </div>
+          )}
+
+          {/* Dependencies */}
+          {task.dependencies && task.dependencies.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Depends On</h4>
+              <div className="flex flex-wrap gap-2">
+                {task.dependencies.map(depId => {
+                  const depTask = TASKS.find(t => t.id === depId);
+                  const title = depTask?.title || depId;
+                  
+                  return (
+                    <span
+                      key={depId}
+                      className="inline-block text-xs px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700"
+                    >
+                      {title}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           )}
 
