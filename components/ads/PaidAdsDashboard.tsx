@@ -6,6 +6,7 @@ import {
   linkCampaignToKpi,
   unlinkCampaignFromKpi,
   getClientKpis,
+  getCampaignInitiatives,
   type AdCampaign,
   type CampaignKpiLink,
 } from '@/lib/actions-ads';
@@ -241,6 +242,14 @@ function CampaignCard({
   onRefresh: () => void;
 }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkedInitiatives, setLinkedInitiatives] = useState<Array<{ id: string; name: string; status: string }>>([]);
+  const [initiativesLoaded, setInitiativesLoaded] = useState(false);
+
+  useEffect(() => {
+    getCampaignInitiatives(campaign.id)
+      .then(data => { setLinkedInitiatives(data); setInitiativesLoaded(true); })
+      .catch(() => setInitiativesLoaded(true));
+  }, [campaign.id]);
 
   const statusDot = {
     active: 'bg-green-500',
@@ -384,6 +393,27 @@ function CampaignCard({
             {kpi ? 'Edit Link' : 'Link KPI'}
           </button>
         </div>
+
+        {/* Linked Initiatives */}
+        {initiativesLoaded && linkedInitiatives.length > 0 && (
+          <div className="px-4 py-2.5 border-t border-gray-100 dark:border-gray-700 bg-[#F8F9FF] dark:bg-gray-700/30">
+            <div className="text-[9px] font-semibold uppercase text-[#8896A6] mb-1.5" style={{ letterSpacing: '0.06em' }}>
+              Linked Initiatives
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {linkedInitiatives.map(init => (
+                <a
+                  key={init.id}
+                  href={`/initiatives/${init.id}`}
+                  className="text-[10px] font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-[#3B5BDB] px-2 py-0.5 rounded-full hover:bg-[#EEF2FF] transition-colors truncate max-w-[160px]"
+                  title={init.name}
+                >
+                  {init.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

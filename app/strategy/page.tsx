@@ -10,6 +10,7 @@ import TopBar from '@/components/layout/TopBar';
 import {
   TrendingUp, Target, CheckCircle, Clock, AlertTriangle, ChevronDown, ChevronUp,
   BarChart3, FolderOpen, Calendar, Zap, ArrowRight, Plus, Pencil, Trash2,
+  TrendingDown, Minus as MinusIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -64,19 +65,32 @@ function getServiceStrategyHealth(ss: ServiceStrategy): 'on-track' | 'at-risk' |
   return 'behind';
 }
 
+interface KpiLiveData {
+  actual: number | null;
+  source: 'meta' | 'manual';
+  lastSyncAt: string | null;
+  metricType: string | null;
+  trendPct: number | null;
+}
+
 function KPIGauge({
   kpi,
+  liveData,
   onEdit,
   onDelete,
 }: {
   kpi: KPI;
+  liveData?: KpiLiveData | null;
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
+  const isMetaTracked = liveData?.source === 'meta' && liveData.actual != null;
+  const displayCurrent = isMetaTracked ? (liveData.actual ?? kpi.current) : kpi.current;
+
   const lb = kpi.name.toLowerCase().includes('bounce') || kpi.name.toLowerCase().includes('churn') || kpi.name.toLowerCase().includes('cpc') || kpi.name.toLowerCase().includes('pos');
   const pct = lb
-    ? Math.max(0, Math.min(100, (kpi.target / Math.max(kpi.current, 0.01)) * 100))
-    : Math.max(0, Math.min(100, (kpi.current / kpi.target) * 100));
+    ? Math.max(0, Math.min(100, (kpi.target / Math.max(displayCurrent, 0.01)) * 100))
+    : Math.max(0, Math.min(100, (displayCurrent / kpi.target) * 100));
   const isOnTrack = pct >= 70;
   const isAtRisk = pct >= 40 && pct < 70;
   const barColor = isOnTrack ? 'bg-green-500' : isAtRisk ? 'bg-amber-500' : 'bg-red-400';
@@ -88,11 +102,28 @@ function KPIGauge({
     return `${v}`;
   };
 
+  const trendPct = liveData?.trendPct ?? null;
+  const lastSync = liveData?.lastSyncAt
+    ? new Date(liveData.lastSyncAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null;
+
   return (
     <div className="group space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-gray-600 dark:text-gray-400 font-medium flex-1">{kpi.name}</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium truncate">{kpi.name}</span>
+          {isMetaTracked && (
+            <span className="flex-shrink-0 text-[9px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded-full">
+              Meta Ads
+            </span>
+          )}
+          {liveData && !isMetaTracked && (
+            <span className="flex-shrink-0 text-[9px] font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 px-1.5 py-0.5 rounded-full">
+              Manual
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
           {onEdit && (
             <button
               onClick={onEdit}
@@ -112,7 +143,9 @@ function KPIGauge({
             </button>
           )}
           <div className="text-xs text-gray-500 flex items-center gap-1">
-            <span className="font-semibold text-gray-900 dark:text-white">{fmt(kpi.current, kpi.unit)}</span>
+            <span className={`font-semibold ${isMetaTracked ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white'}`}>
+              {fmt(displayCurrent, kpi.unit)}
+            </span>
             <span className="text-gray-400">/</span>
             <span>{fmt(kpi.target, kpi.unit)}</span>
             {kpi.unit !== '%' && kpi.unit !== 'x' && kpi.unit !== '★' && kpi.unit !== '$' && <span className="text-gray-400">{kpi.unit}</span>}
@@ -123,8 +156,19 @@ function KPIGauge({
         <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
       <div className="flex justify-between text-[10px] text-gray-400">
-        <span>{isOnTrack ? 'On Track' : isAtRisk ? 'At Risk' : 'Behind'}</span>
-        <span>{Math.round(pct)}%</span>
+        <div className="flex items-center gap-2">
+          <span>{isOnTrack ? 'On Track' : isAtRisk ? 'At Risk' : 'Behind'}</span>
+          {trendPct !== null && (
+            <span className={`flex items-center gap-0.5 ${trendPct > 0 ? 'text-green-600' : trendPct < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+              {trendPct > 0 ? <TrendingUp size={9} /> : trendPct < 0 ? <TrendingDown size={9} /> : <MinusIcon size={9} />}
+              {trendPct > 0 ? '+' : ''}{trendPct}% vs prev 30d
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {lastSync && isMetaTracked && <span title={`Synced ${lastSync}`}>↻ {lastSync}</span>}
+          <span>{Math.round(pct)}%</span>
+        </div>
       </div>
     </div>
   );
@@ -477,6 +521,17 @@ function StrategyView({
   // Description edit state
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState(strategy.description);
+
+  // Live KPI actual values from portal
+  const [kpiActuals, setKpiActuals] = useState<Record<string, KpiLiveData>>({});
+  useEffect(() => {
+    const allKpiIds = strategy.pillars.flatMap(p => p.kpis.map(k => k.id));
+    if (allKpiIds.length === 0) return;
+    fetch(`/api/data/kpi-actuals?clientId=${strategy.clientId}&kpiIds=${allKpiIds.join(',')}`)
+      .then(r => r.json())
+      .then(data => { if (data.kpiActuals) setKpiActuals(data.kpiActuals); })
+      .catch(() => { /* silent — falls back to manual */ });
+  }, [strategy.id, strategy.clientId, strategy.pillars]);
 
   const overallHealth: 'on-track' | 'at-risk' | 'behind' = 'on-track';
   const healthCfg = HEALTH_CONFIG[overallHealth];

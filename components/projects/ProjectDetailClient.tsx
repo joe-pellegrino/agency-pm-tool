@@ -9,7 +9,7 @@ import {
   Calendar, AlertCircle, DollarSign, TrendingUp, Activity,
   FileText, Settings, BarChart3, UserPlus, Filter,
   CheckCircle, RefreshCw, ImageIcon, Video, Paperclip, Archive,
-  Megaphone, Link2, Link2Off, Loader2,
+  Megaphone, Link2, Link2Off, Loader2, TrendingDown, Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { linkTaskToProject } from '@/lib/actions';
@@ -27,13 +27,15 @@ import {
   linkCampaignToInitiative,
   unlinkCampaignFromInitiative,
   getPortalCampaignsForClient,
+  getInitiativeLeads,
   type InitiativeCampaign,
+  type InitiativeLead,
 } from '@/lib/actions-ads';
 import TaskModal from '@/components/tasks/TaskModal';
 import ProjectComments from '@/components/projects/ProjectComments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type Tab = 'overview' | 'team' | 'members' | 'budget' | 'activity' | 'comments' | 'tasks' | 'files' | 'campaigns' | 'settings';
+type Tab = 'overview' | 'team' | 'members' | 'budget' | 'activity' | 'comments' | 'tasks' | 'files' | 'campaigns' | 'leads' | 'settings';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -45,6 +47,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'tasks', label: 'Tasks' },
   { id: 'files', label: 'Files' },
   { id: 'campaigns', label: 'Campaigns' },
+  { id: 'leads', label: 'Leads' },
   { id: 'settings', label: 'Settings' },
 ];
 
@@ -182,6 +185,9 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   const [allTeamMembers, setAllTeamMembers] = useState<Awaited<ReturnType<typeof getAllTeamMembers>>>([]);
   const [linkedCampaigns, setLinkedCampaigns] = useState<InitiativeCampaign[]>([]);
   const [campaignDateRange, setCampaignDateRange] = useState<'today' | '7d' | '30d' | 'month'>('30d');
+  const [initiativeLeads, setInitiativeLeads] = useState<InitiativeLead[]>([]);
+  const [leadsDateRange, setLeadsDateRange] = useState<'today' | '7d' | '30d' | 'month'>('30d');
+  const [leadsLoading, setLeadsLoading] = useState(false);
 
   const [loadedTabs, setLoadedTabs] = useState<Set<Tab>>(new Set());
 
@@ -222,6 +228,11 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
       } else if (tab === 'campaigns') {
         const c = await getInitiativeCampaigns(project.id, campaignDateRange);
         setLinkedCampaigns(c);
+      } else if (tab === 'leads') {
+        setLeadsLoading(true);
+        const l = await getInitiativeLeads(project.id, leadsDateRange);
+        setInitiativeLeads(l);
+        setLeadsLoading(false);
       }
     } catch (err) {
       console.error('Error loading tab data:', err);
@@ -453,6 +464,22 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
               setLinkedCampaigns(c);
               toast.success('Campaign unlinked');
             }}
+          />
+        )}
+        {activeTab === 'leads' && (
+          <LeadsTab
+            project={project}
+            leads={initiativeLeads}
+            loading={leadsLoading}
+            dateRange={leadsDateRange}
+            onDateRangeChange={async (range) => {
+              setLeadsDateRange(range);
+              setLeadsLoading(true);
+              const l = await getInitiativeLeads(project.id, range);
+              setInitiativeLeads(l);
+              setLeadsLoading(false);
+            }}
+            onNavigateToCampaigns={() => handleTabChange('campaigns')}
           />
         )}
         {activeTab === 'settings' && (
@@ -1423,6 +1450,106 @@ function fmtN(v: number) {
   return v.toString();
 }
 
+function LinkedCampaignCard({
+  campaign,
+  onUnlink,
+  onViewLeads,
+}: {
+  campaign: InitiativeCampaign;
+  onUnlink: (campaignId: string) => Promise<void>;
+  onViewLeads: () => void;
+}) {
+  const [kpiName, setKpiName] = useState<string | null>(null);
+  const [kpiLoading, setKpiLoading] = useState(false);
+  const [showKpiInfo, setShowKpiInfo] = useState(false);
+
+  useEffect(() => {
+    // Fetch KPI link for this campaign
+    setKpiLoading(true);
+    import('@/lib/actions-ads').then(({ getCampaignKpiLinks }) => {
+      getCampaignKpiLinks('', [campaign.campaignId])
+        .then(links => {
+          const link = links[0];
+          if (link?.kpiName) setKpiName(link.kpiName);
+          setKpiLoading(false);
+        })
+        .catch(() => setKpiLoading(false));
+    });
+  }, [campaign.campaignId]);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all overflow-hidden">
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+            <h3 className="font-semibold text-[#1E2A3A] text-sm truncate">
+              {campaign.campaignName || campaign.campaignId}
+            </h3>
+          </div>
+          <span className="text-[10px] font-semibold bg-[#EEF2FF] text-[#3B5BDB] px-2 py-0.5 rounded-full flex-shrink-0 capitalize">
+            {campaign.platform}
+          </span>
+        </div>
+        {/* KPI feed indicator */}
+        {!kpiLoading && kpiName && (
+          <div className="flex items-center gap-1 ml-4 mt-1">
+            <TrendingUp size={10} className="text-[#3B5BDB]" />
+            <span className="text-[10px] text-[#5A6A7E]">Feeds KPI: <span className="font-medium text-[#3B5BDB]">{kpiName}</span></span>
+          </div>
+        )}
+        {!kpiLoading && !kpiName && (
+          <div className="flex items-center gap-1 ml-4 mt-1">
+            <Info size={10} className="text-[#A0AAB8]" />
+            <span className="text-[10px] text-[#A0AAB8]">No KPI linked — link one in the Paid Ads tab</span>
+          </div>
+        )}
+      </div>
+
+      {/* Metrics row */}
+      <div className="px-4 pb-3 grid grid-cols-4 gap-1">
+        {[
+          { label: 'Spend', value: fmtCur(campaign.totalSpend ?? 0) },
+          { label: 'Impress.', value: fmtN(campaign.totalImpressions ?? 0) },
+          { label: 'Clicks', value: fmtN(campaign.totalClicks ?? 0) },
+          { label: 'Leads', value: String(campaign.totalResults ?? 0) },
+        ].map(({ label, value }) => (
+          <div key={label} className="text-center">
+            <div className="text-[10px] font-semibold uppercase text-[#8896A6] mb-0.5" style={{ letterSpacing: '0.06em' }}>{label}</div>
+            <div className="text-[15px] font-bold text-[#1E2A3A]">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sparkline */}
+      {campaign.dailySpend && campaign.dailySpend.length > 1 && (
+        <div className="px-4 pb-3">
+          <div className="text-[9px] font-semibold uppercase text-[#8896A6] mb-1">Spend Trend</div>
+          <CampaignSparkline data={campaign.dailySpend} />
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+        <button
+          onClick={onViewLeads}
+          className="flex items-center gap-1 text-[11px] font-medium text-[#5A6A7E] hover:text-[#3B5BDB] hover:bg-[#EEF2FF] px-2 py-1 rounded transition-colors"
+        >
+          <Users size={11} />
+          View Leads
+        </button>
+        <button
+          onClick={() => onUnlink(campaign.campaignId)}
+          className="flex items-center gap-1 text-[11px] font-medium text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+        >
+          <Link2Off size={11} />
+          Unlink
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LinkedCampaignsTab({
   project,
   linkedCampaigns,
@@ -1552,55 +1679,12 @@ function LinkedCampaignsTab({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {linkedCampaigns.map(campaign => (
-            <div key={campaign.campaignId} className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all overflow-hidden">
-              <div className="px-4 pt-4 pb-3">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                    <h3 className="font-semibold text-[#1E2A3A] text-sm truncate">
-                      {campaign.campaignName || campaign.campaignId}
-                    </h3>
-                  </div>
-                  <span className="text-[10px] font-semibold bg-[#EEF2FF] text-[#3B5BDB] px-2 py-0.5 rounded-full flex-shrink-0 capitalize">
-                    {campaign.platform}
-                  </span>
-                </div>
-              </div>
-
-              {/* Metrics row */}
-              <div className="px-4 pb-3 grid grid-cols-4 gap-1">
-                {[
-                  { label: 'Spend', value: fmtCur(campaign.totalSpend ?? 0) },
-                  { label: 'Impress.', value: fmtN(campaign.totalImpressions ?? 0) },
-                  { label: 'Clicks', value: fmtN(campaign.totalClicks ?? 0) },
-                  { label: 'Leads', value: String(campaign.totalResults ?? 0) },
-                ].map(({ label, value }) => (
-                  <div key={label} className="text-center">
-                    <div className="text-[10px] font-semibold uppercase text-[#8896A6] mb-0.5" style={{ letterSpacing: '0.06em' }}>{label}</div>
-                    <div className="text-[15px] font-bold text-[#1E2A3A]">{value}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sparkline */}
-              {campaign.dailySpend && campaign.dailySpend.length > 1 && (
-                <div className="px-4 pb-3">
-                  <div className="text-[9px] font-semibold uppercase text-[#8896A6] mb-1">Spend Trend</div>
-                  <CampaignSparkline data={campaign.dailySpend} />
-                </div>
-              )}
-
-              {/* Unlink footer */}
-              <div className="px-4 py-3 border-t border-gray-100 flex justify-end">
-                <button
-                  onClick={() => onUnlink(campaign.campaignId)}
-                  className="flex items-center gap-1 text-[11px] font-medium text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                >
-                  <Link2Off size={11} />
-                  Unlink
-                </button>
-              </div>
-            </div>
+            <LinkedCampaignCard
+              key={campaign.campaignId}
+              campaign={campaign}
+              onUnlink={onUnlink}
+              onViewLeads={() => {/* handled by parent tab change */}}
+            />
           ))}
         </div>
       )}
@@ -1680,6 +1764,158 @@ function LinkedCampaignsTab({
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Leads Tab ────────────────────────────────────────────────────────────────
+
+type LeadsDateRange = 'today' | '7d' | '30d' | 'month';
+const LEADS_DATE_LABELS: Record<LeadsDateRange, string> = {
+  today: 'Today',
+  '7d': '7 Days',
+  '30d': '30 Days',
+  month: 'This Month',
+};
+
+const LEAD_STATUS_COLORS: Record<string, string> = {
+  new: 'bg-blue-100 text-blue-700',
+  contacted: 'bg-indigo-100 text-indigo-700',
+  qualified: 'bg-purple-100 text-purple-700',
+  converted: 'bg-green-100 text-green-700',
+  lost: 'bg-red-100 text-red-600',
+};
+
+function LeadsTab({
+  project,
+  leads,
+  loading,
+  dateRange,
+  onDateRangeChange,
+  onNavigateToCampaigns,
+}: {
+  project: ProjectDetail;
+  leads: InitiativeLead[];
+  loading: boolean;
+  dateRange: LeadsDateRange;
+  onDateRangeChange: (range: LeadsDateRange) => Promise<void>;
+  onNavigateToCampaigns: () => void;
+}) {
+  const convertedLeads = leads.filter(l => l.converted);
+  const totalRevenue = convertedLeads.reduce((s, l) => s + (l.conversionAmount ?? 0), 0);
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 mb-5">
+        <div>
+          <h2 className="text-base font-semibold text-[#1E2A3A]">Leads from Linked Campaigns</h2>
+          <p className="text-sm text-[#8896A6] mt-0.5">Meta Ad leads attributed to campaigns linked to this initiative</p>
+        </div>
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          {(Object.keys(LEADS_DATE_LABELS) as LeadsDateRange[]).map(range => (
+            <button
+              key={range}
+              onClick={() => onDateRangeChange(range)}
+              disabled={loading}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                dateRange === range
+                  ? 'bg-white text-[#3B5BDB] shadow-sm'
+                  : 'text-[#5A6A7E] hover:text-gray-700'
+              }`}
+            >
+              {LEADS_DATE_LABELS[range]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      {leads.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: 'Total Leads', value: leads.length.toString() },
+            { label: 'Converted', value: convertedLeads.length.toString() },
+            { label: 'Conv. Rate', value: leads.length > 0 ? `${Math.round((convertedLeads.length / leads.length) * 100)}%` : '0%' },
+            { label: 'Revenue', value: totalRevenue > 0 ? formatCurrency(totalRevenue) : '$0' },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-white rounded-xl border border-gray-200 p-4 text-center" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+              <div className="text-[11px] font-semibold uppercase text-[#8896A6] mb-1" style={{ letterSpacing: '0.06em' }}>{label}</div>
+              <div className="text-[22px] font-bold text-[#1E2A3A]">{value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Leads table */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 size={24} className="animate-spin text-[#3B5BDB]" />
+          <span className="ml-2 text-sm text-gray-500">Loading leads...</span>
+        </div>
+      ) : leads.length === 0 ? (
+        <div className="bg-white rounded-lg border border-[var(--color-border)] text-center py-16 text-[#8896A6]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+          <Users size={36} className="mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No leads found</p>
+          <p className="text-sm mt-1">Link Meta campaigns to this initiative to see attributed leads</p>
+          <button
+            onClick={onNavigateToCampaigns}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          >
+            Go to Campaigns
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border border-[var(--color-border)] overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[var(--color-border)]">
+                {['NAME', 'CAMPAIGN', 'STATUS', 'CONVERTED', 'REVENUE', 'DATE'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-[#3B5BDB] uppercase tracking-wide">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map(lead => (
+                <tr key={lead.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[#F8FAFC] transition-colors">
+                  <td className="px-4 py-3 text-sm font-medium text-[#1E2A3A]">
+                    {lead.name || <span className="text-[#8896A6] italic">Unknown</span>}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-[#5A6A7E] max-w-[160px] truncate">
+                    {lead.campaignName || lead.sourceDetail || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${LEAD_STATUS_COLORS[lead.status || 'new'] || 'bg-gray-100 text-gray-600'}`}>
+                      {lead.status || 'new'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {lead.converted ? (
+                      <span className="text-xs font-medium text-green-600 flex items-center gap-1">
+                        <Check size={12} /> Yes
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[#8896A6]">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#1E2A3A]">
+                    {lead.conversionAmount ? formatCurrency(lead.conversionAmount) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-[#8896A6]">
+                    {formatDate(lead.createdAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-4 py-3 border-t border-[var(--color-border)] bg-[#F8F9FF] text-xs text-[#8896A6]">
+            Read-only view · Data from portal Meta Ad leads
           </div>
         </div>
       )}

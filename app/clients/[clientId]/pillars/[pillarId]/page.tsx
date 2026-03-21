@@ -23,7 +23,16 @@ import {
   Bold, Italic, Strikethrough, List, ListOrdered,
   Heading1, Heading2, Heading3, Quote, Code, Table2, Link2,
   Minus, Check, Loader2, X, Plus, Pencil, Trash2, ArrowLeft,
+  TrendingUp, TrendingDown, Minus as TrendFlat,
 } from 'lucide-react';
+
+interface KpiLiveData {
+  actual: number | null;
+  source: 'meta' | 'manual';
+  lastSyncAt: string | null;
+  metricType: string | null;
+  trendPct: number | null;
+}
 
 function ToolbarBtn({
   onClick, active, disabled, children, title,
@@ -109,6 +118,17 @@ export default function PillarDetailPage() {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const [newKpiForm, setNewKpiForm] = useState({ name: '', target: 0, current: 0, unit: '' });
   const [showNewKpiForm, setShowNewKpiForm] = useState(false);
+  const [kpiActuals, setKpiActuals] = useState<Record<string, KpiLiveData>>({});
+
+  // Fetch live KPI actuals from portal
+  useEffect(() => {
+    if (pillarKpis.length === 0) return;
+    const kpiIds = pillarKpis.map(k => k.id).join(',');
+    fetch(`/api/data/kpi-actuals?clientId=${clientId}&kpiIds=${kpiIds}`)
+      .then(r => r.json())
+      .then(data => { if (data.kpiActuals) setKpiActuals(data.kpiActuals); })
+      .catch(() => { /* silent fallback to manual */ });
+  }, [clientId, pillarKpis.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const [editingKpiId, setEditingKpiId] = useState<string | null>(null);
   const [editingKpi, setEditingKpi] = useState<ClientPillarKpi | null>(null);
   const [showNewInitiativeModal, setShowNewInitiativeModal] = useState(false);
@@ -300,8 +320,12 @@ export default function PillarDetailPage() {
                 ) : (
                   <>
                     {pillarKpis.map((kpi) => {
-                      const progress = kpi.target > 0 ? (kpi.current / kpi.target) * 100 : 0;
+                      const liveData = kpiActuals[kpi.id] ?? null;
+                      const isMetaTracked = liveData?.source === 'meta' && liveData.actual != null;
+                      const displayCurrent = isMetaTracked ? (liveData.actual ?? kpi.current) : kpi.current;
+                      const progress = kpi.target > 0 ? (displayCurrent / kpi.target) * 100 : 0;
                       const isEditing = editingKpiId === kpi.id;
+                      const progressColor = progress >= 70 ? 'bg-green-500' : progress >= 40 ? 'bg-amber-500' : 'bg-red-400';
 
                       if (isEditing && editingKpi) {
                         return (
@@ -368,9 +392,28 @@ export default function PillarDetailPage() {
 
                       return (
                         <div key={kpi.id} className="border border-[var(--color-border)] rounded-lg p-4 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{kpi.name}</h4>
-                            <div className="flex gap-1">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{kpi.name}</h4>
+                                {isMetaTracked && (
+                                  <span className="text-[9px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 rounded-full">
+                                    Meta Ads
+                                  </span>
+                                )}
+                                {liveData && !isMetaTracked && (
+                                  <span className="text-[9px] font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 px-1.5 py-0.5 rounded-full">
+                                    Manual
+                                  </span>
+                                )}
+                              </div>
+                              {isMetaTracked && liveData?.lastSyncAt && (
+                                <div className="text-[10px] text-gray-400 mt-0.5">
+                                  Last sync: {new Date(liveData.lastSyncAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-1 flex-shrink-0">
                               <button
                                 onClick={() => { setEditingKpiId(kpi.id); setEditingKpi(kpi); }}
                                 className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
@@ -385,9 +428,19 @@ export default function PillarDetailPage() {
                               </button>
                             </div>
                           </div>
-                          <ProgressBar value={progress} color="bg-[#3B5BDB]" />
+                          <ProgressBar value={progress} color={progressColor} />
                           <div className="text-xs text-gray-500 flex items-center justify-between">
-                            <span>{kpi.current} / {kpi.target} {kpi.unit}</span>
+                            <div className="flex items-center gap-2">
+                              <span className={isMetaTracked ? 'text-blue-700 dark:text-blue-300 font-medium' : ''}>
+                                {displayCurrent} / {kpi.target} {kpi.unit}
+                              </span>
+                              {liveData?.trendPct != null && (
+                                <span className={`flex items-center gap-0.5 text-[10px] ${liveData.trendPct > 0 ? 'text-green-600' : liveData.trendPct < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                                  {liveData.trendPct > 0 ? <TrendingUp size={9} /> : liveData.trendPct < 0 ? <TrendingDown size={9} /> : <TrendFlat size={9} />}
+                                  {liveData.trendPct > 0 ? '+' : ''}{liveData.trendPct}%
+                                </span>
+                              )}
+                            </div>
                             <span className="font-medium">{Math.round(progress)}%</span>
                           </div>
                         </div>
