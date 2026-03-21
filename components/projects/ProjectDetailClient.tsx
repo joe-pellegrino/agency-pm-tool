@@ -9,6 +9,7 @@ import {
   Calendar, AlertCircle, DollarSign, TrendingUp, Activity,
   FileText, Settings, BarChart3, UserPlus, Filter,
   CheckCircle, RefreshCw, ImageIcon, Video, Paperclip, Archive,
+  Megaphone, Link2, Link2Off, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { linkTaskToProject } from '@/lib/actions';
@@ -21,11 +22,18 @@ import {
   getAllTeamMembers, createProjectTask, deleteProjectAsset,
   archiveProjectById,
 } from '@/lib/actions-projects';
+import {
+  getInitiativeCampaigns,
+  linkCampaignToInitiative,
+  unlinkCampaignFromInitiative,
+  getPortalCampaignsForClient,
+  type InitiativeCampaign,
+} from '@/lib/actions-ads';
 import TaskModal from '@/components/tasks/TaskModal';
 import ProjectComments from '@/components/projects/ProjectComments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type Tab = 'overview' | 'team' | 'members' | 'budget' | 'activity' | 'comments' | 'tasks' | 'files' | 'settings';
+type Tab = 'overview' | 'team' | 'members' | 'budget' | 'activity' | 'comments' | 'tasks' | 'files' | 'campaigns' | 'settings';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -36,6 +44,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'comments', label: 'Comments' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'files', label: 'Files' },
+  { id: 'campaigns', label: 'Campaigns' },
   { id: 'settings', label: 'Settings' },
 ];
 
@@ -171,6 +180,8 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
   const [activity, setActivity] = useState<Awaited<ReturnType<typeof getProjectActivity>>>([]);
   const [assets, setAssets] = useState<Awaited<ReturnType<typeof getProjectAssets>>>([]);
   const [allTeamMembers, setAllTeamMembers] = useState<Awaited<ReturnType<typeof getAllTeamMembers>>>([]);
+  const [linkedCampaigns, setLinkedCampaigns] = useState<InitiativeCampaign[]>([]);
+  const [campaignDateRange, setCampaignDateRange] = useState<'today' | '7d' | '30d' | 'month'>('30d');
 
   const [loadedTabs, setLoadedTabs] = useState<Set<Tab>>(new Set());
 
@@ -208,6 +219,9 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
       } else if (tab === 'files') {
         const a = await getProjectAssets(project.id);
         setAssets(a);
+      } else if (tab === 'campaigns') {
+        const c = await getInitiativeCampaigns(project.id, campaignDateRange);
+        setLinkedCampaigns(c);
       }
     } catch (err) {
       console.error('Error loading tab data:', err);
@@ -414,6 +428,30 @@ export default function ProjectDetailClient({ project: initialProject }: { proje
             onRefresh={async () => {
               const a = await getProjectAssets(project.id);
               setAssets(a);
+            }}
+          />
+        )}
+        {activeTab === 'campaigns' && (
+          <LinkedCampaignsTab
+            project={project}
+            linkedCampaigns={linkedCampaigns}
+            dateRange={campaignDateRange}
+            onDateRangeChange={async (range) => {
+              setCampaignDateRange(range);
+              const c = await getInitiativeCampaigns(project.id, range);
+              setLinkedCampaigns(c);
+            }}
+            onLink={async (campaignId, platform) => {
+              await linkCampaignToInitiative(project.id, campaignId, platform);
+              const c = await getInitiativeCampaigns(project.id, campaignDateRange);
+              setLinkedCampaigns(c);
+              toast.success('Campaign linked');
+            }}
+            onUnlink={async (campaignId) => {
+              await unlinkCampaignFromInitiative(project.id, campaignId);
+              const c = await getInitiativeCampaigns(project.id, campaignDateRange);
+              setLinkedCampaigns(c);
+              toast.success('Campaign unlinked');
             }}
           />
         )}
@@ -1332,6 +1370,317 @@ function FilesTab({
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Linked Campaigns Tab ─────────────────────────────────────────────────────
+
+type CampaignDateRange = 'today' | '7d' | '30d' | 'month';
+
+const CAMPAIGN_DATE_LABELS: Record<CampaignDateRange, string> = {
+  today: 'Today',
+  '7d': '7 Days',
+  '30d': '30 Days',
+  month: 'This Month',
+};
+
+function CampaignSparkline({ data }: { data: Array<{ date: string; spend: number }> }) {
+  if (!data || data.length < 2) {
+    return <div className="w-20 h-8 bg-gray-50 rounded" />;
+  }
+  const w = 80, h = 32, pad = 2;
+  const values = data.map(d => d.spend);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const points = values.map((v, i) => {
+    const x = pad + (i / (values.length - 1)) * (w - pad * 2);
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    return `${x},${y}`;
+  });
+  const polyline = points.join(' ');
+  const firstX = points[0].split(',')[0];
+  const lastX = points[points.length - 1].split(',')[0];
+  const area = `${polyline} ${lastX},${h - pad} ${firstX},${h - pad}`;
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polygon points={area} fill="#3B5BDB" fillOpacity="0.08" />
+      <polyline points={polyline} fill="none" stroke="#3B5BDB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function fmtCur(v: number) {
+  if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+  return `$${v.toFixed(0)}`;
+}
+function fmtN(v: number) {
+  if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
+  if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
+  return v.toString();
+}
+
+function LinkedCampaignsTab({
+  project,
+  linkedCampaigns,
+  dateRange,
+  onDateRangeChange,
+  onLink,
+  onUnlink,
+}: {
+  project: ProjectDetail;
+  linkedCampaigns: InitiativeCampaign[];
+  dateRange: CampaignDateRange;
+  onDateRangeChange: (range: CampaignDateRange) => Promise<void>;
+  onLink: (campaignId: string, platform: string) => Promise<void>;
+  onUnlink: (campaignId: string) => Promise<void>;
+}) {
+  const [showPicker, setShowPicker] = useState(false);
+  const [availableCampaigns, setAvailableCampaigns] = useState<Array<{ id: string; name: string; spend: number; impressions: number }>>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [changingRange, setChangingRange] = useState(false);
+
+  const linkedIds = new Set(linkedCampaigns.map(c => c.campaignId));
+
+  const handleOpenPicker = async () => {
+    setShowPicker(true);
+    setPickerLoading(true);
+    try {
+      const campaigns = await getPortalCampaignsForClient(project.clientId, '30d');
+      setAvailableCampaigns(campaigns);
+    } catch (err) {
+      toast.error('Failed to load campaigns');
+    } finally {
+      setPickerLoading(false);
+    }
+  };
+
+  const handleRangeChange = async (range: CampaignDateRange) => {
+    setChangingRange(true);
+    await onDateRangeChange(range);
+    setChangingRange(false);
+  };
+
+  const filtered = availableCampaigns.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Summary totals
+  const totalSpend = linkedCampaigns.reduce((s, c) => s + (c.totalSpend ?? 0), 0);
+  const totalImpressions = linkedCampaigns.reduce((s, c) => s + (c.totalImpressions ?? 0), 0);
+  const totalResults = linkedCampaigns.reduce((s, c) => s + (c.totalResults ?? 0), 0);
+  const totalClicks = linkedCampaigns.reduce((s, c) => s + (c.totalClicks ?? 0), 0);
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 mb-5">
+        <div>
+          <h2 className="text-base font-semibold text-[#1E2A3A]">Linked Campaigns</h2>
+          <p className="text-sm text-[#8896A6] mt-0.5">Meta campaigns linked to this initiative</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Date range */}
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            {(Object.keys(CAMPAIGN_DATE_LABELS) as CampaignDateRange[]).map(range => (
+              <button
+                key={range}
+                onClick={() => handleRangeChange(range)}
+                disabled={changingRange}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  dateRange === range
+                    ? 'bg-white text-[#3B5BDB] shadow-sm'
+                    : 'text-[#5A6A7E] hover:text-gray-700'
+                }`}
+              >
+                {CAMPAIGN_DATE_LABELS[range]}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleOpenPicker}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          >
+            <Link2 size={13} />
+            Link Campaign
+          </button>
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      {linkedCampaigns.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: 'Total Spend', value: fmtCur(totalSpend) },
+            { label: 'Impressions', value: fmtN(totalImpressions) },
+            { label: 'Clicks', value: fmtN(totalClicks) },
+            { label: 'Leads', value: totalResults.toString() },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-white rounded-xl border border-gray-200 p-4 text-center" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+              <div className="text-[11px] font-semibold uppercase text-[#8896A6] mb-1" style={{ letterSpacing: '0.06em' }}>{label}</div>
+              <div className="text-[22px] font-bold text-[#1E2A3A]">{changingRange ? '-' : value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Campaign cards */}
+      {changingRange ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 size={24} className="animate-spin text-[#3B5BDB]" />
+          <span className="ml-2 text-sm text-gray-500">Loading...</span>
+        </div>
+      ) : linkedCampaigns.length === 0 ? (
+        <div className="bg-white rounded-lg border border-[var(--color-border)] text-center py-16 text-[#8896A6]" style={{ boxShadow: '0 1px 3px rgba(30,42,58,0.06)' }}>
+          <Megaphone size={36} className="mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No campaigns linked yet</p>
+          <p className="text-sm mt-1">Link a Meta campaign to track its performance here</p>
+          <button
+            onClick={handleOpenPicker}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-md hover:bg-[#364FC7] transition-colors"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+          >
+            <Link2 size={13} />
+            Link First Campaign
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {linkedCampaigns.map(campaign => (
+            <div key={campaign.campaignId} className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all overflow-hidden">
+              <div className="px-4 pt-4 pb-3">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                    <h3 className="font-semibold text-[#1E2A3A] text-sm truncate">
+                      {campaign.campaignName || campaign.campaignId}
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-semibold bg-[#EEF2FF] text-[#3B5BDB] px-2 py-0.5 rounded-full flex-shrink-0 capitalize">
+                    {campaign.platform}
+                  </span>
+                </div>
+              </div>
+
+              {/* Metrics row */}
+              <div className="px-4 pb-3 grid grid-cols-4 gap-1">
+                {[
+                  { label: 'Spend', value: fmtCur(campaign.totalSpend ?? 0) },
+                  { label: 'Impress.', value: fmtN(campaign.totalImpressions ?? 0) },
+                  { label: 'Clicks', value: fmtN(campaign.totalClicks ?? 0) },
+                  { label: 'Leads', value: String(campaign.totalResults ?? 0) },
+                ].map(({ label, value }) => (
+                  <div key={label} className="text-center">
+                    <div className="text-[10px] font-semibold uppercase text-[#8896A6] mb-0.5" style={{ letterSpacing: '0.06em' }}>{label}</div>
+                    <div className="text-[15px] font-bold text-[#1E2A3A]">{value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Sparkline */}
+              {campaign.dailySpend && campaign.dailySpend.length > 1 && (
+                <div className="px-4 pb-3">
+                  <div className="text-[9px] font-semibold uppercase text-[#8896A6] mb-1">Spend Trend</div>
+                  <CampaignSparkline data={campaign.dailySpend} />
+                </div>
+              )}
+
+              {/* Unlink footer */}
+              <div className="px-4 py-3 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => onUnlink(campaign.campaignId)}
+                  className="flex items-center gap-1 text-[11px] font-medium text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                >
+                  <Link2Off size={11} />
+                  Unlink
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Campaign Picker Modal */}
+      {showPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowPicker(false)}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[80vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="font-semibold text-gray-900 text-base">Link a Campaign</h2>
+              <button onClick={() => setShowPicker(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-6 py-4 border-b border-gray-100">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Search campaigns..."
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {pickerLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 size={20} className="animate-spin text-[#3B5BDB]" />
+                  <span className="ml-2 text-sm text-gray-500">Loading campaigns...</span>
+                </div>
+              ) : filtered.length === 0 ? (
+                <p className="text-center text-sm text-gray-400 py-8">No campaigns found</p>
+              ) : (
+                <div className="space-y-2">
+                  {filtered.map(c => {
+                    const isLinked = linkedIds.has(c.id);
+                    return (
+                      <div key={c.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-[#3B5BDB]/30 hover:bg-[#F8F9FF] transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-[#1E2A3A] truncate">{c.name}</p>
+                          <p className="text-xs text-[#8896A6] mt-0.5">
+                            {fmtCur(c.spend)} spend · {fmtN(c.impressions)} impressions (30d)
+                          </p>
+                        </div>
+                        {isLinked ? (
+                          <span className="ml-3 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full flex-shrink-0">
+                            Linked ✓
+                          </span>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              await onLink(c.id, 'meta');
+                              setShowPicker(false);
+                            }}
+                            className="ml-3 flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white bg-[#3B5BDB] hover:bg-[#364FC7] rounded-lg transition-colors"
+                          >
+                            Link
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100">
+              <button
+                onClick={() => setShowPicker(false)}
+                className="w-full py-2 text-sm font-medium text-[#5A6A7E] border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
