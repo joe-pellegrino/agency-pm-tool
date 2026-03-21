@@ -17,6 +17,12 @@ export interface Client {
   location: string;
   color: string;
   logo: string;
+  primary_contact_name?: string | null;
+  primary_contact_email?: string | null;
+  primary_contact_phone?: string | null;
+  website_url?: string | null;
+  logo_url?: string | null;
+  notes?: string | null;
 }
 
 export interface ClientPillar {

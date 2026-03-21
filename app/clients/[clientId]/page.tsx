@@ -10,7 +10,7 @@ import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, Zap, ArrowLeft,
-  X, Loader2, Megaphone, Edit2, Save, DollarSign, FileText, RefreshCw, Pause, Play, Trash2,
+  X, Loader2, Megaphone, Edit2, Save, DollarSign, FileText, RefreshCw, Pause, Play, Trash2, Settings,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { upsertClientService, removeClientService, updateClient, updateRecurringTemplate, deleteRecurringTemplate } from '@/lib/actions';
@@ -20,6 +20,8 @@ import Drawer from '@/components/ui/Drawer';
 import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
 import BudgetMatrix from '@/components/budget/BudgetMatrix';
 import ClientModal from '@/components/clients/ClientModal';
+import ClientSettings from '@/components/clients/ClientSettings';
+import ServicesTab from '@/components/clients/ServicesTab';
 import ProjectModal from '@/components/projects/ProjectModal';
 import TaskDetailDrawer from '@/components/tasks/TaskDetailDrawer';
 import { TaskDetailModal } from '@/components/kanban/KanbanBoard';
@@ -757,7 +759,7 @@ function ProjectDetailDrawer({
   );
 }
 
-type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets' | 'strategy';
+type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets' | 'strategy' | 'services' | 'settings';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
   { id: 'overview', label: 'Overview', icon: Activity },
@@ -765,10 +767,12 @@ const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentTyp
   { id: 'pillars', label: 'Pillars', icon: Target },
   { id: 'tasks', label: 'Tasks', icon: CheckCircle },
   { id: 'strategy', label: 'Strategy', icon: TrendingUp },
+  { id: 'services', label: 'Services', icon: Zap },
   { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
   { id: 'budget', label: 'Budget', icon: DollarSign },
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'assets', label: 'Assets', icon: FolderOpen },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 // ── Client Info Editor ───────────────────────────────────────────────────────
@@ -1805,6 +1809,14 @@ export default function ClientPage() {
               );
             })()}
           </div>
+        )}
+
+        {activeTab === 'services' && (
+          <ServicesTab clientId={clientId} clientName={client.name} />
+        )}
+
+        {activeTab === 'settings' && (
+          <ClientSettings client={client} />
         )}
       </div>
     </div>

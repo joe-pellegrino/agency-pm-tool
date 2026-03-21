@@ -397,3 +397,19 @@ CREATE INDEX IF NOT EXISTS idx_client_services_cid   ON client_services(client_i
 CREATE INDEX IF NOT EXISTS idx_svc_strategies_csid   ON service_strategies(client_service_id);
 CREATE INDEX IF NOT EXISTS idx_svc_strat_pillars     ON service_strategy_pillars(service_strategy_id);
 CREATE INDEX IF NOT EXISTS idx_svc_strat_kpis        ON service_strategy_kpis(service_strategy_id);
+CREATE INDEX IF NOT EXISTS idx_client_team_assign_cid ON client_team_assignments(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_team_assign_mid ON client_team_assignments(team_member_id);
+
+-- ---------------------------------------------------------------------------
+-- client_team_assignments  (which team members are assigned to a client)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS client_team_assignments (
+  id              TEXT PRIMARY KEY,
+  client_id       TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  team_member_id  TEXT NOT NULL REFERENCES team_members(id) ON DELETE CASCADE,
+  role            TEXT NOT NULL CHECK (role IN ('Account Manager', 'Designer', 'Strategist', 'Developer', 'Other')),
+  is_primary       INTEGER NOT NULL DEFAULT 0 CHECK (is_primary IN (0, 1)),
+  created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  UNIQUE(client_id, team_member_id)
+);

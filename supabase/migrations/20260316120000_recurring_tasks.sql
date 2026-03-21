@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS recurring_task_templates (
 
 -- Enable RLS on recurring_task_templates
 ALTER TABLE recurring_task_templates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all" ON recurring_task_templates;
 CREATE POLICY "anon_all" ON recurring_task_templates FOR ALL USING (true) WITH CHECK (true);
 
 -- Link tasks to their recurring template

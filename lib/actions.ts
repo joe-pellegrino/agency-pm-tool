@@ -195,6 +195,12 @@ export async function updateClient(id: string, data: Partial<{
   location: string;
   color: string;
   logo: string;
+  primary_contact_name: string | null;
+  primary_contact_email: string | null;
+  primary_contact_phone: string | null;
+  website_url: string | null;
+  logo_url: string | null;
+  notes: string | null;
 }>) {
   const { error } = await db().from('clients').update(data).eq('id', id);
   if (error) throw new Error(error.message);
