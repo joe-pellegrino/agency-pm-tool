@@ -2,19 +2,17 @@
 
 import { useState, Suspense } from 'react';
 import { Client } from '@/lib/data';
-import { User, Briefcase, Users, Zap, DollarSign, Bell } from 'lucide-react';
+import { User, Users, Zap, DollarSign, Bell } from 'lucide-react';
 import ProfileTab from './ProfileTab';
-import ServicesTab from './ServicesTab';
 import TeamTab from './TeamTab';
 import IntegrationsTab from './IntegrationsTab';
 import BillingTab from './BillingTab';
 import NotificationsTab from './NotificationsTab';
 
-type SettingsTab = 'profile' | 'services' | 'team' | 'integrations' | 'billing' | 'notifications';
+type SettingsTab = 'profile' | 'team' | 'integrations' | 'billing' | 'notifications';
 
 const TAB_CONFIG: Array<{ id: SettingsTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
   { id: 'profile', label: 'Profile', icon: User },
-  { id: 'services', label: 'Services', icon: Briefcase },
   { id: 'team', label: 'Team', icon: Users },
   { id: 'integrations', label: 'Integrations', icon: Zap },
   { id: 'billing', label: 'Billing', icon: DollarSign },
@@ -28,8 +26,6 @@ export default function ClientSettings({ client }: { client: Client }) {
     switch (activeTab) {
       case 'profile':
         return <ProfileTab client={client} />;
-      case 'services':
-        return <ServicesTab clientId={client.id} clientName={client.name} />;
       case 'team':
         return <TeamTab clientId={client.id} />;
       case 'integrations':
