@@ -660,3 +660,364 @@ export async function getAllData(): Promise<AppData> {
     PRIORITY_DOT,
   };
 }
+
+// ─── Page-specific data fetchers ─────────────────────────────────────────────
+// These replace the mega getAllData() for individual pages.
+// Only query the tables each page actually needs.
+
+export type DashboardData = Pick<AppData,
+  'CLIENTS' | 'CLIENT_PILLARS' | 'CLIENT_PILLAR_KPIS' | 'TEAM_MEMBERS' | 'TASKS' |
+  'PROJECTS' | 'STRATEGY_TARGETED_PILLARS' | 'PRIORITY_DOT'
+>;
+
+export async function getDashboardData(): Promise<DashboardData> {
+  const db = createServerClient();
+
+  const [
+    clientsRes, teamRes, tasksRes, taskDepsRes, approvalsRes,
+    clientPillarsRes, clientPillarKpisRes,
+    projectsRes, projectTasksRes, strategyTargetedPillarsRes,
+  ] = await Promise.all([
+    db.from('clients').select('*').is('archived_at', null),
+    db.from('team_members').select('*').is('archived_at', null),
+    db.from('tasks').select('*').is('archived_at', null),
+    db.from('task_dependencies').select('*'),
+    db.from('approval_history').select('*'),
+    db.from('client_pillars').select('*'),
+    db.from('client_pillar_kpis').select('*'),
+    db.from('projects').select('*').is('archived_at', null),
+    db.from('project_task_links').select('*'),
+    db.from('strategy_targeted_pillars').select('*'),
+  ]);
+
+  const taskRows = tasksRes.data ?? [];
+  const taskDeps = taskDepsRes.data ?? [];
+  const approvalRows = approvalsRes.data ?? [];
+  const projectRows = projectsRes.data ?? [];
+  const projectTaskRows = projectTasksRes.data ?? [];
+
+  const TASKS: Task[] = taskRows.map((r) => {
+    const deps = taskDeps.filter(d => d.task_id === r.id).map(d => d.depends_on_id as string);
+    const approvals = approvalRows.filter(a => a.task_id === r.id).map(toApprovalEntry);
+    return toTask(r, deps, approvals);
+  });
+
+  const PROJECTS: Project[] = projectRows.map(r => {
+    const tasks = projectTaskRows.filter(pt => pt.project_id === r.id).map(pt => pt.task_id as string);
+    return toProject(r, tasks);
+  });
+
+  return {
+    CLIENTS: (clientsRes.data ?? []).map(toClient),
+    CLIENT_PILLARS: (clientPillarsRes.data ?? []).map(toClientPillar),
+    CLIENT_PILLAR_KPIS: (clientPillarKpisRes.data ?? []).map(toClientPillarKpi),
+    STRATEGY_TARGETED_PILLARS: strategyTargetedPillarsRes.data ?? [],
+    TEAM_MEMBERS: (teamRes.data ?? []).map(toTeamMember),
+    TASKS,
+    PROJECTS,
+    PRIORITY_DOT,
+  };
+}
+
+export type KanbanData = Pick<AppData,
+  'TASKS' | 'CLIENTS' | 'CLIENT_PILLARS' | 'TEAM_MEMBERS' | 'RECURRING_TEMPLATES' | 'PRIORITY_DOT'
+>;
+
+export async function getKanbanData(): Promise<KanbanData> {
+  const db = createServerClient();
+
+  const [
+    clientsRes, teamRes, tasksRes, taskDepsRes, approvalsRes,
+    clientPillarsRes, recurringTemplatesRes,
+  ] = await Promise.all([
+    db.from('clients').select('*').is('archived_at', null),
+    db.from('team_members').select('*').is('archived_at', null),
+    db.from('tasks').select('*').is('archived_at', null),
+    db.from('task_dependencies').select('*'),
+    db.from('approval_history').select('*'),
+    db.from('client_pillars').select('*'),
+    db.from('recurring_task_templates').select('*').eq('active', true),
+  ]);
+
+  const taskRows = tasksRes.data ?? [];
+  const taskDeps = taskDepsRes.data ?? [];
+  const approvalRows = approvalsRes.data ?? [];
+
+  const TASKS: Task[] = taskRows.map((r) => {
+    const deps = taskDeps.filter(d => d.task_id === r.id).map(d => d.depends_on_id as string);
+    const approvals = approvalRows.filter(a => a.task_id === r.id).map(toApprovalEntry);
+    return toTask(r, deps, approvals);
+  });
+
+  return {
+    CLIENTS: (clientsRes.data ?? []).map(toClient),
+    CLIENT_PILLARS: (clientPillarsRes.data ?? []).map(toClientPillar),
+    TEAM_MEMBERS: (teamRes.data ?? []).map(toTeamMember),
+    TASKS,
+    RECURRING_TEMPLATES: (recurringTemplatesRes.data ?? []).map(toRecurringTemplate),
+    PRIORITY_DOT,
+  };
+}
+
+export type DocumentsData = Pick<AppData,
+  'DOCUMENTS' | 'DOCUMENT_FOLDERS' | 'CLIENTS' | 'TEAM_MEMBERS' | 'PRIORITY_DOT'
+>;
+
+export async function getDocumentsData(): Promise<DocumentsData> {
+  const db = createServerClient();
+
+  const [
+    clientsRes, teamRes,
+    docsRes, docCollabRes, docVersionsRes, commentsRes, docFoldersRes,
+  ] = await Promise.all([
+    db.from('clients').select('*').is('archived_at', null),
+    db.from('team_members').select('*').is('archived_at', null),
+    db.from('documents').select('*'),
+    db.from('document_collaborators').select('*'),
+    db.from('document_versions').select('*'),
+    db.from('comments').select('*'),
+    db.from('document_folders').select('*').is('archived_at', null),
+  ]);
+
+  const docRows = docsRes.data ?? [];
+  const docCollabs = docCollabRes.data ?? [];
+  const docVersionRows = docVersionsRes.data ?? [];
+  const commentRows = commentsRes.data ?? [];
+
+  const buildComment = (r: Row): Comment => {
+    const replies = commentRows.filter(c => c.parent_comment_id === r.id).map(buildComment);
+    return toComment(r, replies);
+  };
+  const topComments = commentRows.filter(c => !c.parent_comment_id);
+
+  const DOCUMENTS: Document[] = docRows.map((r) => {
+    const collaborators = docCollabs.filter(dc => dc.document_id === r.id).map(dc => dc.team_member_id as string);
+    const versions = docVersionRows.filter(v => v.document_id === r.id).map(toDocumentVersion);
+    const comments = topComments.filter(c => c.document_id === r.id).map(buildComment);
+    return toDocument(r, collaborators, versions, comments);
+  });
+
+  return {
+    CLIENTS: (clientsRes.data ?? []).map(toClient),
+    TEAM_MEMBERS: (teamRes.data ?? []).map(toTeamMember),
+    DOCUMENTS,
+    DOCUMENT_FOLDERS: (docFoldersRes.data ?? []).map(toDocumentFolder),
+    PRIORITY_DOT,
+  };
+}
+
+export type StrategiesData = Pick<AppData,
+  'STRATEGIES' | 'PROJECTS' | 'CLIENTS' | 'CLIENT_PILLARS' | 'STRATEGY_TARGETED_PILLARS' | 'PRIORITY_DOT'
+>;
+
+export async function getStrategiesData(): Promise<StrategiesData> {
+  const db = createServerClient();
+
+  const [
+    clientsRes, clientPillarsRes,
+    strategiesRes, stratPillarsRes, stratKpisRes, stratPillarProjectsRes, strategyTargetedPillarsRes,
+    projectsRes, projectTasksRes,
+  ] = await Promise.all([
+    db.from('clients').select('*').is('archived_at', null),
+    db.from('client_pillars').select('*'),
+    db.from('strategies').select('*').is('archived_at', null),
+    db.from('strategy_pillars').select('*').is('archived_at', null),
+    db.from('strategy_kpis').select('*').is('archived_at', null),
+    db.from('strategy_pillar_projects').select('*'),
+    db.from('strategy_targeted_pillars').select('*'),
+    db.from('projects').select('*').is('archived_at', null),
+    db.from('project_task_links').select('*'),
+  ]);
+
+  const stratPillarRows = stratPillarsRes.data ?? [];
+  const stratKpiRows = stratKpisRes.data ?? [];
+  const stratPillarProjectRows = stratPillarProjectsRes.data ?? [];
+  const projectRows = projectsRes.data ?? [];
+  const projectTaskRows = projectTasksRes.data ?? [];
+  const strategyRows = strategiesRes.data ?? [];
+
+  const stratKpisMap = new Map<string, KPI[]>();
+  stratKpiRows.forEach(r => {
+    const pillarId = r.pillar_id as string;
+    if (!stratKpisMap.has(pillarId)) stratKpisMap.set(pillarId, []);
+    stratKpisMap.get(pillarId)!.push(toKPI(r));
+  });
+  const stratPillarProjectMap = new Map<string, string[]>();
+  stratPillarProjectRows.forEach(r => {
+    const pillarId = r.pillar_id as string;
+    if (!stratPillarProjectMap.has(pillarId)) stratPillarProjectMap.set(pillarId, []);
+    stratPillarProjectMap.get(pillarId)!.push(r.project_id as string);
+  });
+  const pillarsWithData: StrategyPillar[] = stratPillarRows.map(r => {
+    return toStrategyPillar(r, stratPillarProjectMap.get(r.id as string) ?? [], stratKpisMap.get(r.id as string) ?? []);
+  });
+  const STRATEGIES: Strategy[] = strategyRows.map(r => {
+    const pillars = pillarsWithData.filter(p => stratPillarRows.find(sr => sr.id === p.id)?.strategy_id === r.id);
+    return toStrategy(r, pillars);
+  });
+
+  const PROJECTS: Project[] = projectRows.map(r => {
+    const tasks = projectTaskRows.filter(pt => pt.project_id === r.id).map(pt => pt.task_id as string);
+    return toProject(r, tasks);
+  });
+
+  return {
+    CLIENTS: (clientsRes.data ?? []).map(toClient),
+    CLIENT_PILLARS: (clientPillarsRes.data ?? []).map(toClientPillar),
+    STRATEGY_TARGETED_PILLARS: strategyTargetedPillarsRes.data ?? [],
+    STRATEGIES,
+    PROJECTS,
+    PRIORITY_DOT,
+  };
+}
+
+export type ServicesData = Pick<AppData,
+  'SERVICES' | 'CLIENT_SERVICES' | 'SERVICE_STRATEGIES' | 'CLIENTS' | 'PRIORITY_DOT'
+>;
+
+export async function getServicesData(): Promise<ServicesData> {
+  const db = createServerClient();
+
+  const [
+    clientsRes, servicesRes, clientServicesRes, csProjectsRes,
+    ssRes, ssPillarsRes, ssKpisRes,
+  ] = await Promise.all([
+    db.from('clients').select('*').is('archived_at', null),
+    db.from('services').select('*'),
+    db.from('client_services').select('*').is('archived_at', null),
+    db.from('client_service_projects').select('*'),
+    db.from('service_strategies').select('*'),
+    db.from('service_strategy_pillars').select('*'),
+    db.from('service_strategy_kpis').select('*'),
+  ]);
+
+  const clientServiceRows = clientServicesRes.data ?? [];
+  const csProjectRows = csProjectsRes.data ?? [];
+  const ssRows = ssRes.data ?? [];
+  const ssPillarRows = ssPillarsRes.data ?? [];
+  const ssKpiRows = ssKpisRes.data ?? [];
+
+  const ssPillarMap = new Map<string, ServiceStrategyPillar[]>();
+  ssPillarRows.forEach(r => {
+    const ssId = r.service_strategy_id as string;
+    if (!ssPillarMap.has(ssId)) ssPillarMap.set(ssId, []);
+    ssPillarMap.get(ssId)!.push(toServiceStrategyPillar(r));
+  });
+  const ssKpiMap = new Map<string, ServiceStrategyKPI[]>();
+  ssKpiRows.forEach(r => {
+    const ssId = r.service_strategy_id as string;
+    if (!ssKpiMap.has(ssId)) ssKpiMap.set(ssId, []);
+    ssKpiMap.get(ssId)!.push(toServiceStrategyKPI(r));
+  });
+
+  const CLIENT_SERVICES: ClientService[] = clientServiceRows.map(r => {
+    const linked = csProjectRows.filter(csp => csp.client_service_id === r.id).map(csp => csp.project_id as string);
+    return toClientService(r, linked);
+  });
+  const SERVICE_STRATEGIES: ServiceStrategy[] = ssRows.map(r => {
+    return toServiceStrategy(r, ssPillarMap.get(r.id as string) ?? [], ssKpiMap.get(r.id as string) ?? []);
+  });
+
+  return {
+    CLIENTS: (clientsRes.data ?? []).map(toClient),
+    SERVICES: (servicesRes.data ?? []).map(toService),
+    CLIENT_SERVICES,
+    SERVICE_STRATEGIES,
+    PRIORITY_DOT,
+  };
+}
+
+export type AssetsData = Pick<AppData, 'ASSETS' | 'CLIENTS' | 'TEAM_MEMBERS' | 'PRIORITY_DOT'>;
+
+export async function getAssetsData(): Promise<AssetsData> {
+  const db = createServerClient();
+
+  const [clientsRes, teamRes, assetsRes, assetVersionsRes, assetTagsRes] = await Promise.all([
+    db.from('clients').select('*').is('archived_at', null),
+    db.from('team_members').select('*').is('archived_at', null),
+    db.from('assets').select('*').is('archived_at', null),
+    db.from('asset_versions').select('*'),
+    db.from('asset_tags').select('*'),
+  ]);
+
+  const assetRows = assetsRes.data ?? [];
+  const assetVersionRows = assetVersionsRes.data ?? [];
+  const assetTagRows = assetTagsRes.data ?? [];
+
+  const ASSETS: Asset[] = assetRows.map((r) => {
+    const tags = assetTagRows.filter(t => t.asset_id === r.id).map(t => t.tag as string);
+    const versions = assetVersionRows.filter(v => v.asset_id === r.id).map(toAssetVersion);
+    return toAsset(r, tags, versions);
+  });
+
+  return {
+    CLIENTS: (clientsRes.data ?? []).map(toClient),
+    TEAM_MEMBERS: (teamRes.data ?? []).map(toTeamMember),
+    ASSETS,
+    PRIORITY_DOT,
+  };
+}
+
+export type SettingsData = Pick<AppData,
+  'TEAM_MEMBERS' | 'AUTOMATIONS' | 'TASK_TEMPLATES' | 'WORKFLOW_TEMPLATES' | 'TIME_ENTRIES' | 'CLIENTS' | 'PRIORITY_DOT'
+>;
+
+export async function getSettingsData(): Promise<SettingsData> {
+  const db = createServerClient();
+
+  const [
+    clientsRes, teamRes, automationsRes, templatesRes, timeRes,
+    wfTemplatesRes, wfStepsRes, wfStepDepsRes,
+  ] = await Promise.all([
+    db.from('clients').select('*').is('archived_at', null),
+    db.from('team_members').select('*').is('archived_at', null),
+    db.from('automations').select('*').is('archived_at', null),
+    db.from('task_templates').select('*'),
+    db.from('time_entries').select('*').is('archived_at', null),
+    db.from('workflow_templates').select('*'),
+    db.from('workflow_steps').select('*'),
+    db.from('workflow_step_dependencies').select('*'),
+  ]);
+
+  const wfStepRows = wfStepsRes.data ?? [];
+  const wfStepDepRows = wfStepDepsRes.data ?? [];
+  const wfTemplateRows = wfTemplatesRes.data ?? [];
+
+  const wfStepsWithDeps: WorkflowStep[] = wfStepRows.map((r) => {
+    const deps = wfStepDepRows.filter(d => d.step_id === r.id).map(d => d.depends_on_id as string);
+    return toWorkflowStep(r, deps);
+  });
+  const WORKFLOW_TEMPLATES: WorkflowTemplate[] = wfTemplateRows.map((r) => {
+    const steps = wfStepsWithDeps
+      .filter(s => (wfStepRows.find(sr => sr.id === s.id) as Row)?.workflow_template_id === r.id)
+      .sort((a, b) => a.order - b.order);
+    return toWorkflowTemplate(r, steps);
+  });
+
+  return {
+    CLIENTS: (clientsRes.data ?? []).map(toClient),
+    TEAM_MEMBERS: (teamRes.data ?? []).map(toTeamMember),
+    AUTOMATIONS: (automationsRes.data ?? []).map(toAutomation),
+    TASK_TEMPLATES: (templatesRes.data ?? []).map(toTaskTemplate),
+    TIME_ENTRIES: (timeRes.data ?? []).map(toTimeEntry),
+    WORKFLOW_TEMPLATES,
+    PRIORITY_DOT,
+  };
+}
+
+export type KBData = Pick<AppData, 'KB_CATEGORIES' | 'KB_ARTICLES' | 'PRIORITY_DOT'>;
+
+export async function getKBData(): Promise<KBData> {
+  const db = createServerClient();
+
+  const [kbCategoriesRes, kbArticlesRes] = await Promise.all([
+    db.from('kb_categories').select('*').is('archived_at', null),
+    db.from('kb_articles').select('*').is('archived_at', null),
+  ]);
+
+  return {
+    KB_CATEGORIES: (kbCategoriesRes.data ?? []).map(toKBCategory),
+    KB_ARTICLES: (kbArticlesRes.data ?? []).map(toKBArticle),
+    PRIORITY_DOT,
+  };
+}

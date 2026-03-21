@@ -64,13 +64,10 @@ export default function TopBar({ breadcrumb, actions }: TopBarProps) {
   const fetchNotifications = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', CURRENT_USER_ID)
-        .order('created_at', { ascending: false })
-        .limit(20)
-      const rows = (data ?? []) as NotificationRow[]
+      // Fetch via server endpoint instead of direct Supabase client call
+      // This benefits from edge caching and avoids cold-start latency
+      const res = await fetch(`/api/data/notifications?user_id=${encodeURIComponent(CURRENT_USER_ID)}`)
+      const rows = (res.ok ? await res.json() : []) as NotificationRow[]
       setNotifications(rows)
       setUnreadCount(rows.filter((n) => !n.read).length)
     } catch (err) {
