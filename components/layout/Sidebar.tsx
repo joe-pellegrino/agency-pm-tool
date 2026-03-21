@@ -172,8 +172,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
       {!isCollapsed && showLogo && (
         <div
           style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid var(--color-sidebar-border)',
+            padding: '12px 16px',
             flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
@@ -384,9 +383,6 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
                 )
               })}
             </div>
-
-            {/* Visual separator between CLIENTS and TOOLS */}
-            <div style={{ margin: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} />
           </div>
         )}
 
@@ -493,7 +489,7 @@ export default function Sidebar() {
           borderRight: '1px solid var(--color-sidebar-border)',
         }}
       >
-        <SidebarContent isCollapsed={isCollapsed} showLogo={true} />
+        <SidebarContent isCollapsed={isCollapsed} showLogo={false} />
       </div>
 
       {/* ── MOBILE SIDEBAR ── Dialog overlay, only on < lg screens ── */}
