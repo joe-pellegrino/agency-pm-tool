@@ -997,7 +997,7 @@ function RecurringTemplatesSection({ clientId }: { clientId: string }) {
 }
 
 export default function ClientPage() {
-  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], DOCUMENTS = [], ASSETS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], refresh } = useAppData();
+  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], DOCUMENTS = [], ASSETS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], refresh, loading } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -1094,6 +1094,17 @@ export default function ClientPage() {
     await updateClient(clientId, data);
     refresh?.();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 size={32} className="animate-spin text-[#3B5BDB]" />
+          <span className="text-sm text-gray-500">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!client) {
     return (
