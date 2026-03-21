@@ -2,6 +2,20 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerClient } from '@/lib/supabase/client';
+import {
+  notifyTaskAssigned,
+  notifyTaskStatusChanged,
+  notifyTaskComment,
+  notifyMentions,
+  notifyDependencyUnblocked,
+  notifyNewTaskOnClient,
+  notifyInitiativeStatusChanged,
+  notifyDocumentShared,
+  notifyDocumentUpdated,
+  notifyDocumentComment,
+  notifyStrategyPublished,
+  notifyRecurringTaskCreated,
+} from '@/lib/notification-triggers';
 
 const db = () => createServerClient();
 
@@ -50,6 +64,15 @@ export async function createTask(data: {
   if (error) throw new Error(error.message);
   revalidatePath('/kanban');
   revalidatePath('/projects');
+
+  // Fire notifications (best-effort, don't block)
+  if (row) {
+    if (data.assigneeId) {
+      notifyTaskAssigned(row.id, data.assigneeId).catch(() => {});
+    }
+    notifyNewTaskOnClient(row.id).catch(() => {});
+  }
+
   return row;
 }
 
@@ -91,12 +114,31 @@ export async function updateTask(id: string, data: Partial<{
   if (error) throw new Error(error.message);
   revalidatePath('/kanban');
   revalidatePath('/projects');
+
+  // Notify new assignee if changed
+  if (data.assigneeId) {
+    notifyTaskAssigned(id, data.assigneeId).catch(() => {});
+  }
+  // Notify on status change
+  if (data.status) {
+    notifyTaskStatusChanged(id, 'previous', data.status).catch(() => {});
+  }
 }
 
 export async function updateTaskStatus(id: string, status: string) {
+  // Fetch current status before update for proper old→new diff
+  const { data: existing } = await db().from('tasks').select('status').eq('id', id).single();
   const { error } = await db().from('tasks').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/kanban');
+
+  // Notification: status changed
+  notifyTaskStatusChanged(id, existing?.status ?? 'unknown', status).catch(() => {});
+
+  // If done → check dependencies that are now unblocked
+  if (status.toLowerCase() === 'done' || status.toLowerCase() === 'complete') {
+    notifyDependencyUnblocked(id).catch(() => {});
+  }
 }
 
 export async function archiveTask(id: string) {
@@ -396,9 +438,17 @@ export async function updateProject(id: string, data: Partial<{
   if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
   if (data.clientPillarId !== undefined) update.client_pillar_id = data.clientPillarId;
   if (data.type !== undefined) update.type = data.type;
+  const { data: existingProj } = data.status
+    ? await db().from('projects').select('status').eq('id', id).single()
+    : { data: null };
   const { error } = await db().from('projects').update(update).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/initiatives');
+
+  // Fire initiative status changed notification
+  if (data.status && existingProj?.status) {
+    notifyInitiativeStatusChanged(id, existingProj.status, data.status).catch(() => {});
+  }
 }
 
 export async function archiveProject(id: string) {
@@ -472,9 +522,22 @@ export async function updateStrategy(id: string, data: Partial<{
   if (data.startDate !== undefined) update.start_date = data.startDate;
   if (data.endDate !== undefined) update.end_date = data.endDate;
   if (data.status !== undefined) update.status = data.status;
+
+  // Fetch current state before update for notification context
+  const { data: existingStrat } = data.status
+    ? await db().from('strategies').select('name, client_id, status').eq('id', id).single()
+    : { data: null };
+
   const { error } = await db().from('strategies').update(update).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/strategy');
+
+  // Fire strategy_published notification when status moves to 'published' or 'active'
+  if (data.status && existingStrat &&
+      (data.status.toLowerCase() === 'published' || data.status.toLowerCase() === 'active') &&
+      existingStrat.status?.toLowerCase() !== data.status.toLowerCase()) {
+    notifyStrategyPublished(id, existingStrat.name, existingStrat.client_id).catch(() => {});
+  }
 }
 
 export async function archiveStrategy(id: string) {
@@ -972,6 +1035,8 @@ export async function createDocument(data: {
     await db()
       .from('document_collaborators')
       .insert(data.collaboratorIds.map(memberId => ({ document_id: id, team_member_id: memberId })));
+    // Notify new collaborators
+    notifyDocumentShared(id, data.title, data.collaboratorIds).catch(() => {});
   }
 
   revalidatePath('/documents');
@@ -997,12 +1062,32 @@ export async function updateDocument(id: string, data: {
   if (error) throw new Error(error.message);
 
   if (data.collaboratorIds !== undefined) {
+    // Find newly added collaborators for notification
+    const { data: existing } = await db()
+      .from('document_collaborators')
+      .select('team_member_id')
+      .eq('document_id', id);
+    const existingIds = new Set((existing ?? []).map((c) => c.team_member_id));
+    const newCollabs = data.collaboratorIds.filter((cid) => !existingIds.has(cid));
+
     await db().from('document_collaborators').delete().eq('document_id', id);
     if (data.collaboratorIds.length > 0) {
       await db()
         .from('document_collaborators')
         .insert(data.collaboratorIds.map(memberId => ({ document_id: id, team_member_id: memberId })));
     }
+
+    // Notify newly added collaborators
+    if (newCollabs.length > 0) {
+      const title = data.title || 'a document';
+      notifyDocumentShared(id, title, newCollabs).catch(() => {});
+    }
+  }
+
+  // Notify existing collaborators of content update
+  if (data.content !== undefined || data.title !== undefined) {
+    const title = data.title || 'Document';
+    notifyDocumentUpdated(id, title, 'system').catch(() => {});
   }
 
   revalidatePath('/documents');
@@ -1060,6 +1145,17 @@ export async function createDocumentComment(data: {
     });
   if (error) throw new Error(error.message);
   revalidatePath(`/documents/${data.documentId}`);
+
+  // Notify document owner + collaborators
+  const { data: doc } = await db()
+    .from('documents')
+    .select('title')
+    .eq('id', data.documentId)
+    .single();
+  if (doc?.title) {
+    notifyDocumentComment(data.documentId, doc.title, data.authorId, data.text).catch(() => {});
+  }
+
   return id;
 }
 
@@ -1089,7 +1185,23 @@ export async function createTaskComment(data: {
     });
   if (error) throw new Error(error.message);
   revalidatePath('/kanban');
+
+  // Notify task assignee
+  notifyTaskComment(data.taskId, data.authorId, data.text).catch(() => {});
+
   return id;
+}
+
+export async function handleTaskCommentNotifications(
+  taskId: string,
+  authorId: string,
+  commentText: string
+): Promise<void> {
+  // Fire both comment and mention notifications
+  await Promise.all([
+    notifyTaskComment(taskId, authorId, commentText),
+    notifyMentions(taskId, authorId, commentText),
+  ]).catch(() => {});
 }
 
 export async function getTaskComments(taskId: string) {
@@ -1593,6 +1705,11 @@ export async function generateRecurringTaskInstances() {
 
         if (!error) {
           created++;
+          // Notify assignee of recurring task creation
+          if (template.assignee_id) {
+            const taskId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            notifyRecurringTaskCreated(taskId, template.assignee_id).catch(() => {});
+          }
         }
       }
     }

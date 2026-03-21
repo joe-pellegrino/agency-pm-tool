@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useRef } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createTaskComment, getTaskComments, updateTaskComment, deleteTaskComment } from '@/lib/actions';
+import { createTaskComment, getTaskComments, updateTaskComment, deleteTaskComment, handleTaskCommentNotifications } from '@/lib/actions';
 import { useAppData } from '@/lib/contexts/AppDataContext';
+import { MentionDropdown } from '@/components/mentions/MentionDropdown';
+import { renderMentionedText } from '@/lib/mention-parser';
 
 interface CommentRow {
   id: string;
@@ -60,6 +62,10 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearchText, setMentionSearchText] = useState('');
+  const [mentionCursorPos, setMentionCursorPos] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -72,6 +78,45 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   const currentUser = TEAM_MEMBERS.find(m => m.id === CURRENT_USER_ID);
   const currentInitials = currentUser?.initials || 'JP';
   const currentColor = currentUser?.color || 'var(--color-primary)';
+
+  const handleMentionInput = (value: string) => {
+    setText(value);
+    
+    // Check if user is typing after @
+    const lastAtIndex = value.lastIndexOf('@');
+    if (lastAtIndex === -1) {
+      setShowMentionDropdown(false);
+      return;
+    }
+
+    // Check if @ is followed by space or end of string (detect mention mode)
+    const afterAt = value.slice(lastAtIndex + 1);
+    const hasSpace = afterAt.includes(' ');
+    const hasNewline = afterAt.includes('\n');
+
+    if (hasSpace || hasNewline) {
+      setShowMentionDropdown(false);
+      return;
+    }
+
+    // Show dropdown and extract search text
+    setShowMentionDropdown(true);
+    setMentionSearchText(afterAt);
+    setMentionCursorPos(lastAtIndex);
+  };
+
+  const handleMentionSelect = (member: any) => {
+    const beforeAt = text.slice(0, mentionCursorPos);
+    const afterAt = text.slice(mentionCursorPos + 1 + mentionSearchText.length);
+    const mentionText = `@[${member.name}](${member.id})`;
+    const newText = beforeAt + mentionText + afterAt;
+    setText(newText);
+    setShowMentionDropdown(false);
+    setMentionSearchText('');
+    
+    // Focus textarea after selection
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +135,8 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
     startTransition(async () => {
       try {
         await createTaskComment({ taskId, authorId: CURRENT_USER_ID, text: optimistic.text });
+        // Fire notification for mentions
+        await handleTaskCommentNotifications(taskId, CURRENT_USER_ID, optimistic.text);
         // Refresh comments from server
         const fresh = await getTaskComments(taskId);
         setComments(fresh as CommentRow[]);
@@ -221,7 +268,25 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
                           /* View mode */
                           <div className="mt-1">
                             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                              {comment.text}
+                              {renderMentionedText(comment.text).map((part, idx) => {
+                                if (typeof part === 'string') {
+                                  return <span key={idx}>{part}</span>;
+                                }
+                                return (
+                                  <span
+                                    key={idx}
+                                    className="font-medium"
+                                    style={{
+                                      color: '#4f46e5',
+                                      backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                      borderRadius: '4px',
+                                      padding: '0 4px',
+                                    }}
+                                  >
+                                    @{part.name}
+                                  </span>
+                                );
+                              })}
                             </p>
                             {comment.author_id === CURRENT_USER_ID && (
                               <div className="mt-1 flex gap-3">
@@ -280,23 +345,37 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
         {/* Right: textarea + actions */}
         <div className="min-w-0 flex-1">
           <form onSubmit={handleSubmit}>
-            <div>
+            <div className="relative">
               <label htmlFor="task-comment" className="sr-only">
                 Add your comment
               </label>
               <textarea
+                ref={textareaRef}
                 id="task-comment"
                 name="task-comment"
                 rows={3}
                 value={text}
-                onChange={e => setText(e.target.value)}
+                onChange={e => handleMentionInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Escape' && showMentionDropdown) {
+                    e.preventDefault();
+                    setShowMentionDropdown(false);
+                  }
+                }}
                 disabled={submitting}
-                placeholder="Add a comment..."
+                placeholder="Add a comment... (Type @ to mention someone)"
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: 'var(--color-white)',
                   color: 'var(--color-text-primary)',
                 }}
+              />
+              <MentionDropdown
+                isOpen={showMentionDropdown}
+                searchText={mentionSearchText}
+                teamMembers={TEAM_MEMBERS}
+                onSelectMember={handleMentionSelect}
+                textareaRef={textareaRef}
               />
             </div>
             <div className="mt-2 flex justify-between">

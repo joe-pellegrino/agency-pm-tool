@@ -3,9 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
 import TopBar from '@/components/layout/TopBar';
-import { User, Bell, Palette, Image } from 'lucide-react';
+import { User, Bell, Palette, Image, Monitor, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
+import { getNotificationPreferences, saveNotificationPreferences } from '@/app/actions/notifications';
+import type { NotificationPreferences, NotificationPrefValue, NotificationType } from '@/app/actions/notifications';
+
+const CURRENT_USER_ID = 'default-user';
 
 const CARD = 'bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden';
 const SECTION = 'flex gap-8 p-6';
@@ -29,6 +33,103 @@ async function upsertSetting(key: string, value: string) {
   return supabase
     .from('agency_settings')
     .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+}
+
+// Normalise legacy boolean or new object pref value
+function normalisePref(raw: boolean | NotificationPrefValue | undefined): NotificationPrefValue {
+  if (raw === undefined) return { inApp: true, email: true };
+  if (typeof raw === 'boolean') return { inApp: raw, email: true };
+  return { inApp: raw.inApp ?? true, email: raw.email ?? true };
+}
+
+// Toggle helper
+function setPrefField(
+  prefs: NotificationPreferences,
+  key: NotificationType,
+  field: 'inApp' | 'email',
+  value: boolean
+): NotificationPreferences {
+  const current = normalisePref(prefs[key]);
+  return { ...prefs, [key]: { ...current, [field]: value } };
+}
+
+// ── DualToggleRow ──────────────────────────────────────────────────────────────
+function DualToggleRow({
+  label,
+  desc,
+  prefKey,
+  prefs,
+  onChange,
+}: {
+  label: string;
+  desc: string;
+  prefKey: NotificationType;
+  prefs: NotificationPreferences;
+  onChange: (key: NotificationType, field: 'inApp' | 'email', val: boolean) => void;
+}) {
+  const pref = normalisePref(prefs[prefKey]);
+  return (
+    <div className="flex items-center justify-between py-3 px-4 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors">
+      <div className="flex-1 min-w-0 pr-4">
+        <div className="text-sm font-medium text-gray-900">{label}</div>
+        <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+      </div>
+      <div className="flex items-center gap-6 flex-shrink-0">
+        {/* In-App toggle */}
+        <div className="flex flex-col items-center gap-1">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={pref.inApp}
+            onClick={() => onChange(prefKey, 'inApp', !pref.inApp)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+              pref.inApp ? 'bg-blue-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                pref.inApp ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+        {/* Email toggle */}
+        <div className="flex flex-col items-center gap-1">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={pref.email}
+            onClick={() => onChange(prefKey, 'email', !pref.email)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ${
+              pref.email ? 'bg-indigo-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                pref.email ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Column header ──────────────────────────────────────────────────────────────
+function ToggleColumnHeader() {
+  return (
+    <div className="flex items-center justify-end gap-6 mb-2 pr-4">
+      <div className="flex items-center gap-1 text-xs font-medium text-gray-500 w-9 justify-center">
+        <Monitor size={12} />
+        <span>App</span>
+      </div>
+      <div className="flex items-center gap-1 text-xs font-medium text-gray-500 w-9 justify-center">
+        <Mail size={12} />
+        <span>Email</span>
+      </div>
+    </div>
+  );
 }
 
 export default function SettingsPage() {
@@ -57,6 +158,8 @@ export default function SettingsPage() {
   const [pushNotifications, setPushNotifications]   = useState(false);
   const [weeklyDigest, setWeeklyDigest]             = useState(true);
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>({});
+  const [loadingNotifPrefs, setLoadingNotifPrefs] = useState(false);
 
   // ── Load all settings ─────────────────────────────────────
   useEffect(() => {
@@ -77,9 +180,22 @@ export default function SettingsPage() {
         if (key === 'notif_push')          setPushNotifications(value === 'true');
         if (key === 'notif_weekly_digest') setWeeklyDigest(value === 'true');
       });
+      // Load per-type notification preferences
+      setLoadingNotifPrefs(true);
+      try {
+        const prefs = await getNotificationPreferences(CURRENT_USER_ID);
+        setNotifPrefs(prefs);
+      } finally {
+        setLoadingNotifPrefs(false);
+      }
     };
     load();
   }, []);
+
+  // ── Pref toggle helper ────────────────────────────────────
+  const handlePrefChange = (key: NotificationType, field: 'inApp' | 'email', val: boolean) => {
+    setNotifPrefs(p => setPrefField(p, key, field, val));
+  };
 
   // ── Save handlers ─────────────────────────────────────────
   const handleSaveAccount = async () => {
@@ -138,6 +254,7 @@ export default function SettingsPage() {
         upsertSetting('notif_email', String(emailNotifications)),
         upsertSetting('notif_push', String(pushNotifications)),
         upsertSetting('notif_weekly_digest', String(weeklyDigest)),
+        saveNotificationPreferences(CURRENT_USER_ID, notifPrefs),
       ]);
       toast.success('Notification preferences saved');
     } catch {
@@ -439,10 +556,11 @@ export default function SettingsPage() {
 
             {/* ── Notifications ── */}
             <Tab.Panel className={CARD}>
+              {/* Global toggles */}
               <div className={SECTION}>
                 <div className="w-1/3 flex-shrink-0">
-                  <h3 className="font-semibold text-gray-900">Notification Preferences</h3>
-                  <p className="text-sm text-gray-500 mt-1">Choose what alerts you receive</p>
+                  <h3 className="font-semibold text-gray-900">Global Settings</h3>
+                  <p className="text-sm text-gray-500 mt-1">High-level notification channels</p>
                 </div>
                 <div className="w-2/3 space-y-2">
                   {[
@@ -460,6 +578,123 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
+
+              <div className={DIVIDER} />
+
+              {/* Per-type dual toggles */}
+              {loadingNotifPrefs ? (
+                <div className="px-6 py-8 text-center text-sm text-gray-400">Loading preferences…</div>
+              ) : (
+                <>
+                  {/* Legend */}
+                  <div className="px-6 pt-5 pb-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500">Toggle in-app and email notifications per event type.</p>
+                      <div className="flex items-center gap-6 pr-4">
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <Monitor size={12} className="text-blue-600" />
+                          <span className="font-medium">In-App</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <Mail size={12} className="text-indigo-600" />
+                          <span className="font-medium">Email</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Task notifications */}
+                  <div className={`${SECTION} pt-3`}>
+                    <div className="w-1/3 flex-shrink-0">
+                      <h3 className="font-semibold text-gray-900">📋 Tasks</h3>
+                      <p className="text-sm text-gray-500 mt-1">Task activity alerts</p>
+                    </div>
+                    <div className="w-2/3 space-y-2">
+                      <ToggleColumnHeader />
+                      {([
+                        { key: 'task_assigned',           label: 'Task Assigned',           desc: 'When a task is assigned to you' },
+                        { key: 'task_status_changed',     label: 'Status Changed',          desc: 'When a task status is updated' },
+                        { key: 'task_comment',            label: 'New Comment',             desc: 'When someone comments on your task' },
+                        { key: 'approval_requested',      label: 'Approval Requested',      desc: 'When a task needs your review' },
+                        { key: 'approval_decision',       label: 'Approval Decision',       desc: 'When your task is approved or rejected' },
+                        { key: 'dependency_unblocked',    label: 'Dependency Unblocked',    desc: 'When a blocking task is completed' },
+                        { key: 'task_due_soon',           label: 'Due Soon Reminder',       desc: 'Same-day and next-day due reminders' },
+                        { key: 'task_overdue',            label: 'Overdue Alert',           desc: 'Daily nudge for overdue tasks' },
+                        { key: 'recurring_task_created',  label: 'Recurring Task Created',  desc: 'When a recurring task is generated' },
+                        { key: 'milestone_reached',       label: 'Milestone Reached',       desc: 'When a milestone task is completed' },
+                        { key: 'adhoc_request',           label: 'Ad Hoc Request',          desc: 'When an ad hoc task is submitted' },
+                      ] as { key: NotificationType; label: string; desc: string }[]).map(({ key, label, desc }) => (
+                        <DualToggleRow
+                          key={key}
+                          label={label}
+                          desc={desc}
+                          prefKey={key}
+                          prefs={notifPrefs}
+                          onChange={handlePrefChange}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={DIVIDER} />
+
+                  {/* Project / Initiative */}
+                  <div className={SECTION}>
+                    <div className="w-1/3 flex-shrink-0">
+                      <h3 className="font-semibold text-gray-900">🚀 Initiatives</h3>
+                      <p className="text-sm text-gray-500 mt-1">Project and initiative alerts</p>
+                    </div>
+                    <div className="w-2/3 space-y-2">
+                      <ToggleColumnHeader />
+                      {([
+                        { key: 'new_task_on_client',        label: 'New Task on Client',    desc: 'When a task is created for one of your clients' },
+                        { key: 'initiative_status_changed', label: 'Initiative Status',      desc: 'When an initiative status changes' },
+                        { key: 'initiative_completed',      label: 'Initiative Completed',   desc: 'When an initiative is fully done' },
+                        { key: 'kpi_target_hit',            label: 'KPI Target Hit',         desc: 'When a KPI reaches its target value' },
+                        { key: 'strategy_published',        label: 'Strategy Published',     desc: 'When a strategy is published or made active' },
+                      ] as { key: NotificationType; label: string; desc: string }[]).map(({ key, label, desc }) => (
+                        <DualToggleRow
+                          key={key}
+                          label={label}
+                          desc={desc}
+                          prefKey={key}
+                          prefs={notifPrefs}
+                          onChange={handlePrefChange}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={DIVIDER} />
+
+                  {/* Documents */}
+                  <div className={SECTION}>
+                    <div className="w-1/3 flex-shrink-0">
+                      <h3 className="font-semibold text-gray-900">📄 Documents</h3>
+                      <p className="text-sm text-gray-500 mt-1">Document activity alerts</p>
+                    </div>
+                    <div className="w-2/3 space-y-2">
+                      <ToggleColumnHeader />
+                      {([
+                        { key: 'document_shared',   label: 'Document Shared With You', desc: 'When a document is shared with you' },
+                        { key: 'document_updated',  label: 'Document Updated',          desc: 'When a shared document has a new version' },
+                        { key: 'document_comment',  label: 'Comment on Document',       desc: 'When someone comments on a shared document' },
+                        { key: 'asset_uploaded',    label: 'Asset Uploaded',            desc: 'When a new asset version is uploaded' },
+                        { key: 'team_member_added', label: 'Team Member Added',         desc: 'When you are added to a client or project' },
+                      ] as { key: NotificationType; label: string; desc: string }[]).map(({ key, label, desc }) => (
+                        <DualToggleRow
+                          key={key}
+                          label={label}
+                          desc={desc}
+                          prefKey={key}
+                          prefs={notifPrefs}
+                          onChange={handlePrefChange}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
 
               <SaveButton onClick={handleSaveNotifications} saving={savingNotifications} />
             </Tab.Panel>
