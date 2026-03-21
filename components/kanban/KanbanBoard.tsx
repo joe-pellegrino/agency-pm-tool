@@ -797,6 +797,7 @@ function Column({
 export default function KanbanBoard() {
   const searchParams = useSearchParams();
   const clientFilter = searchParams.get('clientId') || 'all';
+  const taskParam = searchParams.get('task');
   const { TASKS = [], CLIENTS = [], TEAM_MEMBERS = [], TIME_ENTRIES = [], PROJECTS = [] } = useAppData();
 
   const [taskState, setTaskState] = useState<Task[]>([]);
@@ -806,6 +807,8 @@ export default function KanbanBoard() {
     setTaskState(TASKS.filter(t => !t.isMilestone));
     if (TASKS.length > 0) setInitialLoaded(true);
   }, [TASKS]);
+
+
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [filterClient, setFilterClient] = useState(clientFilter);
   const [filterAssignee, setFilterAssignee] = useState('all');
@@ -814,6 +817,19 @@ export default function KanbanBoard() {
   const [showFilters, setShowFilters] = useState(false);
   const [approvalTask, setApprovalTask] = useState<Task | null>(null);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
+
+  // Auto-open task detail drawer when ?task=<id> is in the URL
+  const taskParamHandled = useRef(false);
+  useEffect(() => {
+    if (taskParam && initialLoaded && !taskParamHandled.current) {
+      const match = taskState.find(t => t.id === taskParam);
+      if (match) {
+        setDetailTask(match);
+        taskParamHandled.current = true;
+      }
+    }
+  }, [taskParam, initialLoaded, taskState]);
+
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
   const [newTaskDefaultStatus, setNewTaskDefaultStatus] = useState<string>('todo');
   const [archiveTaskId, setArchiveTaskId] = useState<string | null>(null);
