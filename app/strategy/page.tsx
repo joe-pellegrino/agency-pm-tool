@@ -588,33 +588,37 @@ function StrategyView({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:items-center sm:gap-2 sm:flex-shrink-0 sm:flex-wrap gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowDiagram(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-gray-900 hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex items-center justify-center sm:justify-start gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-gray-900 hover:bg-gray-700 rounded-lg transition-colors"
             >
               <TrendingUp size={13} />
-              Strategy Overview
+              <span className="hidden sm:inline">Strategy Overview</span>
+              <span className="inline sm:hidden">Overview</span>
             </button>
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#3B5BDB] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
+              className="flex items-center justify-center sm:justify-start gap-1.5 px-3 py-1.5 text-sm font-medium text-[#3B5BDB] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
             >
               <Pencil size={13} />
-              Edit Strategy
+              <span className="hidden sm:inline">Edit Strategy</span>
+              <span className="inline sm:hidden">Edit</span>
             </button>
             <button
               onClick={onArchive}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+              className="flex items-center justify-center sm:justify-start gap-1.5 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
             >
-              Archive
+              <span className="hidden sm:inline">Archive</span>
+              <span className="inline sm:hidden">✕</span>
             </button>
             <Link
               href={`/clients/${client.id}`}
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all hover:shadow-sm"
+              className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all hover:shadow-sm"
               style={{ borderColor: '#000000', color: '#ffffff', backgroundColor: '#000000' }}
             >
-              Client View <ArrowRight size={12} />
+              <span className="hidden sm:inline">Client View <ArrowRight size={12} className="inline ml-1" /></span>
+              <span className="inline sm:hidden">Client</span>
             </Link>
           </div>
         </div>
