@@ -29,7 +29,7 @@ export default function ClientSettings({ client }: { client: Client }) {
       case 'profile':
         return <ProfileTab client={client} />;
       case 'services':
-        return <ServicesTab clientId={client.id} />;
+        return <ServicesTab clientId={client.id} clientName={client.name} />;
       case 'team':
         return <TeamTab clientId={client.id} />;
       case 'integrations':

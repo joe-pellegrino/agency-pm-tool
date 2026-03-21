@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { createServerClient } from '@/lib/supabase/client';
 import { createPortalClient, ClientIntegration } from '@/lib/supabase/portal-client';
 
 /**
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the portal client ID from client_portal_mapping
-    const agencyClient = createSupabaseClient();
+    const agencyClient = createServerClient();
     const { data: mapping, error: mappingError } = await agencyClient
       .from('client_portal_mapping')
       .select('portal_client_id')

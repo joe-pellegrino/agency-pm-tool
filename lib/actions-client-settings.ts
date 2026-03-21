@@ -83,19 +83,30 @@ export async function addClientTeamAssignment(data: {
   isPrimary?: boolean;
 }) {
   try {
-    const { error } = await db()
+    const { data: row, error } = await db()
       .from('client_team_assignments')
       .insert({
         client_id: data.clientId,
         team_member_id: data.teamMemberId,
         role: data.role,
         is_primary: data.isPrimary || false,
-      });
+      })
+      .select()
+      .single();
 
     if (error) throw error;
 
     revalidatePath(`/clients/${data.clientId}`);
-    return { success: true };
+    return {
+      id: row.id,
+      client_id: row.client_id,
+      team_member_id: row.team_member_id,
+      teamMemberId: row.team_member_id,
+      role: row.role,
+      is_primary: row.is_primary,
+      isPrimary: row.is_primary,
+      created_at: row.created_at,
+    };
   } catch (error) {
     console.error('Error adding team assignment:', error);
     throw error;
@@ -132,6 +143,41 @@ export async function updateClientTeamAssignmentRole(assignmentId: string, role:
     return { success: true };
   } catch (error) {
     console.error('Error updating team assignment role:', error);
+    throw error;
+  }
+}
+
+export async function updateClientTeamAssignment(
+  assignmentId: string,
+  updates: { role?: string; isPrimary?: boolean }
+) {
+  try {
+    const updateData: Record<string, any> = {};
+    if (updates.role !== undefined) updateData.role = updates.role;
+    if (updates.isPrimary !== undefined) updateData.is_primary = updates.isPrimary;
+
+    const { data, error } = await db()
+      .from('client_team_assignments')
+      .update(updateData)
+      .eq('id', assignmentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    revalidatePath('/clients');
+    return {
+      id: data.id,
+      client_id: data.client_id,
+      team_member_id: data.team_member_id,
+      teamMemberId: data.team_member_id,
+      role: data.role,
+      is_primary: data.is_primary,
+      isPrimary: data.is_primary,
+      created_at: data.created_at,
+    };
+  } catch (error) {
+    console.error('Error updating team assignment:', error);
     throw error;
   }
 }

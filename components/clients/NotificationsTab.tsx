@@ -67,7 +67,7 @@ export default function NotificationsTab({ clientId }: { clientId: string }) {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h4 className="font-semibold text-gray-900 dark:text-white">{member.name}</h4>
-                    <p className="text-xs text-gray-500">{member.email}</p>
+                    <p className="text-xs text-gray-500">{member.role}</p>
                   </div>
                 </div>
 
