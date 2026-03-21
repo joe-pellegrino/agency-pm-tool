@@ -4,17 +4,16 @@ import dynamic from 'next/dynamic';
 import { useState, useMemo, useEffect, useTransition, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Strategy, StrategyPillar, KPI, ServiceStrategy, Service, ClientService } from '@/lib/data';
+import { Strategy, KPI, ServiceStrategy, Service, ClientService } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import TopBar from '@/components/layout/TopBar';
 import {
   TrendingUp, Target, CheckCircle, Clock, AlertTriangle, ChevronDown, ChevronUp,
-  BarChart3, Layers, FolderOpen, Calendar, Zap, ArrowRight, Plus, Pencil, Trash2,
+  BarChart3, FolderOpen, Calendar, Zap, ArrowRight, Plus, Pencil, Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   createStrategy, updateStrategy, archiveStrategy,
-  createStrategyPillar, updateStrategyPillar, archiveStrategyPillar,
   createStrategyKPI, updateStrategyKPI, archiveStrategyKPI,
   addServiceToStrategy, removeServiceFromStrategy, updateServiceStrategySummary,
 } from '@/lib/actions';
@@ -49,14 +48,6 @@ function getKpiHealth(kpi: KPI): 'on-track' | 'at-risk' | 'behind' {
   if (pct >= 70) return 'on-track';
   if (pct >= 40) return 'at-risk';
   return 'behind';
-}
-
-function getPillarHealth(pillar: StrategyPillar): 'on-track' | 'at-risk' | 'behind' {
-  if (pillar.kpis.length === 0) return 'on-track';
-  const healths = pillar.kpis.map(getKpiHealth);
-  if (healths.some(h => h === 'behind')) return 'behind';
-  if (healths.some(h => h === 'at-risk')) return 'at-risk';
-  return 'on-track';
 }
 
 function getServiceStrategyHealth(ss: ServiceStrategy): 'on-track' | 'at-risk' | 'behind' {
@@ -251,88 +242,6 @@ function KPIModal({
   );
 }
 
-// ─── Pillar Modal ─────────────────────────────────────────────────────────────
-
-function PillarModal({
-  strategyId,
-  pillar,
-  onClose,
-}: {
-  strategyId: string;
-  pillar?: StrategyPillar | null;
-  onClose: () => void;
-}) {
-  const { refresh } = useAppData();
-  const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState({
-    name: pillar?.name || '',
-    description: pillar?.description || '',
-  });
-
-  const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
-  const labelClass = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1';
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) { toast.error('Name is required'); return; }
-    startTransition(async () => {
-      try {
-        if (pillar) {
-          await updateStrategyPillar(pillar.id, { name: form.name.trim(), description: form.description.trim() });
-          toast.success('Pillar updated');
-        } else {
-          await createStrategyPillar(strategyId, { name: form.name.trim(), description: form.description.trim() });
-          toast.success('Pillar created');
-        }
-        refresh?.();
-        onClose();
-      } catch (err) {
-        toast.error('Failed: ' + (err as Error).message);
-      }
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
-        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900 dark:text-white text-lg">{pillar ? 'Edit Pillar' : 'Add Pillar'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><Plus size={18} className="rotate-45" /></button>
-        </div>
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div>
-            <label className={labelClass}>Name *</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-              placeholder="e.g. Brand Awareness, Lead Generation"
-              className={inputClass}
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Description</label>
-            <textarea
-              value={form.description}
-              onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              placeholder="Briefly describe what this pillar focuses on..."
-              rows={3}
-              className={inputClass}
-            />
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={isPending} className="flex-1 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors">
-              {pillar ? 'Save Changes' : 'Add Pillar'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ─── Service Strategy Card ────────────────────────────────────────────────────
 
 function ServiceStrategyCard({ ss, clientColor }: { ss: ServiceStrategy; clientColor: string }) {
@@ -420,113 +329,6 @@ function ServiceStrategyCard({ ss, clientColor }: { ss: ServiceStrategy; clientC
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Pillar Card ──────────────────────────────────────────────────────────────
-
-function PillarCard({
-  pillar,
-  clientColor,
-  onEditPillar,
-  onDeletePillar,
-  onAddKPI,
-  onEditKPI,
-  onDeleteKPI,
-}: {
-  pillar: StrategyPillar;
-  clientColor: string;
-  onEditPillar: () => void;
-  onDeletePillar: () => void;
-  onAddKPI: () => void;
-  onEditKPI: (kpi: KPI) => void;
-  onDeleteKPI: (kpi: KPI) => void;
-}) {
-  const { PROJECTS = [] } = useAppData();
-  const projects = PROJECTS.filter(p => pillar.projectIds.includes(p.id));
-  const health = getPillarHealth(pillar);
-  const healthCfg = HEALTH_CONFIG[health];
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div
-        className="px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-700"
-        style={{ backgroundColor: clientColor + '08' }}
-      >
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{pillar.name}</h4>
-          {pillar.description && (
-            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{pillar.description}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border flex items-center gap-1 ${healthCfg.color}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${healthCfg.dot}`} />
-            {healthCfg.label}
-          </span>
-          <button
-            onClick={onEditPillar}
-            className="p-1 text-gray-400 hover:text-[#3B5BDB] rounded transition-colors"
-            title="Edit pillar"
-          >
-            <Pencil size={13} />
-          </button>
-          <button
-            onClick={onDeletePillar}
-            className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
-            title="Delete pillar"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </div>
-
-      <div className="px-4 py-4 space-y-4">
-        {/* KPIs */}
-        <div>
-          {pillar.kpis.length > 0 ? (
-            <div className="space-y-3">
-              {pillar.kpis.map(kpi => (
-                <KPIGauge
-                  key={kpi.id}
-                  kpi={kpi}
-                  onEdit={() => onEditKPI(kpi)}
-                  onDelete={() => onDeleteKPI(kpi)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-gray-400 italic">No KPIs yet</p>
-          )}
-          <button
-            onClick={onAddKPI}
-            className="mt-3 flex items-center gap-1.5 text-xs text-[#3B5BDB] hover:text-indigo-800 font-medium transition-colors"
-          >
-            <Plus size={12} />
-            Add KPI
-          </button>
-        </div>
-
-        {/* Projects */}
-        {projects.length > 0 && (
-          <div>
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Projects</div>
-            <div className="space-y-1.5">
-              {projects.map(proj => {
-                const sc = PROJECT_STATUS_CONFIG[proj.status];
-                return (
-                  <div key={proj.id} className="flex items-center gap-2">
-                    <FolderOpen size={11} className="text-gray-400 flex-shrink-0" />
-                    <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{proj.name}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${sc.color}`}>{proj.progress}%</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -668,40 +470,16 @@ function StrategyView({
   const [, startTransition] = useTransition();
   const [showDiagram, setShowDiagram] = useState(false);
 
-  // Pillar modal state
-  const [pillarModal, setPillarModal] = useState<{ open: boolean; pillar?: StrategyPillar | null }>({ open: false });
   // KPI modal state
   const [kpiModal, setKpiModal] = useState<{ open: boolean; pillarId?: string; kpi?: KPI | null }>({ open: false });
   // Delete confirm state
-  const [deletePillarId, setDeletePillarId] = useState<string | null>(null);
   const [deleteKpiId, setDeleteKpiId] = useState<string | null>(null);
   // Description edit state
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState(strategy.description);
 
-  const overallHealth = (() => {
-    if (strategy.pillars.length === 0) return 'on-track';
-    const healths = strategy.pillars.map(getPillarHealth);
-    if (healths.some(h => h === 'behind')) return 'behind';
-    if (healths.some(h => h === 'at-risk')) return 'at-risk';
-    return 'on-track';
-  })();
+  const overallHealth: 'on-track' | 'at-risk' | 'behind' = 'on-track';
   const healthCfg = HEALTH_CONFIG[overallHealth];
-
-  const handleDeletePillar = () => {
-    if (!deletePillarId) return;
-    const id = deletePillarId;
-    setDeletePillarId(null);
-    startTransition(async () => {
-      try {
-        await archiveStrategyPillar(id);
-        toast.success('Pillar removed');
-        refresh?.();
-      } catch (err) {
-        toast.error('Failed: ' + (err as Error).message);
-      }
-    });
-  };
 
   const handleDeleteKPI = () => {
     if (!deleteKpiId) return;
@@ -735,28 +513,11 @@ function StrategyView({
   return (
     <div>
       {/* Modals */}
-      {pillarModal.open && (
-        <PillarModal
-          strategyId={strategy.id}
-          pillar={pillarModal.pillar}
-          onClose={() => setPillarModal({ open: false })}
-        />
-      )}
       {kpiModal.open && kpiModal.pillarId && (
         <KPIModal
           pillarId={kpiModal.pillarId}
           kpi={kpiModal.kpi}
           onClose={() => setKpiModal({ open: false })}
-        />
-      )}
-      {deletePillarId && (
-        <ConfirmDialog
-          title="Remove Pillar"
-          message="Remove this pillar and all its KPIs? This cannot be undone."
-          confirmLabel="Remove"
-          destructive
-          onConfirm={handleDeletePillar}
-          onCancel={() => setDeletePillarId(null)}
         />
       )}
       {deleteKpiId && (
@@ -814,10 +575,6 @@ function StrategyView({
                 {new Date(strategy.startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 {' – '}
                 {new Date(strategy.endDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </div>
-              <div className="flex items-center gap-1">
-                <Layers size={13} />
-                {strategy.pillars.length} pillars
               </div>
               <div className="flex items-center gap-1">
                 <FolderOpen size={13} />
@@ -898,55 +655,6 @@ function StrategyView({
             </div>
           );
         })()}
-      </div>
-
-      {/* Core Strategy Pillars */}
-      <div>
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <Target size={16} className="text-[#3B5BDB]" />
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">Core Strategy Pillars</h3>
-            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-              {strategy.pillars.length} pillars
-            </span>
-          </div>
-          <button
-            onClick={() => setPillarModal({ open: true, pillar: null })}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#3B5BDB] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
-          >
-            <Plus size={14} />
-            Add Pillar
-          </button>
-        </div>
-
-        {strategy.pillars.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {strategy.pillars.map(pillar => (
-              <PillarCard
-                key={pillar.id}
-                pillar={pillar}
-                clientColor={'#000000'}
-                onEditPillar={() => setPillarModal({ open: true, pillar })}
-                onDeletePillar={() => setDeletePillarId(pillar.id)}
-                onAddKPI={() => setKpiModal({ open: true, pillarId: pillar.id, kpi: null })}
-                onEditKPI={(kpi) => setKpiModal({ open: true, pillarId: pillar.id, kpi })}
-                onDeleteKPI={(kpi) => setDeleteKpiId(kpi.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
-            <Layers size={32} className="mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-medium mb-3">No pillars yet</p>
-            <button
-              onClick={() => setPillarModal({ open: true, pillar: null })}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3B5BDB] hover:bg-[#3B5BDB] text-white rounded-lg text-sm font-medium transition-colors mx-auto"
-            >
-              <Plus size={14} />
-              Add First Pillar
-            </button>
-          </div>
-        )}
       </div>
 
       {showDiagram && (
