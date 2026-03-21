@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Edit2, AlertCircle, Clock, User } from 'lucide-react';
 import type { Task } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
+import { formatDate } from '@/lib/utils';
 import Drawer from '@/components/ui/Drawer';
 import TaskComments from '@/components/tasks/TaskComments';
 import TaskModal from '@/components/tasks/TaskModal';
@@ -86,13 +87,18 @@ export default function TaskDetailDrawer({
           </div>
 
           {/* Status & Priority Badges */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <span className={`text-xs font-medium px-3 py-1 rounded-full ${statusConfig.color}`}>
               {statusConfig.label}
             </span>
             <span className={`text-xs font-medium px-3 py-1 rounded-full ${priorityConfig.color}`}>
               {priorityConfig.label}
             </span>
+            {task.type && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-900 text-white capitalize">
+                {task.type}
+              </span>
+            )}
           </div>
 
           {/* Client Info */}
@@ -130,7 +136,7 @@ export default function TaskDetailDrawer({
                 <Clock size={14} className="text-gray-500" />
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Due Date</h4>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{task.dueDate}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{formatDate(task.dueDate)}</p>
             </div>
           )}
 
@@ -140,13 +146,13 @@ export default function TaskDetailDrawer({
               {task.startDate && (
                 <div>
                   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{task.startDate}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{formatDate(task.startDate)}</p>
                 </div>
               )}
               {task.endDate && (
                 <div>
                   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">End Date</h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{task.endDate}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{formatDate(task.endDate)}</p>
                 </div>
               )}
             </div>

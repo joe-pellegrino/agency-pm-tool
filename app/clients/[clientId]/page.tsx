@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ClientService, ServiceStrategy, Project, Task, Service } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
+import { formatDate } from '@/lib/utils';
 import TopBar from '@/components/layout/TopBar';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
@@ -85,7 +86,7 @@ function TaskRow({ task }: { task: Task }) {
       <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${statusColors[task.status]}`}>
         {statusLabels[task.status]}
       </span>
-      <span className="text-[10px] text-gray-500 flex-shrink-0 whitespace-nowrap">{task.dueDate}</span>
+      <span className="text-[10px] text-gray-500 flex-shrink-0 whitespace-nowrap">{formatDate(task.dueDate)}</span>
     </div>
   );
 }
@@ -646,11 +647,16 @@ function ProjectDetailDrawer({
         <div className="space-y-6">
           {/* Header with Status Badge and Edit Button */}
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-2">
               <span className={`text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1.5 ${statusCfg.color}`}>
                 <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
                 {statusCfg.label}
               </span>
+              {project.type && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-900 text-white capitalize">
+                  {project.type}
+                </span>
+              )}
             </div>
             <button
               onClick={() => setShowProjectModal(true)}
@@ -674,11 +680,11 @@ function ProjectDetailDrawer({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{project.startDate}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{formatDate(project.startDate)}</p>
             </div>
             <div>
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">End Date</h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{project.endDate}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{formatDate(project.endDate)}</p>
             </div>
           </div>
 
@@ -1329,18 +1335,25 @@ export default function ClientPage() {
                           <h3 className="font-medium text-gray-900 dark:text-white hover:text-[#3B5BDB] transition-colors">{proj.name}</h3>
                           <p className="text-sm text-gray-500 mt-1">{proj.description}</p>
                         </div>
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${
-                          proj.status === 'complete' ? 'bg-green-100 text-green-700' :
-                          proj.status === 'on-hold' ? 'bg-amber-100 text-amber-700' :
-                          proj.status === 'active' ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {proj.status.charAt(0).toUpperCase() + proj.status.slice(1)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {proj.type && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-900 text-white capitalize">
+                              {proj.type}
+                            </span>
+                          )}
+                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${
+                            proj.status === 'complete' ? 'bg-green-100 text-green-700' :
+                            proj.status === 'on-hold' ? 'bg-amber-100 text-amber-700' :
+                            proj.status === 'active' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {proj.status.charAt(0).toUpperCase() + proj.status.slice(1)}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
                         <span>{proj.progress}% progress</span>
-                        <span>{proj.startDate} to {proj.endDate}</span>
+                        <span>{formatDate(proj.startDate)} to {formatDate(proj.endDate)}</span>
                       </div>
                     </button>
                   ))}
@@ -1504,7 +1517,7 @@ export default function ClientPage() {
                             done: 'Done',
                           }[task.status] || task.status}
                         </span>
-                        <span className="text-[10px] text-gray-500 flex-shrink-0 whitespace-nowrap">{task.dueDate}</span>
+                        <span className="text-[10px] text-gray-500 flex-shrink-0 whitespace-nowrap">{formatDate(task.dueDate)}</span>
                       </button>
                     ))}
                   </div>
@@ -1541,7 +1554,7 @@ export default function ClientPage() {
                                   {task.title}
                                 </h4>
                                 {task.dueDate && (
-                                  <p className="text-[10px] text-gray-500">{task.dueDate}</p>
+                                  <p className="text-[10px] text-gray-500">{formatDate(task.dueDate)}</p>
                                 )}
                               </button>
                             ))}
