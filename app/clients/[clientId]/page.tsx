@@ -20,7 +20,7 @@ import PaidAdsDashboard from '@/components/ads/PaidAdsDashboard';
 import BudgetMatrix from '@/components/budget/BudgetMatrix';
 import ClientModal from '@/components/clients/ClientModal';
 import ProjectModal from '@/components/projects/ProjectModal';
-import TaskModal from '@/components/tasks/TaskModal';
+import TaskDetailDrawer from '@/components/tasks/TaskDetailDrawer';
 import { TaskDetailModal } from '@/components/kanban/KanbanBoard';
 import YearRoadmap from '@/components/roadmap/YearRoadmap';
 
@@ -589,6 +589,7 @@ function ProjectDetailDrawer({
   const { TASKS = [] } = useAppData();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showCreateTask, setShowCreateTask] = useState(false);
 
   if (!project) return null;
 
@@ -630,9 +631,17 @@ function ProjectDetailDrawer({
       {showProjectModal && (
         <ProjectModal project={project} onClose={() => setShowProjectModal(false)} />
       )}
-      {selectedTask && (
-        <TaskModal task={selectedTask} onClose={() => setSelectedTaskId(null)} />
-      )}
+      <TaskDetailDrawer
+        task={selectedTask || null}
+        isOpen={selectedTaskId !== null || showCreateTask}
+        onClose={() => {
+          setSelectedTaskId(null);
+          setShowCreateTask(false);
+        }}
+        defaultClientId={showCreateTask ? project.clientId : undefined}
+        defaultProjectId={showCreateTask ? project.id : undefined}
+        defaultStatus={showCreateTask ? 'todo' : undefined}
+      />
       <Drawer isOpen={isOpen} onClose={onClose} title={project.name}>
         <div className="space-y-6">
           {/* Header with Status Badge and Edit Button */}
@@ -703,10 +712,20 @@ function ProjectDetailDrawer({
 
           {/* Tasks Summary */}
           <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1">
-              <CheckCircle size={11} />
-              Tasks ({completedTasks}/{projectTasks.length})
-            </h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                <CheckCircle size={11} />
+                Tasks ({completedTasks}/{projectTasks.length})
+              </h4>
+              <button
+                onClick={() => setShowCreateTask(true)}
+                className="flex items-center gap-1 text-xs font-medium text-[#3B5BDB] hover:bg-[#EEF2FF] px-2 py-1 rounded transition-colors"
+                title="Add new task"
+              >
+                <Plus size={14} />
+                New Task
+              </button>
+            </div>
             {projectTasks.length === 0 ? (
               <p className="text-sm text-gray-400">No tasks yet.</p>
             ) : (
@@ -875,16 +894,12 @@ function RecurringTemplatesSection({ clientId }: { clientId: string }) {
           </button>
         </div>
         <p className="text-gray-400">No recurring tasks for this client.</p>
-        {showNewTask && (
-          <TaskModal
-            defaultStatus="todo"
-            onClose={() => setShowNewTask(false)}
-            onSuccess={() => {
-              setShowNewTask(false);
-              refresh?.();
-            }}
-          />
-        )}
+        <TaskDetailDrawer
+          isOpen={showNewTask}
+          onClose={() => setShowNewTask(false)}
+          defaultClientId={clientId}
+          defaultStatus="todo"
+        />
       </div>
     );
   }
@@ -964,16 +979,11 @@ function RecurringTemplatesSection({ clientId }: { clientId: string }) {
           );
         })}
       </div>
-      {showNewTask && (
-        <TaskModal
-          defaultStatus="todo"
-          onClose={() => setShowNewTask(false)}
-          onSuccess={() => {
-            setShowNewTask(false);
-            refresh?.();
-          }}
-        />
-      )}
+      <TaskDetailDrawer
+        isOpen={showNewTask}
+        onClose={() => setShowNewTask(false)}
+        defaultStatus="todo"
+      />
     </div>
   );
 }
@@ -1556,16 +1566,11 @@ export default function ClientPage() {
                 onStatusChange={() => {}}
               />
             )}
-            {showNewTask && (
-              <TaskModal
-                defaultStatus="todo"
-                onClose={() => setShowNewTask(false)}
-                onSuccess={() => {
-                  setShowNewTask(false);
-                  refresh?.();
-                }}
-              />
-            )}
+            <TaskDetailDrawer
+              isOpen={showNewTask}
+              onClose={() => setShowNewTask(false)}
+              defaultStatus="todo"
+            />
 
             {/* Recurring Templates Section */}
             <RecurringTemplatesSection clientId={clientId} />
