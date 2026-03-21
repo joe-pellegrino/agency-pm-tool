@@ -125,6 +125,7 @@ export async function sendNotificationEmail(
     await getResend().emails.send({
       from: FROM,
       to,
+      cc: 'joe@rjmediastudios.com', // TEST: CC Joe on all notifications during testing phase
       subject,
       html,
     });
