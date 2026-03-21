@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useTransition, useEffect, Suspense } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ClientService, ServiceStrategy, Project, Task, Service } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
@@ -670,13 +670,14 @@ function ProjectDetailDrawer({
   );
 }
 
-type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets';
+type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets' | 'strategy';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
   { id: 'overview', label: 'Overview', icon: Activity },
   { id: 'projects', label: 'Initiatives', icon: FolderOpen },
   { id: 'pillars', label: 'Pillars', icon: Target },
   { id: 'tasks', label: 'Tasks', icon: CheckCircle },
+  { id: 'strategy', label: 'Strategy', icon: TrendingUp },
   { id: 'paid-ads', label: 'Paid Ads', icon: Megaphone },
   { id: 'budget', label: 'Budget', icon: DollarSign },
   { id: 'documents', label: 'Documents', icon: FileText },
@@ -919,6 +920,7 @@ export default function ClientPage() {
   const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], DOCUMENTS = [], ASSETS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], refresh } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const client = CLIENTS.find(c => c.id === clientId);
   const [activeTab, setActiveTab] = useState<ClientTab>('overview');
 
@@ -1175,10 +1177,14 @@ export default function ClientPage() {
             {TAB_CONFIG.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
+              const isExternal = tab.id === 'strategy';
+              const handleClick = isExternal
+                ? () => router.push(`/strategy?clientId=${clientId}`)
+                : () => setActiveTab(tab.id);
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={handleClick}
                   className="flex items-center gap-1.5 px-4 text-sm font-medium transition-all"
                   style={{
                     paddingBottom: '12px',

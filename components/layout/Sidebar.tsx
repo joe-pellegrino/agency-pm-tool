@@ -27,6 +27,7 @@ import {
   Briefcase,
   Users,
   BookOpen,
+  TrendingUp,
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -133,6 +134,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
   // Define sub-nav items for each client
   const clientSubNav = (clientId: string) => [
     { label: 'Overview', href: `/clients/${clientId}`, icon: Briefcase },
+    { label: 'Strategy', href: `/strategy?clientId=${clientId}`, icon: TrendingUp },
     { label: 'Pillars', href: `/clients/${clientId}/pillars`, icon: Target },
     { label: 'Initiatives', href: `/clients/${clientId}?tab=projects`, icon: Layers },
     { label: 'Kanban', href: `/kanban?clientId=${clientId}`, icon: Kanban },

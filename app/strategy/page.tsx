@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState, useMemo, useEffect, useTransition, Suspense } from 'react';
+import { useState, useMemo, useEffect, useTransition, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Strategy, StrategyPillar, KPI, ServiceStrategy, Service, ClientService } from '@/lib/data';
@@ -1093,16 +1093,25 @@ function StrategyPageContent() {
   const [showStrategyModal, setShowStrategyModal] = useState(false);
   const [archiveId, setArchiveId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const initialParamConsumed = useRef(false);
 
   useEffect(() => {
-    // First, check if clientId is passed via query params (from client detail page)
-    const clientIdFromParams = searchParams.get('clientId');
-    if (clientIdFromParams && CLIENTS.some(c => c.id === clientIdFromParams)) {
-      setSelectedClientId(clientIdFromParams);
+    // Only read the URL param once on initial mount — after that, manual tab clicks win.
+    if (!initialParamConsumed.current && CLIENTS.length > 0) {
+      initialParamConsumed.current = true;
+      const clientIdFromParams = searchParams.get('clientId');
+      if (clientIdFromParams && CLIENTS.some(c => c.id === clientIdFromParams)) {
+        setSelectedClientId(clientIdFromParams);
+      } else {
+        setSelectedClientId(CLIENTS[0].id);
+      }
+    } else if (!initialParamConsumed.current) {
+      // CLIENTS not loaded yet — wait for next render
     } else if (!selectedClientId && CLIENTS.length > 0) {
+      // Fallback: if somehow selectedClientId is still empty after clients load
       setSelectedClientId(CLIENTS[0].id);
     }
-  }, [CLIENTS, selectedClientId, searchParams]);
+  }, [CLIENTS]); // Only re-run when CLIENTS changes, NOT on searchParams or selectedClientId
 
   const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === selectedClientId) || null, [selectedClientId, STRATEGIES]);
 
