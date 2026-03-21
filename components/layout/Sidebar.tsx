@@ -99,12 +99,36 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null)
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
   // Auto-expand the active client based on pathname
   useEffect(() => {
     const match = pathname.match(/^\/clients\/([^\/]+)/)
     if (match) setExpandedClientId(match[1])
   }, [pathname])
+
+  // Detect dark mode
+  useEffect(() => {
+    const detectDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark') || 
+                     window.matchMedia('(prefers-color-scheme: dark)').matches
+      setIsDarkMode(isDark)
+    }
+
+    detectDarkMode()
+    
+    // Watch for theme changes
+    const observer = new MutationObserver(detectDarkMode)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    mediaQuery.addEventListener('change', detectDarkMode)
+    
+    return () => {
+      observer.disconnect()
+      mediaQuery.removeEventListener('change', detectDarkMode)
+    }
+  }, [])
 
   // Define sub-nav items for each client
   const clientSubNav = (clientId: string) => [
@@ -117,28 +141,34 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
     { label: 'Health', href: `/health?clientId=${clientId}`, icon: Activity },
   ]
 
-  // Fetch logo from Supabase
+  // Fetch logos from Supabase
   useEffect(() => {
-    const fetchLogo = async () => {
+    const fetchLogos = async () => {
       try {
         const { data, error } = await supabase
           .from('agency_settings')
-          .select('value')
-          .eq('key', 'logo_url')
-          .single()
+          .select('key, value')
+          .in('key', ['logo_light_url', 'logo_dark_url'])
 
-        if (!error && data?.value) {
-          setLogoUrl(data.value)
+        if (!error && data) {
+          const lightLogo = data.find(d => d.key === 'logo_light_url')?.value
+          const darkLogo = data.find(d => d.key === 'logo_dark_url')?.value
+          
+          // Choose logo based on current theme
+          const selectedLogo = isDarkMode ? darkLogo : lightLogo
+          if (selectedLogo) {
+            setLogoUrl(selectedLogo)
+          }
         }
       } catch (err) {
-        console.error('Failed to fetch logo:', err)
+        console.error('Failed to fetch logos:', err)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchLogo()
-  }, [])
+    fetchLogos()
+  }, [isDarkMode])
 
   const navItemStyle = (active: boolean) => active
     ? {
@@ -162,7 +192,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
   const getHoverTextColor = () => '#FFFFFF'
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Logo area - only show on mobile */}
       {!isCollapsed && showLogo && (
         <div
@@ -211,7 +241,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
       )}
 
       {/* Nav */}
-      <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Clients section - FIRST */}
         {CLIENTS.length > 0 && (
           <div>
@@ -512,6 +542,8 @@ export default function Sidebar() {
               top: '56px',
               height: 'calc(100vh - 56px)',
               backgroundColor: '#111827',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* Mobile close button */}
@@ -535,7 +567,9 @@ export default function Sidebar() {
               </button>
             </div>
 
-            <SidebarContent isCollapsed={false} />
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              <SidebarContent isCollapsed={false} />
+            </div>
           </DialogPanel>
         </div>
       </Dialog>

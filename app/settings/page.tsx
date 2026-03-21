@@ -40,11 +40,13 @@ export default function SettingsPage() {
   const [savingAccount, setSavingAccount] = useState(false);
 
   // ── Branding ─────────────────────────────────────────────
-  const [agencyName, setAgencyName]     = useState('');
-  const [logoUrl, setLogoUrl]           = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#3B5BDB');
+  const [agencyName, setAgencyName]       = useState('');
+  const [logoLightUrl, setLogoLightUrl]   = useState('');
+  const [logoDarkUrl, setLogoDarkUrl]     = useState('');
+  const [primaryColor, setPrimaryColor]   = useState('#3B5BDB');
   const [savingBranding, setSavingBranding] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingLogoLight, setUploadingLogoLight] = useState(false);
+  const [uploadingLogoDark, setUploadingLogoDark] = useState(false);
 
   // ── Appearance ────────────────────────────────────────────
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
@@ -63,7 +65,8 @@ export default function SettingsPage() {
       if (!data) return;
       data.forEach(({ key, value }) => {
         if (key === 'agency_name')         setAgencyName(value ?? '');
-        if (key === 'logo_url')            setLogoUrl(value ?? '');
+        if (key === 'logo_light_url')      setLogoLightUrl(value ?? '');
+        if (key === 'logo_dark_url')       setLogoDarkUrl(value ?? '');
         if (key === 'primary_color')       setPrimaryColor(value ?? '#3B5BDB');
         if (key === 'user_first_name')     setFirstName(value ?? '');
         if (key === 'user_last_name')      setLastName(value ?? '');
@@ -101,7 +104,8 @@ export default function SettingsPage() {
     try {
       await Promise.all([
         upsertSetting('agency_name', agencyName),
-        upsertSetting('logo_url', logoUrl),
+        upsertSetting('logo_light_url', logoLightUrl),
+        upsertSetting('logo_dark_url', logoDarkUrl),
         upsertSetting('primary_color', primaryColor),
       ]);
       toast.success('Branding saved');
@@ -257,31 +261,31 @@ export default function SettingsPage() {
 
               <div className={SECTION}>
                 <div className="w-1/3 flex-shrink-0">
-                  <h3 className="font-semibold text-gray-900">Agency Logo</h3>
-                  <p className="text-sm text-gray-500 mt-1">Recommended: 200×60px, PNG or SVG, transparent background</p>
+                  <h3 className="font-semibold text-gray-900">Light Mode Logo</h3>
+                  <p className="text-sm text-gray-500 mt-1">Recommended: 200×60px, PNG or SVG</p>
                 </div>
                 <div className="w-2/3 space-y-3">
-                  {logoUrl && (
+                  {logoLightUrl && (
                     <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
-                      <img src={logoUrl} alt="Logo preview" className="h-10 max-w-[160px] object-contain rounded" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                      <img src={logoLightUrl} alt="Light logo preview" className="h-10 max-w-[160px] object-contain rounded" onError={(e) => (e.currentTarget.style.display = 'none')} />
                       <button
                         type="button"
-                        onClick={() => setLogoUrl('')}
+                        onClick={() => setLogoLightUrl('')}
                         className="text-xs text-red-500 hover:text-red-700 font-medium ml-auto"
                       >
                         Remove
                       </button>
                     </div>
                   )}
-                  <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploadingLogo ? 'border-gray-200 bg-gray-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}`}>
+                  <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploadingLogoLight ? 'border-gray-200 bg-gray-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}`}>
                     <div className="flex flex-col items-center gap-1 text-center">
-                      {uploadingLogo ? (
+                      {uploadingLogoLight ? (
                         <span className="text-sm text-gray-400">Uploading…</span>
                       ) : (
                         <>
                           <Image size={20} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-600">Click to upload logo</span>
-                          <span className="text-xs text-gray-400">PNG, SVG, JPG · 200×60px recommended · Max 2MB</span>
+                          <span className="text-sm font-medium text-gray-600">Click to upload</span>
+                          <span className="text-xs text-gray-400">PNG, SVG, JPG · Max 2MB</span>
                         </>
                       )}
                     </div>
@@ -289,25 +293,86 @@ export default function SettingsPage() {
                       type="file"
                       accept="image/png,image/svg+xml,image/jpeg,image/webp"
                       className="hidden"
-                      disabled={uploadingLogo}
+                      disabled={uploadingLogoLight}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         if (file.size > 2 * 1024 * 1024) { toast.error('File too large — max 2MB'); return; }
-                        setUploadingLogo(true);
+                        setUploadingLogoLight(true);
                         try {
                           const ext = file.name.split('.').pop();
-                          const path = `logos/agency-logo-${Date.now()}.${ext}`;
+                          const path = `logos/light-logo-${Date.now()}.${ext}`;
                           const { error: upErr } = await supabase.storage.from('assets').upload(path, file, { upsert: true, contentType: file.type });
                           if (upErr) throw upErr;
                           const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(path);
-                          setLogoUrl(publicUrl);
-                          await upsertSetting('logo_url', publicUrl);
-                          toast.success('Logo uploaded');
+                          setLogoLightUrl(publicUrl);
+                          toast.success('Light logo uploaded');
                         } catch (err) {
                           toast.error('Upload failed: ' + (err as Error).message);
                         } finally {
-                          setUploadingLogo(false);
+                          setUploadingLogoLight(false);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className={DIVIDER} />
+
+              <div className={SECTION}>
+                <div className="w-1/3 flex-shrink-0">
+                  <h3 className="font-semibold text-gray-900">Dark Mode Logo</h3>
+                  <p className="text-sm text-gray-500 mt-1">Recommended: 200×60px, PNG or SVG</p>
+                </div>
+                <div className="w-2/3 space-y-3">
+                  {logoDarkUrl && (
+                    <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-900">
+                      <img src={logoDarkUrl} alt="Dark logo preview" className="h-10 max-w-[160px] object-contain rounded" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                      <button
+                        type="button"
+                        onClick={() => setLogoDarkUrl('')}
+                        className="text-xs text-red-400 hover:text-red-300 font-medium ml-auto"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                  <label className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploadingLogoDark ? 'border-gray-200 bg-gray-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}`}>
+                    <div className="flex flex-col items-center gap-1 text-center">
+                      {uploadingLogoDark ? (
+                        <span className="text-sm text-gray-400">Uploading…</span>
+                      ) : (
+                        <>
+                          <Image size={20} className="text-gray-400" />
+                          <span className="text-sm font-medium text-gray-600">Click to upload</span>
+                          <span className="text-xs text-gray-400">PNG, SVG, JPG · Max 2MB</span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                      className="hidden"
+                      disabled={uploadingLogoDark}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { toast.error('File too large — max 2MB'); return; }
+                        setUploadingLogoDark(true);
+                        try {
+                          const ext = file.name.split('.').pop();
+                          const path = `logos/dark-logo-${Date.now()}.${ext}`;
+                          const { error: upErr } = await supabase.storage.from('assets').upload(path, file, { upsert: true, contentType: file.type });
+                          if (upErr) throw upErr;
+                          const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(path);
+                          setLogoDarkUrl(publicUrl);
+                          toast.success('Dark logo uploaded');
+                        } catch (err) {
+                          toast.error('Upload failed: ' + (err as Error).message);
+                        } finally {
+                          setUploadingLogoDark(false);
                           e.target.value = '';
                         }
                       }}
