@@ -100,36 +100,12 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null)
-  const [isDarkMode, setIsDarkMode] = useState(false)
 
   // Auto-expand the active client based on pathname
   useEffect(() => {
     const match = pathname.match(/^\/clients\/([^\/]+)/)
     if (match) setExpandedClientId(match[1])
   }, [pathname])
-
-  // Detect dark mode
-  useEffect(() => {
-    const detectDarkMode = () => {
-      const isDark = document.documentElement.classList.contains('dark') || 
-                     window.matchMedia('(prefers-color-scheme: dark)').matches
-      setIsDarkMode(isDark)
-    }
-
-    detectDarkMode()
-    
-    // Watch for theme changes
-    const observer = new MutationObserver(detectDarkMode)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-    
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    mediaQuery.addEventListener('change', detectDarkMode)
-    
-    return () => {
-      observer.disconnect()
-      mediaQuery.removeEventListener('change', detectDarkMode)
-    }
-  }, [])
 
   // Define sub-nav items for each client
   const clientSubNav = (clientId: string) => [
@@ -144,22 +120,19 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
   ]
 
   // Fetch logos from Supabase
+  // The sidebar is always dark-themed (#111827), so always use the dark logo
   useEffect(() => {
     const fetchLogos = async () => {
       try {
         const { data, error } = await supabase
           .from('agency_settings')
           .select('key, value')
-          .in('key', ['logo_light_url', 'logo_dark_url'])
+          .eq('key', 'logo_dark_url')
 
-        if (!error && data) {
-          const lightLogo = data.find(d => d.key === 'logo_light_url')?.value
-          const darkLogo = data.find(d => d.key === 'logo_dark_url')?.value
-          
-          // Choose logo based on current theme
-          const selectedLogo = isDarkMode ? darkLogo : lightLogo
-          if (selectedLogo) {
-            setLogoUrl(selectedLogo)
+        if (!error && data && data.length > 0) {
+          const darkLogo = data[0].value
+          if (darkLogo) {
+            setLogoUrl(darkLogo)
           }
         }
       } catch (err) {
@@ -170,7 +143,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
     }
 
     fetchLogos()
-  }, [isDarkMode])
+  }, [])
 
   const navItemStyle = (active: boolean) => active
     ? {
@@ -520,7 +493,7 @@ export default function Sidebar() {
           borderRight: '1px solid var(--color-sidebar-border)',
         }}
       >
-        <SidebarContent isCollapsed={isCollapsed} showLogo={false} />
+        <SidebarContent isCollapsed={isCollapsed} showLogo={true} />
       </div>
 
       {/* ── MOBILE SIDEBAR ── Dialog overlay, only on < lg screens ── */}
