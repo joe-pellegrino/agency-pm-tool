@@ -29,7 +29,7 @@ export default function Drawer({
 
   return (
     <Transition show={isOpen} appear afterLeave={onAfterLeave}>
-      <Dialog onClose={onClose} className="relative z-[200]">
+      <Dialog onClose={onClose} className="relative z-[200]" autoFocus={false}>
         <TransitionChild>
           <DialogBackdrop
             transition
