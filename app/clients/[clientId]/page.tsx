@@ -22,6 +22,7 @@ import ClientModal from '@/components/clients/ClientModal';
 import ProjectModal from '@/components/projects/ProjectModal';
 import TaskModal from '@/components/tasks/TaskModal';
 import { TaskDetailModal } from '@/components/kanban/KanbanBoard';
+import YearRoadmap from '@/components/roadmap/YearRoadmap';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -1122,19 +1123,14 @@ export default function ClientPage() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
-            {[
-              { label: 'Active Services', value: activeServices.filter(cs => cs.status === 'active').length, icon: Zap },
-              { label: 'Active Initiatives', value: PROJECTS.filter(p => p.clientId === clientId && p.status === 'active').length, icon: FolderOpen },
-              { label: 'Open Tasks', value: TASKS.filter(t => t.clientId === clientId && t.status !== 'done').length, icon: CheckCircle },
-              { label: 'Completed Tasks', value: TASKS.filter(t => t.clientId === clientId && t.status === 'done').length, icon: TrendingUp },
-            ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{value}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{label}</div>
-              </div>
-            ))}
+          {/* Year Roadmap */}
+          <div className="mt-5 pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
+            <YearRoadmap
+              strategies={STRATEGIES.filter(s => s.clientId === clientId)}
+              initiatives={PROJECTS.filter(p => p.clientId === clientId)}
+              pillars={CLIENT_PILLARS.filter(p => p.clientId === clientId)}
+              clientId={clientId}
+            />
           </div>
 
           {/* Budget Progress Bar */}
