@@ -678,14 +678,13 @@ function StrategyView({
             </Link>
           </div>
         </div>
-      </div>
 
-      {/* Pillar Columns Board */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <BarChart3 size={16} className="text-[#3B5BDB]" />
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">Initiatives by Pillar</h3>
+        {/* Pillar Columns Board — inside the strategy card */}
+        <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 size={16} className="text-[#3B5BDB]" />
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Initiatives by Pillar</h3>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
               {strategy.pillars.length} pillars
             </span>
@@ -770,6 +769,7 @@ function StrategyView({
             })}
           </div>
         )}
+        </div>
       </div>
 
       {showDiagram && (
