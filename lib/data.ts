@@ -1289,7 +1289,7 @@ export interface Strategy {
   startDate: string;
   endDate: string;
   pillars: StrategyPillar[];
-  status: 'planning' | 'active' | 'complete';
+  status: 'draft' | 'queued' | 'active' | 'complete';
 }
 
 export interface Project {
@@ -1620,7 +1620,7 @@ export const STRATEGIES: Strategy[] = [
     quarter: 'Q2 2026',
     startDate: '2026-04-01',
     endDate: '2026-06-30',
-    status: 'planning',
+    status: 'active',
     pillars: [
       {
         id: 'pillar-kp-1',

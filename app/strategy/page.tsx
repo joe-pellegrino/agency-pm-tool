@@ -10,11 +10,11 @@ import TopBar from '@/components/layout/TopBar';
 import {
   TrendingUp, Target, CheckCircle, Clock, AlertTriangle, ChevronDown, ChevronUp,
   BarChart3, FolderOpen, Calendar, Zap, ArrowRight, Plus, Pencil, Trash2,
-  TrendingDown, Minus as MinusIcon,
+  TrendingDown, Minus as MinusIcon, FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  createStrategy, updateStrategy, archiveStrategy,
+  createStrategy, updateStrategy, archiveStrategy, activateStrategy,
   createStrategyKPI, updateStrategyKPI, archiveStrategyKPI,
   addServiceToStrategy, removeServiceFromStrategy, updateServiceStrategySummary,
 } from '@/lib/actions';
@@ -23,7 +23,8 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 const StrategyDiagram = dynamic(() => import('@/components/strategy/StrategyDiagram'), { ssr: false });
 
 const STATUS_CONFIG = {
-  planning: { label: 'Planning', color: 'bg-gray-100 text-gray-600', icon: Clock },
+  draft: { label: 'Draft', color: 'bg-gray-100 text-gray-600', icon: FileText },
+  queued: { label: 'Queued', color: 'bg-amber-100 text-amber-700', icon: Clock },
   active: { label: 'Active', color: 'bg-green-100 text-green-700', icon: CheckCircle },
   complete: { label: 'Complete', color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
 } as const;
@@ -679,41 +680,96 @@ function StrategyView({
         </div>
       </div>
 
-      {/* Services Section */}
+      {/* Pillar Columns Board */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <Zap size={16} className="text-[#3B5BDB]" />
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">Services</h3>
+            <BarChart3 size={16} className="text-[#3B5BDB]" />
+            <h3 className="text-base font-bold text-gray-900 dark:text-white">Initiatives by Pillar</h3>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-              {serviceStrategies.length} linked
+              {strategy.pillars.length} pillars
             </span>
           </div>
         </div>
 
-        {(() => {
-          const allClientServices = CLIENT_SERVICES.filter(cs => cs.clientId === strategy.clientId);
-          return allClientServices.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No services added to this client yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {allClientServices.map(cs => {
-                const service = SERVICES.find(s => s.id === cs.serviceId);
-                const linked = serviceStrategies.find(ss => ss.clientServiceId === cs.id);
-                return (
-                  <ServiceStrategyItem
-                    key={cs.id}
-                    cs={cs}
-                    service={service}
-                    linked={linked}
-                    strategyId={strategy.id}
-                    onRefresh={refresh}
-                  />
-                );
-              })}
-            </div>
-          );
-        })()}
+        {strategy.pillars.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <BarChart3 size={32} className="mx-auto mb-2 opacity-30" />
+            <p className="text-sm font-medium mb-1">No pillars yet</p>
+            <p className="text-xs">Add pillars to organize your strategic initiatives</p>
+          </div>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {strategy.pillars.map(pillar => {
+              const pillarProjects = PROJECTS.filter(p => pillar.projectIds.includes(p.id));
+              return (
+                <div
+                  key={pillar.id}
+                  className="flex-shrink-0 w-72 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                >
+                  {/* Column Header */}
+                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{pillar.name}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{pillar.description}</p>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded font-medium">
+                        {pillar.kpis.length} KPI{pillar.kpis.length !== 1 ? 's' : ''}
+                      </span>
+                      <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded font-medium">
+                        {pillarProjects.length} initiative{pillarProjects.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Column Body */}
+                  <div className="p-3 space-y-2 max-h-96 overflow-y-auto">
+                    {pillarProjects.length === 0 ? (
+                      <div className="text-center py-6 text-gray-400">
+                        <p className="text-xs italic">No initiatives yet</p>
+                      </div>
+                    ) : (
+                      pillarProjects.map(project => {
+                        const projectStatus = PROJECT_STATUS_CONFIG[project.status];
+                        const taskCount = project.taskIds.length;
+                        return (
+                          <Link
+                            key={project.id}
+                            href={`/app/projects/${project.id}`}
+                            className="block p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-500 transition-all"
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h5 className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">
+                                {project.name}
+                              </h5>
+                              <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 font-medium ${projectStatus.color}`}>
+                                {projectStatus.label}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-blue-500 transition-all"
+                                  style={{ width: `${project.progress || 0}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 font-medium">
+                                {project.progress || 0}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                              <FolderOpen size={12} />
+                              {taskCount} task{taskCount !== 1 ? 's' : ''}
+                            </div>
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {showDiagram && (
@@ -727,6 +783,83 @@ function StrategyView({
           pillars={strategy.pillars}
           onClose={() => setShowDiagram(false)}
         />
+      )}
+    </div>
+  );
+}
+
+// ─── Strategy Pipeline ────────────────────────────────────────────────────────
+
+function StrategyPipeline({
+  strategies,
+  onActivate,
+  onQueueDraft,
+}: {
+  strategies: Strategy[];
+  onActivate: (id: string) => void;
+  onQueueDraft: (id: string) => void;
+}) {
+  return (
+    <div className="mt-8">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <Clock size={16} />
+        Strategy Pipeline
+        <span className="ml-auto px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full">
+          {strategies.length}
+        </span>
+      </h3>
+      {strategies.length === 0 ? (
+        <div className="text-center py-8 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <Target size={32} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">No upcoming strategies. Create one to start building your pipeline.</p>
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {strategies.map(strat => {
+            const statusCfg = STATUS_CONFIG[strat.status];
+            const Icon = statusCfg.icon;
+            return (
+              <div
+                key={strat.id}
+                className="flex items-start justify-between gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm truncate">{strat.name}</h4>
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${statusCfg.color}`}>
+                      {strat.quarter}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(strat.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(strat.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-xs px-2 py-1 rounded font-medium flex items-center gap-1 ${statusCfg.color}`}>
+                    <Icon size={12} />
+                    {statusCfg.label}
+                  </span>
+                  {strat.status === 'draft' && (
+                    <button
+                      onClick={() => onQueueDraft(strat.id)}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors"
+                    >
+                      Queue
+                    </button>
+                  )}
+                  {strat.status === 'queued' && (
+                    <button
+                      onClick={() => onActivate(strat.id)}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                    >
+                      Activate
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -752,7 +885,7 @@ function StrategyModal({
     quarter: strategy?.quarter || 'Q1 2025',
     startDate: strategy?.startDate || new Date().toISOString().split('T')[0],
     endDate: strategy?.endDate || (() => { const d = new Date(); d.setMonth(d.getMonth() + 3); return d.toISOString().split('T')[0]; })(),
-    status: strategy?.status || 'planning',
+    status: strategy?.status || 'draft',
   });
 
   const inputClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3B5BDB]';
@@ -880,7 +1013,9 @@ function StrategyPageContent() {
     }
   }, [CLIENTS]); // Only re-run when CLIENTS changes, NOT on searchParams or selectedClientId
 
-  const strategy = useMemo(() => STRATEGIES.find(s => s.clientId === selectedClientId) || null, [selectedClientId, STRATEGIES]);
+  const clientStrategies = useMemo(() => STRATEGIES.filter(s => s.clientId === selectedClientId), [selectedClientId, STRATEGIES]);
+  const activeStrategy = useMemo(() => clientStrategies.find(s => s.status === 'active') || null, [clientStrategies]);
+  const pipelineStrategies = useMemo(() => clientStrategies.filter(s => s.status === 'draft' || s.status === 'queued').sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()), [clientStrategies]);
 
   const handleArchive = () => {
     if (!archiveId) return;
@@ -904,7 +1039,7 @@ function StrategyPageContent() {
       {showStrategyModal && (
         <StrategyModal
           clientId={selectedClientId || undefined}
-          strategy={strategy}
+          strategy={activeStrategy}
           onClose={() => setShowStrategyModal(false)}
         />
       )}
@@ -941,7 +1076,8 @@ function StrategyPageContent() {
         {/* Client selector tabs */}
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
           {CLIENTS.map(client => {
-            const s = STRATEGIES.find(st => st.clientId === client.id);
+            const activeStrat = STRATEGIES.find(st => st.clientId === client.id && st.status === 'active');
+            const pipelineCount = STRATEGIES.filter(st => st.clientId === client.id && (st.status === 'draft' || st.status === 'queued')).length;
             const isSelected = selectedClientId === client.id;
             return (
               <button
@@ -964,9 +1100,14 @@ function StrategyPageContent() {
                   {client.logo}
                 </span>
                 {client.name}
-                {s && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isSelected ? 'bg-white/20 text-white' : STATUS_CONFIG[s.status].color}`}>
-                    {s.quarter}
+                {activeStrat && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isSelected ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
+                    {activeStrat.quarter}
+                  </span>
+                )}
+                {pipelineCount > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isSelected ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                    +{pipelineCount}
                   </span>
                 )}
               </button>
@@ -974,12 +1115,41 @@ function StrategyPageContent() {
           })}
         </div>
 
-        {strategy ? (
-          <StrategyView
-            strategy={strategy}
-            onEdit={() => setShowStrategyModal(true)}
-            onArchive={() => setArchiveId(strategy.id)}
-          />
+        {activeStrategy ? (
+          <>
+            <StrategyView
+              strategy={activeStrategy}
+              onEdit={() => setShowStrategyModal(true)}
+              onArchive={() => setArchiveId(activeStrategy.id)}
+            />
+            {pipelineStrategies.length > 0 && (
+              <StrategyPipeline
+                strategies={pipelineStrategies}
+                onActivate={(id) => {
+                  startTransition(async () => {
+                    try {
+                      await activateStrategy(id);
+                      toast.success('Strategy activated');
+                      refresh?.();
+                    } catch (err) {
+                      toast.error('Failed: ' + (err as Error).message);
+                    }
+                  });
+                }}
+                onQueueDraft={(id) => {
+                  startTransition(async () => {
+                    try {
+                      await updateStrategy(id, { status: 'queued' });
+                      toast.success('Strategy queued');
+                      refresh?.();
+                    } catch (err) {
+                      toast.error('Failed: ' + (err as Error).message);
+                    }
+                  });
+                }}
+              />
+            )}
+          </>
         ) : (
           <div className="text-center py-20 text-gray-400">
             <Target size={40} className="mx-auto mb-4 opacity-30" />

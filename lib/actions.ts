@@ -555,6 +555,44 @@ export async function archiveStrategy(id: string) {
   revalidatePath('/strategy');
 }
 
+export async function activateStrategy(id: string) {
+  // Fetch the strategy to get the client ID
+  const { data: strategy, error: fetchError } = await db()
+    .from('strategies')
+    .select('client_id')
+    .eq('id', id)
+    .single();
+  if (fetchError) throw new Error(fetchError.message);
+
+  const clientId = strategy.client_id;
+
+  // Find any active strategy for this client
+  const { data: activeStrategy, error: findError } = await db()
+    .from('strategies')
+    .select('id')
+    .eq('client_id', clientId)
+    .eq('status', 'active')
+    .single();
+
+  // If there's an active strategy, mark it as complete
+  if (activeStrategy && !findError) {
+    const { error: completeError } = await db()
+      .from('strategies')
+      .update({ status: 'complete' })
+      .eq('id', activeStrategy.id);
+    if (completeError) throw new Error(completeError.message);
+  }
+
+  // Set the target strategy to active
+  const { error: activateError } = await db()
+    .from('strategies')
+    .update({ status: 'active' })
+    .eq('id', id);
+  if (activateError) throw new Error(activateError.message);
+
+  revalidatePath('/strategy');
+}
+
 export async function createStrategyPillar(strategyId: string, data: { name: string; description?: string }) {
   const id = `pillar-${Date.now()}`;
   const { error } = await db()
