@@ -17,6 +17,7 @@ import {
   createStrategy, updateStrategy, archiveStrategy, activateStrategy,
   createStrategyKPI, updateStrategyKPI, archiveStrategyKPI,
   addServiceToStrategy, removeServiceFromStrategy, updateServiceStrategySummary,
+  createClientPillarKpi, updateClientPillarKpi, deleteClientPillarKpi,
 } from '@/lib/actions';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
@@ -209,11 +210,20 @@ function KPIModal({
           current: parseFloat(form.current) || 0,
           unit: form.unit.trim() || 'followers',
         };
+        const isClientPillar = pillarId.startsWith('cpillar-');
         if (kpi) {
-          await updateStrategyKPI(kpi.id, data);
+          if (isClientPillar) {
+            await updateClientPillarKpi(kpi.id, data);
+          } else {
+            await updateStrategyKPI(kpi.id, data);
+          }
           toast.success('KPI updated');
         } else {
-          await createStrategyKPI(pillarId, data);
+          if (isClientPillar) {
+            await createClientPillarKpi(pillarId, data);
+          } else {
+            await createStrategyKPI(pillarId, data);
+          }
           toast.success('KPI created');
         }
         refresh?.();
@@ -506,10 +516,33 @@ function StrategyView({
   onEdit: () => void;
   onArchive: () => void;
 }) {
-  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], CLIENTS = [], PROJECTS = [], TASKS = [], refresh } = useAppData();
+  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], CLIENTS = [], PROJECTS = [], TASKS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], refresh } = useAppData();
   const client = CLIENTS.find(c => c.id === strategy.clientId)!;
   const statusCfg = STATUS_CONFIG[strategy.status];
-  const allProjects = strategy.pillars.flatMap(p => PROJECTS.filter(proj => p.projectIds.includes(proj.id)));
+
+  // Build pillarsForStrategy from client_pillars (the real pillar data)
+  const pillarsForStrategy = CLIENT_PILLARS
+    .filter(cp => cp.clientId === strategy.clientId)
+    .map(cp => {
+      const cpKpis = CLIENT_PILLAR_KPIS.filter(k => k.clientPillarId === cp.id);
+      const linkedProjects = PROJECTS.filter(p => p.clientPillarId === cp.id && p.clientId === strategy.clientId);
+      return {
+        id: cp.id,
+        name: cp.name,
+        description: cp.description || '',
+        color: cp.color,
+        projectIds: linkedProjects.map(p => p.id),
+        kpis: cpKpis.map(k => ({
+          id: k.id,
+          name: k.name,
+          target: k.target,
+          current: k.current,
+          unit: k.unit,
+        })) as KPI[],
+      };
+    });
+
+  const allProjects = pillarsForStrategy.flatMap(p => PROJECTS.filter(proj => p.projectIds.includes(proj.id)));
   const uniqueProjects = [...new Map(allProjects.map(p => [p.id, p])).values()];
   const serviceStrategies = SERVICE_STRATEGIES.filter(ss => ss.clientStrategyId === strategy.id);
   const [, startTransition] = useTransition();
@@ -517,8 +550,8 @@ function StrategyView({
 
   // KPI modal state
   const [kpiModal, setKpiModal] = useState<{ open: boolean; pillarId?: string; kpi?: KPI | null }>({ open: false });
-  // Delete confirm state
-  const [deleteKpiId, setDeleteKpiId] = useState<string | null>(null);
+  // Delete confirm state: { kpiId, pillarId }
+  const [deleteKpiState, setDeleteKpiState] = useState<{ kpiId: string; pillarId: string } | null>(null);
   // Description edit state
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState(strategy.description);
@@ -526,24 +559,29 @@ function StrategyView({
   // Live KPI actual values from portal
   const [kpiActuals, setKpiActuals] = useState<Record<string, KpiLiveData>>({});
   useEffect(() => {
-    const allKpiIds = strategy.pillars.flatMap(p => p.kpis.map(k => k.id));
+    const allKpiIds = pillarsForStrategy.flatMap(p => p.kpis.map(k => k.id));
     if (allKpiIds.length === 0) return;
     fetch(`/api/data/kpi-actuals?clientId=${strategy.clientId}&kpiIds=${allKpiIds.join(',')}`)
       .then(r => r.json())
       .then(data => { if (data.kpiActuals) setKpiActuals(data.kpiActuals); })
       .catch(() => { /* silent — falls back to manual */ });
-  }, [strategy.id, strategy.clientId, strategy.pillars]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strategy.id, strategy.clientId]);
 
   const overallHealth: 'on-track' | 'at-risk' | 'behind' = 'on-track';
   const healthCfg = HEALTH_CONFIG[overallHealth];
 
   const handleDeleteKPI = () => {
-    if (!deleteKpiId) return;
-    const id = deleteKpiId;
-    setDeleteKpiId(null);
+    if (!deleteKpiState) return;
+    const { kpiId, pillarId } = deleteKpiState;
+    setDeleteKpiState(null);
     startTransition(async () => {
       try {
-        await archiveStrategyKPI(id);
+        if (pillarId.startsWith('cpillar-')) {
+          await deleteClientPillarKpi(kpiId);
+        } else {
+          await archiveStrategyKPI(kpiId);
+        }
         toast.success('KPI removed');
         refresh?.();
       } catch (err) {
@@ -576,14 +614,14 @@ function StrategyView({
           onClose={() => setKpiModal({ open: false })}
         />
       )}
-      {deleteKpiId && (
+      {deleteKpiState && (
         <ConfirmDialog
           title="Remove KPI"
           message="Remove this KPI?"
           confirmLabel="Remove"
           destructive
           onConfirm={handleDeleteKPI}
-          onCancel={() => setDeleteKpiId(null)}
+          onCancel={() => setDeleteKpiState(null)}
         />
       )}
 
@@ -686,12 +724,12 @@ function StrategyView({
               <BarChart3 size={16} className="text-[#3B5BDB]" />
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Initiatives by Pillar</h3>
             <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-              {strategy.pillars.length} pillars
+              {pillarsForStrategy.length} pillars
             </span>
           </div>
         </div>
 
-        {strategy.pillars.length === 0 ? (
+        {pillarsForStrategy.length === 0 ? (
           <div className="text-center py-12 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <BarChart3 size={32} className="mx-auto mb-2 opacity-30" />
             <p className="text-sm font-medium mb-1">No pillars yet</p>
@@ -699,12 +737,13 @@ function StrategyView({
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-4">
-            {strategy.pillars.map(pillar => {
+            {pillarsForStrategy.map(pillar => {
               const pillarProjects = PROJECTS.filter(p => pillar.projectIds.includes(p.id));
               return (
                 <div
                   key={pillar.id}
                   className="flex-shrink-0 w-72 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                  style={{ borderLeftColor: pillar.color || '#3B5BDB', borderLeftWidth: 3 }}
                 >
                   {/* Column Header */}
                   <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
@@ -780,7 +819,7 @@ function StrategyView({
           services={SERVICES}
           projects={PROJECTS}
           tasks={TASKS}
-          pillars={strategy.pillars}
+          pillars={pillarsForStrategy}
           onClose={() => setShowDiagram(false)}
         />
       )}
