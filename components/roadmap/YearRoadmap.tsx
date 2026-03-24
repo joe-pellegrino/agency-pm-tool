@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, ChevronRight, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 
@@ -41,6 +41,8 @@ interface Task {
   clientId: string;
   status: string;
   dueDate?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface YearRoadmapProps {
@@ -95,70 +97,13 @@ function getStrategyTextColor(index: number): string {
   return colors[index % colors.length];
 }
 
-// Popover component for task hover
-function InitiativePopover({
-  initiative,
-  tasks,
-  clientId,
-  onClose,
-}: {
-  initiative: Initiative;
-  tasks: Task[];
-  clientId: string;
-  onClose: () => void;
-}) {
-  const statusConfig: Record<string, { color: string; label: string }> = {
-    todo: { color: 'bg-gray-100 text-gray-700', label: 'To Do' },
-    inprogress: { color: 'bg-blue-100 text-blue-700', label: 'In Progress' },
-    review: { color: 'bg-amber-100 text-amber-700', label: 'Review' },
-    done: { color: 'bg-green-100 text-green-700', label: 'Done' },
-  };
-
-  return (
-    <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 min-w-max max-w-sm">
-      <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">
-        {initiative.name}
-      </h4>
-      {tasks.length === 0 ? (
-        <p className="text-xs text-gray-500">No tasks yet</p>
-      ) : (
-        <div className="space-y-2">
-          {tasks.map(task => {
-            const cfg = statusConfig[task.status] || statusConfig.todo;
-            return (
-              <Link
-                key={task.id}
-                href={`/tasks/${task.id}`}
-                className="flex items-center gap-2 text-xs hover:underline text-blue-600 dark:text-blue-400"
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    task.status === 'done'
-                      ? 'bg-green-500'
-                      : task.status === 'inprogress'
-                      ? 'bg-blue-500'
-                      : task.status === 'review'
-                      ? 'bg-amber-500'
-                      : 'bg-gray-400'
-                  }`}
-                />
-                <span className="truncate">{task.title}</span>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs">
-        <Link
-          href={`/projects/${initiative.id}`}
-          className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-        >
-          View Initiative →
-        </Link>
-      </div>
-    </div>
-  );
-}
+// Task status color classes
+const TASK_STATUS_COLORS: Record<string, string> = {
+  todo: 'bg-gray-100 border-gray-300 text-gray-600',
+  inprogress: 'bg-blue-100 border-blue-300 text-blue-700',
+  review: 'bg-amber-100 border-amber-300 text-amber-700',
+  done: 'bg-green-100 border-green-300 text-green-700',
+};
 
 export default function YearRoadmap({
   strategies,
@@ -168,7 +113,15 @@ export default function YearRoadmap({
 }: YearRoadmapProps) {
   const { TASKS = [] } = useAppData();
   const currentYear = new Date().getFullYear();
-  const [hoveredInitiative, setHoveredInitiative] = useState<string | null>(null);
+  const [expandedInitiatives, setExpandedInitiatives] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedInitiatives(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   // Calculate "today" position
   const todayPercent = useMemo(() => {
@@ -214,10 +167,10 @@ export default function YearRoadmap({
   };
 
   // Get tasks for an initiative
-  const getTasksForInitiative = (initiativeId: string) => {
+  const getTasksForInitiative = (initiativeId: string): Task[] => {
     const initiative = initiatives.find(i => i.id === initiativeId);
     if (!initiative || !initiative.taskIds) return [];
-    return TASKS.filter(t => initiative.taskIds!.includes(t.id) && t.clientId === clientId);
+    return TASKS.filter(t => initiative.taskIds!.includes(t.id) && t.clientId === clientId) as Task[];
   };
 
   // Empty state
@@ -240,7 +193,7 @@ export default function YearRoadmap({
       {/* Header */}
       <div className="flex items-center gap-2">
         <CalendarDays size={18} className="text-blue-600 dark:text-blue-400" />
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">This Year's Roadmap</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">This Year&apos;s Roadmap</h3>
       </div>
 
       {/* Timeline Container */}
@@ -249,7 +202,7 @@ export default function YearRoadmap({
           {/* Month Headers */}
           <div className="flex">
             {/* Strategy label column */}
-            <div className="w-40 flex-shrink-0 px-3 py-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50" />
+            <div className="w-48 flex-shrink-0 px-3 py-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50" />
 
             {/* Month columns */}
             <div className="flex flex-1">
@@ -272,96 +225,143 @@ export default function YearRoadmap({
             const strategyInitiatives = initiativesByStrategy[strategy.id] || [];
             const bgColor = getStrategyColor(strategyIndex);
             const textColor = getStrategyTextColor(strategyIndex);
+            const isActive = strategy.status === 'active';
 
             return (
               <div key={strategy.id} className="flex border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                 {/* Strategy Label */}
-                <div className="w-40 flex-shrink-0 px-3 py-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center">
+                <div className="w-48 flex-shrink-0 px-3 py-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col justify-start gap-1">
                   <Link
                     href={`/strategy?clientId=${clientId}`}
-                    className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 truncate hover:underline"
+                    className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 break-words whitespace-normal hover:underline leading-snug"
                     title={strategy.name}
                   >
                     {strategy.name}
                   </Link>
+                  {isActive && (
+                    <span className="self-start text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">
+                      Active
+                    </span>
+                  )}
                 </div>
 
                 {/* Timeline */}
-                <div className="flex flex-1 relative min-h-24">
-                  {/* Month dividers */}
-                  {months.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="flex-1 min-w-[60px] border-r border-gray-100 dark:border-gray-700 last:border-r-0 relative"
-                    />
-                  ))}
+                <div className="flex-1 relative">
+                  {/* Background: Month grid */}
+                  <div className="absolute inset-0 flex pointer-events-none">
+                    {months.map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="flex-1 min-w-[60px] border-r border-gray-100 dark:border-gray-700 last:border-r-0"
+                      />
+                    ))}
+                  </div>
 
                   {/* Today marker */}
                   <div
-                    className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 opacity-70"
+                    className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 opacity-70 pointer-events-none"
                     style={{ left: `${todayPercent}%` }}
                   />
 
-                  {/* Initiative Bars */}
-                  {strategyInitiatives.map((initiative, initIdx) => {
-                    const leftPercent = getPositionPercent(initiative.startDate, currentYear);
-                    const widthPercent = getWidthPercent(initiative.startDate, initiative.endDate, currentYear);
-                    const pillar = getPillarForInitiative(initiative.clientPillarId);
-                    const tasks = getTasksForInitiative(initiative.id);
-                    const isHovered = hoveredInitiative === initiative.id;
+                  {/* Initiative rows */}
+                  <div className="relative z-10 py-2 flex flex-col gap-1 min-h-24">
+                    {strategyInitiatives.map((initiative) => {
+                      const leftPercent = getPositionPercent(initiative.startDate, currentYear);
+                      const widthPercent = getWidthPercent(initiative.startDate, initiative.endDate, currentYear);
+                      const pillar = getPillarForInitiative(initiative.clientPillarId);
+                      const tasks = getTasksForInitiative(initiative.id);
+                      const isExpanded = expandedInitiatives.has(initiative.id);
 
-                    return (
-                      <div
-                        key={initiative.id}
-                        className="absolute group cursor-pointer"
-                        style={{
-                          left: `calc(${leftPercent}% + 12px)`,
-                          width: `calc(${widthPercent}% - 24px)`,
-                          top: `${8 + initIdx * 20}px`,
-                        }}
-                        onMouseEnter={() => setHoveredInitiative(initiative.id)}
-                        onMouseLeave={() => setHoveredInitiative(null)}
-                      >
-                        {/* Initiative Bar */}
-                        <Link href={`/projects/${initiative.id}`}>
-                          <div
-                            className="rounded px-2 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all"
-                            style={{
-                              backgroundColor: bgColor,
-                              color: textColor,
-                            }}
-                          >
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="text-xs font-semibold truncate whitespace-nowrap">
-                                {initiative.name}
-                              </span>
-                              {pillar && (
-                                <Link
-                                  href={`/clients/${clientId}/pillars/${pillar.id}`}
-                                  className="flex-shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full text-white hover:opacity-90 transition-opacity"
-                                  style={{ backgroundColor: pillar.color }}
-                                  title={pillar.name}
-                                  onClick={e => e.stopPropagation()}
+                      return (
+                        <div key={initiative.id}>
+                          {/* Initiative Row */}
+                          <div className="relative h-8 flex items-center">
+                            {/* Initiative bar wrapper */}
+                            <div
+                              className="absolute flex items-center gap-0.5"
+                              style={{
+                                left: `${leftPercent}%`,
+                                width: `calc(${widthPercent}%)`,
+                              }}
+                            >
+                              {/* Expand toggle */}
+                              <button
+                                className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors z-30"
+                                onClick={() => toggleExpand(initiative.id)}
+                                title={isExpanded ? 'Collapse tasks' : 'Expand tasks'}
+                              >
+                                {isExpanded
+                                  ? <ChevronDown size={10} />
+                                  : <ChevronRight size={10} />
+                                }
+                              </button>
+
+                              {/* Initiative Bar */}
+                              <Link href={`/projects/${initiative.id}`} className="flex-1 min-w-0">
+                                <div
+                                  className="rounded px-2 py-1 border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all"
+                                  style={{
+                                    backgroundColor: bgColor,
+                                    color: textColor,
+                                  }}
                                 >
-                                  {pillar.name.substring(0, 3).toUpperCase()}
-                                </Link>
-                              )}
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="text-xs font-semibold truncate whitespace-nowrap">
+                                      {initiative.name}
+                                    </span>
+                                    {pillar && (
+                                      <Link
+                                        href={`/clients/${clientId}/pillars/${pillar.id}`}
+                                        className="flex-shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full text-white hover:opacity-90 transition-opacity"
+                                        style={{ backgroundColor: pillar.color }}
+                                        title={pillar.name}
+                                        onClick={e => e.stopPropagation()}
+                                      >
+                                        {pillar.name.substring(0, 3).toUpperCase()}
+                                      </Link>
+                                    )}
+                                  </div>
+                                </div>
+                              </Link>
                             </div>
                           </div>
-                        </Link>
 
-                        {/* Popover */}
-                        {isHovered && (
-                          <InitiativePopover
-                            initiative={initiative}
-                            tasks={tasks}
-                            clientId={clientId}
-                            onClose={() => setHoveredInitiative(null)}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
+                          {/* Task Sub-Rows (expanded) */}
+                          {isExpanded && tasks.map((task) => {
+                            const taskStart = task.startDate || task.dueDate;
+                            const taskEnd = task.endDate || task.dueDate || task.startDate;
+                            if (!taskStart) return null;
+
+                            const taskLeft = getPositionPercent(taskStart, currentYear);
+                            const taskWidth = getWidthPercent(taskStart, taskEnd!, currentYear);
+                            const colorClass = TASK_STATUS_COLORS[task.status] || TASK_STATUS_COLORS.todo;
+
+                            return (
+                              <div key={task.id} className="relative h-6 flex items-center">
+                                <div
+                                  className="absolute"
+                                  style={{
+                                    left: `calc(${taskLeft}% + 20px)`,
+                                    width: `calc(${taskWidth}% - 4px)`,
+                                    minWidth: '40px',
+                                  }}
+                                >
+                                  <Link href={`/tasks/${task.id}`}>
+                                    <div
+                                      className={`rounded px-1.5 py-0.5 border text-[10px] font-medium truncate hover:opacity-80 transition-opacity ${colorClass}`}
+                                      title={task.title}
+                                    >
+                                      {task.title}
+                                    </div>
+                                  </Link>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             );
