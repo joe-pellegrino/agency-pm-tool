@@ -1017,6 +1017,7 @@ export default function ClientPage() {
   const [showNewInitiative, setShowNewInitiative] = useState(false);
   const [showNewTask, setShowNewTask] = useState(false);
   const [selectedClientTask, setSelectedClientTask] = useState<Task | null>(null);
+  const [roadmapDetailTask, setRoadmapDetailTask] = useState<Task | null>(null);
   const [taskView, setTaskView] = useState<'list' | 'kanban'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem(`client-task-view-${clientId}`) as 'list' | 'kanban') ?? 'list';
@@ -1130,6 +1131,13 @@ export default function ClientPage() {
         onClose={() => setIsProjectDrawerOpen(false)}
       />
 
+      {/* Roadmap Task Detail Drawer */}
+      <TaskDetailDrawer
+        task={roadmapDetailTask}
+        isOpen={roadmapDetailTask !== null}
+        onClose={() => setRoadmapDetailTask(null)}
+      />
+
       {/* Edit Client Modal */}
       {showEditClientModal && client && (
         <ClientModal
@@ -1220,6 +1228,17 @@ export default function ClientPage() {
               initiatives={PROJECTS.filter(p => p.clientId === clientId)}
               pillars={CLIENT_PILLARS.filter(p => p.clientId === clientId)}
               clientId={clientId}
+              onInitiativeClick={(id) => {
+                const project = PROJECTS.find(p => p.id === id);
+                if (project) {
+                  setSelectedProject(project);
+                  setIsProjectDrawerOpen(true);
+                }
+              }}
+              onTaskClick={(id) => {
+                const task = TASKS.find(t => t.id === id);
+                if (task) setRoadmapDetailTask(task as Task);
+              }}
             />
           </div>
 
