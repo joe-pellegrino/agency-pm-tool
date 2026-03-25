@@ -47,8 +47,9 @@ export default function TaskDetailDrawer({
     return null;
   }
 
-  // If no task, show create form
+  // If no task, show create form only when drawer is open
   if (!task) {
+    if (!isOpen) return null;
     return (
       <TaskModal
         defaultClientId={defaultClientId}
