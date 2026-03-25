@@ -47,9 +47,9 @@ export async function createTask(data: {
       assignee_id: data.assigneeId,
       status: data.status,
       priority: data.priority,
-      due_date: data.dueDate,
-      start_date: data.startDate,
-      end_date: data.endDate,
+      due_date: data.dueDate || new Date().toISOString().split('T')[0],
+      start_date: data.startDate || data.dueDate || new Date().toISOString().split('T')[0],
+      end_date: data.endDate || data.dueDate || data.startDate || new Date().toISOString().split('T')[0],
       type: data.type || 'other',
       description: data.description || '',
       is_milestone: data.isMilestone || false,
@@ -405,8 +405,8 @@ export async function createProject(data: {
       name: data.name,
       description: data.description,
       status: data.status,
-      start_date: data.startDate,
-      end_date: data.endDate,
+      start_date: data.startDate || new Date().toISOString().split('T')[0],
+      end_date: data.endDate || data.startDate || new Date().toISOString().split('T')[0],
       progress: 0,
       workflow_template_id: data.workflowTemplateId || null,
       strategy_id: data.strategyId || null,
@@ -504,8 +504,8 @@ export async function createStrategy(data: {
       name: data.name,
       description: data.description ?? '',
       quarter: data.quarter,
-      start_date: data.startDate,
-      end_date: data.endDate,
+      start_date: data.startDate || new Date().toISOString().split('T')[0],
+      end_date: data.endDate || data.startDate || new Date().toISOString().split('T')[0],
       status: data.status,
     });
   if (error) throw new Error(error.message);
@@ -750,7 +750,7 @@ export async function upsertClientService(data: {
   if (existing?.id) {
     const update: Record<string, unknown> = {
       status: data.status,
-      start_date: data.startDate,
+      start_date: data.startDate || new Date().toISOString().split('T')[0],
     };
     if (data.monthlyCadence !== undefined) update.monthly_cadence = data.monthlyCadence || null;
     if (data.linkedStrategyId !== undefined) update.linked_strategy_id = data.linkedStrategyId || null;
@@ -780,7 +780,7 @@ export async function createClientService(data: {
       client_id: data.clientId,
       service_id: data.serviceId,
       status: data.status,
-      start_date: data.startDate,
+      start_date: data.startDate || new Date().toISOString().split('T')[0],
       monthly_cadence: data.monthlyCadence || null,
       linked_strategy_id: data.linkedStrategyId || null,
     });

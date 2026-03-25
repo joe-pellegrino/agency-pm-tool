@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { CalendarDays, ChevronRight, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useAppData } from '@/lib/contexts/AppDataContext';
@@ -62,6 +62,8 @@ interface YearRoadmapProps {
   onTaskClick?: (taskId: string) => void;
 }
 
+const UNASSIGNED_KEY = '__unassigned__';
+
 // Helper: calculate position percentage within a range
 function getPositionPercent(dateStr: string, rangeStart: Date, rangeEnd: Date): number {
   const date = new Date(`${dateStr}T00:00:00Z`);
@@ -90,7 +92,7 @@ function getWidthPercent(startStr: string, endStr: string, rangeStart: Date, ran
 function overlapsRange(startStr: string, endStr: string | undefined, rangeStart: Date, rangeEnd: Date): boolean {
   const start = new Date(`${startStr}T00:00:00Z`);
   const end = endStr ? new Date(`${endStr}T00:00:00Z`) : start;
-  return start < rangeEnd && end > rangeStart;
+  return start <= rangeEnd && end >= rangeStart;
 }
 
 // Build columns for a given view
@@ -225,6 +227,20 @@ export default function YearRoadmap({
 
   const { rangeStart, rangeEnd, columns } = useMemo(() => buildColumns(view, now), [view, now]);
 
+  // Auto-expand any initiative that has linked tasks
+  useEffect(() => {
+    if (!TASKS.length) return;
+    const withTasks = initiatives
+      .filter(i => i.clientId === clientId && i.taskIds && i.taskIds.length > 0)
+      .map(i => i.id);
+    if (withTasks.length === 0) return;
+    setExpandedInitiatives(prev => {
+      const next = new Set(prev);
+      withTasks.forEach(id => next.add(id));
+      return next;
+    });
+  }, [TASKS, initiatives, clientId]);
+
   const toggleExpand = (id: string) => {
     setExpandedInitiatives(prev => {
       const next = new Set(prev);
@@ -247,23 +263,30 @@ export default function YearRoadmap({
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
   }, [strategies, clientId]);
 
-  // Group initiatives by strategy
+  // Group initiatives by strategy; unmatched go into UNASSIGNED_KEY bucket
   const initiativesByStrategy = useMemo(() => {
     const map: Record<string, Initiative[]> = {};
     sortedStrategies.forEach(s => {
       map[s.id] = [];
     });
+    map[UNASSIGNED_KEY] = [];
+
+    const strategyIds = new Set(sortedStrategies.map(s => s.id));
 
     initiatives
       .filter(i => i.clientId === clientId)
       .forEach(i => {
-        if (i.strategyId && map[i.strategyId] !== undefined) {
+        if (i.strategyId && strategyIds.has(i.strategyId)) {
           map[i.strategyId].push(i);
+        } else {
+          map[UNASSIGNED_KEY].push(i);
         }
       });
 
     return map;
   }, [sortedStrategies, initiatives, clientId]);
+
+  const unassignedInitiatives = initiativesByStrategy[UNASSIGNED_KEY] || [];
 
   const getPillarForInitiative = (pillarId?: string | null) => {
     if (!pillarId) return null;
@@ -276,13 +299,15 @@ export default function YearRoadmap({
     return TASKS.filter(t => initiative.taskIds!.includes(t.id) && t.clientId === clientId) as Task[];
   };
 
+  const hasAnyContent = sortedStrategies.length > 0 || unassignedInitiatives.length > 0;
+
   // Empty state
-  if (sortedStrategies.length === 0) {
+  if (!hasAnyContent) {
     return (
       <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50/50 dark:bg-gray-800/30">
         <CalendarDays size={28} className="mx-auto mb-2 opacity-30 text-gray-400" />
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          No strategies defined yet. Create a strategy to see your roadmap.
+          No strategies or initiatives yet. Create a strategy to see your roadmap.
         </p>
         <Link href={`/strategy?clientId=${clientId}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block font-medium">
           Create Strategy →
@@ -290,6 +315,218 @@ export default function YearRoadmap({
       </div>
     );
   }
+
+  // Render a strategy row (reused for named strategies AND the unassigned bucket)
+  const renderStrategyRow = (
+    rowKey: string,
+    label: string,
+    rowInitiatives: Initiative[],
+    strategyIndex: number,
+    isActive?: boolean,
+    isUnassigned?: boolean,
+  ) => {
+    const visibleInitiatives = rowInitiatives.filter(initiative =>
+      overlapsRange(initiative.startDate, initiative.endDate, rangeStart, rangeEnd)
+    );
+    const bgColor = getStrategyColor(strategyIndex);
+    const textColor = getStrategyTextColor(strategyIndex);
+
+    return (
+      <div key={rowKey} className="flex border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+        {/* Strategy Label */}
+        <div className="w-48 flex-shrink-0 px-3 py-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col justify-start gap-1">
+          {isUnassigned ? (
+            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 break-words whitespace-normal leading-snug italic">
+              {label}
+            </span>
+          ) : (
+            <Link
+              href={`/strategy?clientId=${clientId}`}
+              className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 break-words whitespace-normal hover:underline leading-snug"
+              title={label}
+            >
+              {label}
+            </Link>
+          )}
+          {isActive && !isUnassigned && (
+            <span className="self-start text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">
+              Active
+            </span>
+          )}
+          {isUnassigned && (
+            <span className="self-start text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
+              No Strategy
+            </span>
+          )}
+        </div>
+
+        {/* Timeline */}
+        <div className="flex-1 relative">
+          {/* Background: column grid */}
+          <div className="absolute inset-0 flex pointer-events-none">
+            {columns.map((_, idx) => (
+              <div
+                key={idx}
+                className="flex-1 min-w-[40px] border-r border-gray-100 dark:border-gray-700 last:border-r-0"
+              />
+            ))}
+          </div>
+
+          {/* Today marker */}
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 opacity-70 pointer-events-none"
+            style={{ left: `${todayPercent}%` }}
+          />
+
+          {/* Initiative rows */}
+          <div className="relative z-10 py-2 flex flex-col gap-1 min-h-24">
+            {visibleInitiatives.length === 0 && (
+              <div className="flex items-center justify-center h-full min-h-[80px]">
+                <span className="text-xs text-gray-300 dark:text-gray-600 italic">No initiatives in view</span>
+              </div>
+            )}
+            {visibleInitiatives.map((initiative) => {
+              const leftPercent = getPositionPercent(initiative.startDate, rangeStart, rangeEnd);
+              const widthPercent = getWidthPercent(initiative.startDate, initiative.endDate, rangeStart, rangeEnd);
+              const pillar = getPillarForInitiative(initiative.clientPillarId);
+              const tasks = getTasksForInitiative(initiative.id);
+              const taskCount = tasks.length;
+              const isExpanded = expandedInitiatives.has(initiative.id);
+
+              if (widthPercent === 0) return null;
+
+              return (
+                <div key={initiative.id}>
+                  {/* Initiative Row */}
+                  <div className="relative h-8 flex items-center">
+                    <div
+                      className="absolute flex items-center gap-0.5"
+                      style={{
+                        left: `${leftPercent}%`,
+                        width: `calc(${widthPercent}%)`,
+                      }}
+                    >
+                      {/* Expand toggle */}
+                      <button
+                        className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors z-30"
+                        onClick={() => toggleExpand(initiative.id)}
+                        title={isExpanded ? 'Collapse tasks' : 'Expand tasks'}
+                      >
+                        {isExpanded
+                          ? <ChevronDown size={10} />
+                          : <ChevronRight size={10} />
+                        }
+                      </button>
+
+                      {/* Initiative Bar — click to open drawer */}
+                      <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => onInitiativeClick?.(initiative.id)}
+                      >
+                        <div
+                          className="rounded px-2 py-1 border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all"
+                          style={{
+                            backgroundColor: bgColor,
+                            color: textColor,
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs font-semibold truncate whitespace-nowrap">
+                              {initiative.name}
+                            </span>
+                            {taskCount > 0 && (
+                              <span
+                                className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-white/70 border border-current leading-none"
+                                title={`${taskCount} task${taskCount !== 1 ? 's' : ''}`}
+                              >
+                                {taskCount}
+                              </span>
+                            )}
+                            {pillar && (
+                              <Link
+                                href={`/clients/${clientId}/pillars/${pillar.id}`}
+                                className="flex-shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full text-white hover:opacity-90 transition-opacity"
+                                style={{ backgroundColor: pillar.color }}
+                                title={pillar.name}
+                                onClick={e => e.stopPropagation()}
+                              >
+                                {pillar.name.substring(0, 3).toUpperCase()}
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Task Sub-Rows (expanded) */}
+                  {isExpanded && tasks.map((task) => {
+                    const taskStart = task.startDate || task.dueDate;
+                    const taskEnd = task.endDate || task.dueDate || task.startDate;
+                    if (!taskStart) return null;
+                    if (!overlapsRange(taskStart, taskEnd, rangeStart, rangeEnd)) return null;
+
+                    const taskLeft = getPositionPercent(taskStart, rangeStart, rangeEnd);
+                    const taskWidth = taskEnd && taskEnd !== taskStart
+                      ? getWidthPercent(taskStart, taskEnd, rangeStart, rangeEnd)
+                      : 0;
+                    const colorClass = TASK_STATUS_COLORS[task.status] || TASK_STATUS_COLORS.todo;
+
+                    // Dot-only task (due date only, no range)
+                    const isDotOnly = taskWidth === 0;
+
+                    return (
+                      <div key={task.id} className="relative h-6 flex items-center">
+                        {isDotOnly ? (
+                          // Render a dot marker for point-in-time tasks (due date only)
+                          <div
+                            className="absolute cursor-pointer flex items-center gap-1"
+                            style={{ left: `calc(${taskLeft}% + 20px)` }}
+                            onClick={() => onTaskClick?.(task.id)}
+                            title={task.title}
+                          >
+                            <div
+                              className={`w-2.5 h-2.5 rounded-full border-2 flex-shrink-0 ${
+                                task.status === 'done' ? 'bg-green-400 border-green-600' :
+                                task.status === 'inprogress' ? 'bg-blue-400 border-blue-600' :
+                                task.status === 'review' ? 'bg-amber-400 border-amber-600' :
+                                'bg-gray-300 border-gray-500'
+                              }`}
+                            />
+                            <span className="text-[9px] text-gray-500 truncate max-w-[80px] whitespace-nowrap">
+                              {task.title}
+                            </span>
+                          </div>
+                        ) : (
+                          // Render a bar for tasks with a date range
+                          <div
+                            className="absolute cursor-pointer"
+                            style={{
+                              left: `calc(${taskLeft}% + 20px)`,
+                              width: `calc(${taskWidth}% - 4px)`,
+                              minWidth: '40px',
+                            }}
+                            onClick={() => onTaskClick?.(task.id)}
+                          >
+                            <div
+                              className={`rounded px-1.5 py-0.5 border text-[10px] font-medium truncate hover:opacity-80 transition-opacity ${colorClass}`}
+                              title={task.title}
+                            >
+                              {task.title}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -341,160 +578,28 @@ export default function YearRoadmap({
           {/* Divider */}
           <div className="border-t border-gray-200 dark:border-gray-700" />
 
-          {/* Strategy Rows */}
+          {/* Named Strategy Rows */}
           {sortedStrategies.map((strategy, strategyIndex) => {
-            const strategyInitiatives = (initiativesByStrategy[strategy.id] || []).filter(initiative =>
-              overlapsRange(initiative.startDate, initiative.endDate, rangeStart, rangeEnd)
-            );
-            const bgColor = getStrategyColor(strategyIndex);
-            const textColor = getStrategyTextColor(strategyIndex);
-            const isActive = strategy.status === 'active';
-
-            return (
-              <div key={strategy.id} className="flex border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                {/* Strategy Label */}
-                <div className="w-48 flex-shrink-0 px-3 py-3 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col justify-start gap-1">
-                  <Link
-                    href={`/strategy?clientId=${clientId}`}
-                    className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 break-words whitespace-normal hover:underline leading-snug"
-                    title={strategy.name}
-                  >
-                    {strategy.name}
-                  </Link>
-                  {isActive && (
-                    <span className="self-start text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">
-                      Active
-                    </span>
-                  )}
-                </div>
-
-                {/* Timeline */}
-                <div className="flex-1 relative">
-                  {/* Background: column grid */}
-                  <div className="absolute inset-0 flex pointer-events-none">
-                    {columns.map((_, idx) => (
-                      <div
-                        key={idx}
-                        className="flex-1 min-w-[40px] border-r border-gray-100 dark:border-gray-700 last:border-r-0"
-                      />
-                    ))}
-                  </div>
-
-                  {/* Today marker */}
-                  <div
-                    className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 opacity-70 pointer-events-none"
-                    style={{ left: `${todayPercent}%` }}
-                  />
-
-                  {/* Initiative rows */}
-                  <div className="relative z-10 py-2 flex flex-col gap-1 min-h-24">
-                    {strategyInitiatives.map((initiative) => {
-                      const leftPercent = getPositionPercent(initiative.startDate, rangeStart, rangeEnd);
-                      const widthPercent = getWidthPercent(initiative.startDate, initiative.endDate, rangeStart, rangeEnd);
-                      const pillar = getPillarForInitiative(initiative.clientPillarId);
-                      const tasks = getTasksForInitiative(initiative.id);
-                      const isExpanded = expandedInitiatives.has(initiative.id);
-
-                      if (widthPercent === 0) return null;
-
-                      return (
-                        <div key={initiative.id}>
-                          {/* Initiative Row */}
-                          <div className="relative h-8 flex items-center">
-                            <div
-                              className="absolute flex items-center gap-0.5"
-                              style={{
-                                left: `${leftPercent}%`,
-                                width: `calc(${widthPercent}%)`,
-                              }}
-                            >
-                              {/* Expand toggle */}
-                              <button
-                                className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors z-30"
-                                onClick={() => toggleExpand(initiative.id)}
-                                title={isExpanded ? 'Collapse tasks' : 'Expand tasks'}
-                              >
-                                {isExpanded
-                                  ? <ChevronDown size={10} />
-                                  : <ChevronRight size={10} />
-                                }
-                              </button>
-
-                              {/* Initiative Bar — click to open drawer */}
-                              <div
-                                className="flex-1 min-w-0 cursor-pointer"
-                                onClick={() => onInitiativeClick?.(initiative.id)}
-                              >
-                                <div
-                                  className="rounded px-2 py-1 border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all"
-                                  style={{
-                                    backgroundColor: bgColor,
-                                    color: textColor,
-                                  }}
-                                >
-                                  <div className="flex items-center gap-1.5 min-w-0">
-                                    <span className="text-xs font-semibold truncate whitespace-nowrap">
-                                      {initiative.name}
-                                    </span>
-                                    {pillar && (
-                                      <Link
-                                        href={`/clients/${clientId}/pillars/${pillar.id}`}
-                                        className="flex-shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full text-white hover:opacity-90 transition-opacity"
-                                        style={{ backgroundColor: pillar.color }}
-                                        title={pillar.name}
-                                        onClick={e => e.stopPropagation()}
-                                      >
-                                        {pillar.name.substring(0, 3).toUpperCase()}
-                                      </Link>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Task Sub-Rows (expanded) */}
-                          {isExpanded && tasks.map((task) => {
-                            const taskStart = task.startDate || task.dueDate;
-                            const taskEnd = task.endDate || task.dueDate || task.startDate;
-                            if (!taskStart) return null;
-                            if (!overlapsRange(taskStart, taskEnd, rangeStart, rangeEnd)) return null;
-
-                            const taskLeft = getPositionPercent(taskStart, rangeStart, rangeEnd);
-                            const taskWidth = getWidthPercent(taskStart, taskEnd!, rangeStart, rangeEnd);
-                            const colorClass = TASK_STATUS_COLORS[task.status] || TASK_STATUS_COLORS.todo;
-
-                            if (taskWidth === 0) return null;
-
-                            return (
-                              <div key={task.id} className="relative h-6 flex items-center">
-                                <div
-                                  className="absolute cursor-pointer"
-                                  style={{
-                                    left: `calc(${taskLeft}% + 20px)`,
-                                    width: `calc(${taskWidth}% - 4px)`,
-                                    minWidth: '40px',
-                                  }}
-                                  onClick={() => onTaskClick?.(task.id)}
-                                >
-                                  <div
-                                    className={`rounded px-1.5 py-0.5 border text-[10px] font-medium truncate hover:opacity-80 transition-opacity ${colorClass}`}
-                                    title={task.title}
-                                  >
-                                    {task.title}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+            const rowInitiatives = initiativesByStrategy[strategy.id] || [];
+            return renderStrategyRow(
+              strategy.id,
+              strategy.name,
+              rowInitiatives,
+              strategyIndex,
+              strategy.status === 'active',
+              false,
             );
           })}
+
+          {/* Unassigned Row — shown only if there are initiatives without a strategy */}
+          {unassignedInitiatives.length > 0 && renderStrategyRow(
+            UNASSIGNED_KEY,
+            'General',
+            unassignedInitiatives,
+            sortedStrategies.length, // use next color slot
+            false,
+            true,
+          )}
         </div>
       </div>
     </div>
