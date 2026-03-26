@@ -764,8 +764,8 @@ function ProjectDetailDrawer({
 type ClientTab = 'goals' | 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets' | 'strategy' | 'outcomes' | 'settings';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
-  { id: 'goals', label: 'Goals', icon: Target },
   { id: 'overview', label: 'Overview', icon: Activity },
+  { id: 'goals', label: 'Goals', icon: Target },
   { id: 'projects', label: 'Initiatives', icon: FolderOpen },
   { id: 'pillars', label: 'Pillars', icon: Target },
   { id: 'tasks', label: 'Tasks', icon: CheckCircle },

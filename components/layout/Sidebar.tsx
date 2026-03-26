@@ -110,8 +110,8 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
 
   // Define sub-nav items for each client
   const clientSubNav = (clientId: string) => [
-    { label: 'Goals', href: `/clients/${clientId}?tab=goals`, icon: Target },
     { label: 'Overview', href: `/clients/${clientId}`, icon: Briefcase },
+    { label: 'Goals', href: `/clients/${clientId}?tab=goals`, icon: Target },
     { label: 'Strategy', href: `/strategy?clientId=${clientId}`, icon: TrendingUp },
     { label: 'Pillars', href: `/clients/${clientId}/pillars`, icon: Target },
     { label: 'Initiatives', href: `/clients/${clientId}?tab=projects`, icon: Layers },

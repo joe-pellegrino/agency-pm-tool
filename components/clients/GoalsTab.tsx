@@ -261,8 +261,10 @@ export default function GoalsTab({ clientId, goals, goalPillarLinks, pillars, on
                         <Link size={13} />
                       </button>
                       <button
-                        onClick={() => handleDelete(goal.id)}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(goal.id); }}
                         className="p-1.5 text-gray-400 hover:text-red-500 rounded"
+                        title="Delete goal"
                       >
                         <Trash2 size={13} />
                       </button>
