@@ -28,6 +28,7 @@ import {
   Users,
   BookOpen,
   TrendingUp,
+  CheckCircle,
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -109,6 +110,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
 
   // Define sub-nav items for each client
   const clientSubNav = (clientId: string) => [
+    { label: 'Goals', href: `/clients/${clientId}?tab=goals`, icon: Target },
     { label: 'Overview', href: `/clients/${clientId}`, icon: Briefcase },
     { label: 'Strategy', href: `/strategy?clientId=${clientId}`, icon: TrendingUp },
     { label: 'Pillars', href: `/clients/${clientId}/pillars`, icon: Target },
@@ -117,6 +119,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
     { label: 'Documents', href: `/clients/${clientId}?tab=documents`, icon: FileText },
     { label: 'Assets', href: `/clients/${clientId}?tab=assets`, icon: FolderOpen },
     { label: 'Health', href: `/health?clientId=${clientId}`, icon: Activity },
+    { label: 'Outcomes', href: `/clients/${clientId}?tab=outcomes`, icon: CheckCircle },
     { label: 'Settings', href: `/clients/${clientId}?tab=settings`, icon: Settings },
   ]
 

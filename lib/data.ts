@@ -2265,3 +2265,46 @@ export interface KBArticleVersion {
   createdAt: string;
   summary?: string;
 }
+
+// ─── Goals & Outcomes Types ───────────────────────────────────────────────────
+
+export interface ClientGoal {
+  id: string;
+  clientId: string;
+  title: string;
+  description: string | null;
+  targetMetric: string | null;
+  status: 'active' | 'achieved' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoalPillarLink {
+  id: string;
+  goalId: string;
+  pillarId: string;
+}
+
+export interface FocusArea {
+  id: string;
+  pillarId: string;
+  clientId: string;
+  name: string;
+  description: string | null;
+  status: 'active' | 'archived';
+  createdAt: string;
+}
+
+export interface Outcome {
+  id: string;
+  clientId: string;
+  goalId: string | null;
+  pillarId: string | null;
+  initiativeId: string | null;
+  title: string;
+  description: string | null;
+  metricValue: string | null;
+  period: string | null;
+  evidenceUrl: string | null;
+  createdAt: string;
+}

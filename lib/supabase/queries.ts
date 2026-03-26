@@ -10,6 +10,7 @@ import type {
   WorkflowStep, Strategy, StrategyPillar, KPI, Project, Service,
   ClientService, ServiceStrategy, ServiceStrategyPillar, ServiceStrategyKPI,
   KBCategory, KBArticle, KBArticleVersion,
+  ClientGoal, GoalPillarLink, FocusArea, Outcome,
 } from '@/lib/data';
 
 type AssetVersion = { id: string; date: string; note: string };
@@ -415,6 +416,113 @@ export interface AppData {
   KB_CATEGORIES: KBCategory[];
   KB_ARTICLES: KBArticle[];
   PRIORITY_DOT: Record<string, string>;
+  CLIENT_GOALS: ClientGoal[];
+  GOAL_PILLAR_LINKS: GoalPillarLink[];
+  FOCUS_AREAS: FocusArea[];
+  OUTCOMES: Outcome[];
+}
+
+// ─── Goals & Outcomes transform helpers ──────────────────────────────────────
+
+function toClientGoal(r: Row): ClientGoal {
+  return {
+    id: r.id as string,
+    clientId: r.client_id as string,
+    title: r.title as string,
+    description: (r.description as string) || null,
+    targetMetric: (r.target_metric as string) || null,
+    status: r.status as ClientGoal['status'],
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function toGoalPillarLink(r: Row): GoalPillarLink {
+  return {
+    id: r.id as string,
+    goalId: r.goal_id as string,
+    pillarId: r.pillar_id as string,
+  };
+}
+
+function toFocusArea(r: Row): FocusArea {
+  return {
+    id: r.id as string,
+    pillarId: r.pillar_id as string,
+    clientId: r.client_id as string,
+    name: r.name as string,
+    description: (r.description as string) || null,
+    status: r.status as FocusArea['status'],
+    createdAt: r.created_at as string,
+  };
+}
+
+function toOutcome(r: Row): Outcome {
+  return {
+    id: r.id as string,
+    clientId: r.client_id as string,
+    goalId: (r.goal_id as string) || null,
+    pillarId: (r.pillar_id as string) || null,
+    initiativeId: (r.initiative_id as string) || null,
+    title: r.title as string,
+    description: (r.description as string) || null,
+    metricValue: (r.metric_value as string) || null,
+    period: (r.period as string) || null,
+    evidenceUrl: (r.evidence_url as string) || null,
+    createdAt: r.created_at as string,
+  };
+}
+
+// ─── Standalone fetch functions ───────────────────────────────────────────────
+
+export async function fetchClientGoals(clientId: string): Promise<ClientGoal[]> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from('client_goals')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toClientGoal);
+}
+
+export async function fetchGoalPillarLinks(clientId: string): Promise<GoalPillarLink[]> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from('goal_pillar_links')
+    .select('*, client_goals!inner(client_id)')
+    .eq('client_goals.client_id', clientId);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toGoalPillarLink);
+}
+
+export async function fetchAllGoalPillarLinks(): Promise<GoalPillarLink[]> {
+  const db = createServerClient();
+  const { data, error } = await db.from('goal_pillar_links').select('*');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toGoalPillarLink);
+}
+
+export async function fetchFocusAreas(clientId: string): Promise<FocusArea[]> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from('focus_areas')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toFocusArea);
+}
+
+export async function fetchOutcomes(clientId: string): Promise<Outcome[]> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from('outcomes')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toOutcome);
 }
 
 export const PRIORITY_DOT: Record<string, string> = {
@@ -442,6 +550,7 @@ export async function getAllData(): Promise<AppData> {
     kbCategoriesRes, kbArticlesRes,
     docFoldersRes,
     recurringTemplatesRes,
+    clientGoalsRes, goalPillarLinksRes, focusAreasRes, outcomesRes,
   ] = await Promise.all([
     db.from('clients').select('*').is('archived_at', null),
     db.from('team_members').select('*').is('archived_at', null),
@@ -480,6 +589,10 @@ export async function getAllData(): Promise<AppData> {
     db.from('kb_articles').select('*').is('archived_at', null),
     db.from('document_folders').select('*').is('archived_at', null),
     db.from('recurring_task_templates').select('*').eq('active', true),
+    db.from('client_goals').select('*'),
+    db.from('goal_pillar_links').select('*'),
+    db.from('focus_areas').select('*'),
+    db.from('outcomes').select('*'),
   ]);
 
   const clients = clientsRes.data ?? [];
@@ -658,6 +771,10 @@ export async function getAllData(): Promise<AppData> {
     KB_CATEGORIES: kbCategoryRows.map(toKBCategory),
     KB_ARTICLES: kbArticleRows.map(toKBArticle),
     PRIORITY_DOT,
+    CLIENT_GOALS: (clientGoalsRes.data ?? []).map(toClientGoal),
+    GOAL_PILLAR_LINKS: (goalPillarLinksRes.data ?? []).map(toGoalPillarLink),
+    FOCUS_AREAS: (focusAreasRes.data ?? []).map(toFocusArea),
+    OUTCOMES: (outcomesRes.data ?? []).map(toOutcome),
   };
 }
 
@@ -807,7 +924,8 @@ export async function getDocumentsData(): Promise<DocumentsData> {
 }
 
 export type StrategiesData = Pick<AppData,
-  'STRATEGIES' | 'PROJECTS' | 'CLIENTS' | 'CLIENT_PILLARS' | 'STRATEGY_TARGETED_PILLARS' | 'PRIORITY_DOT'
+  'STRATEGIES' | 'PROJECTS' | 'CLIENTS' | 'CLIENT_PILLARS' | 'STRATEGY_TARGETED_PILLARS' | 'PRIORITY_DOT' |
+  'CLIENT_GOALS' | 'GOAL_PILLAR_LINKS'
 >;
 
 export async function getStrategiesData(): Promise<StrategiesData> {
@@ -817,6 +935,7 @@ export async function getStrategiesData(): Promise<StrategiesData> {
     clientsRes, clientPillarsRes,
     strategiesRes, stratPillarsRes, stratKpisRes, stratPillarProjectsRes, strategyTargetedPillarsRes,
     projectsRes, projectTasksRes,
+    clientGoalsRes, goalPillarLinksRes,
   ] = await Promise.all([
     db.from('clients').select('*').is('archived_at', null),
     db.from('client_pillars').select('*'),
@@ -827,6 +946,8 @@ export async function getStrategiesData(): Promise<StrategiesData> {
     db.from('strategy_targeted_pillars').select('*'),
     db.from('projects').select('*').is('archived_at', null),
     db.from('project_task_links').select('*'),
+    db.from('client_goals').select('*'),
+    db.from('goal_pillar_links').select('*'),
   ]);
 
   const stratPillarRows = stratPillarsRes.data ?? [];
@@ -868,6 +989,8 @@ export async function getStrategiesData(): Promise<StrategiesData> {
     STRATEGIES,
     PROJECTS,
     PRIORITY_DOT,
+    CLIENT_GOALS: (clientGoalsRes.data ?? []).map(toClientGoal),
+    GOAL_PILLAR_LINKS: (goalPillarLinksRes.data ?? []).map(toGoalPillarLink),
   };
 }
 

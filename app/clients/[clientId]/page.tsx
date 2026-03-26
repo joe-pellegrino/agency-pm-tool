@@ -7,6 +7,9 @@ import { ClientService, ServiceStrategy, Project, Task, Service } from '@/lib/da
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import { formatDate } from '@/lib/utils';
 import TopBar from '@/components/layout/TopBar';
+import GoalsTab from '@/components/clients/GoalsTab';
+import OutcomesTab from '@/components/clients/OutcomesTab';
+import FocusAreasSection from '@/components/clients/FocusAreasSection';
 import {
   Activity, Target, FolderOpen, CheckCircle, Clock, AlertCircle,
   ChevronDown, ChevronUp, Plus, BarChart3, TrendingUp, ArrowLeft,
@@ -758,9 +761,10 @@ function ProjectDetailDrawer({
   );
 }
 
-type ClientTab = 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets' | 'strategy' | 'settings';
+type ClientTab = 'goals' | 'overview' | 'projects' | 'pillars' | 'tasks' | 'paid-ads' | 'budget' | 'documents' | 'assets' | 'strategy' | 'outcomes' | 'settings';
 
 const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
+  { id: 'goals', label: 'Goals', icon: Target },
   { id: 'overview', label: 'Overview', icon: Activity },
   { id: 'projects', label: 'Initiatives', icon: FolderOpen },
   { id: 'pillars', label: 'Pillars', icon: Target },
@@ -770,6 +774,7 @@ const TAB_CONFIG: Array<{ id: ClientTab; label: string; icon: React.ComponentTyp
   { id: 'budget', label: 'Budget', icon: DollarSign },
   { id: 'documents', label: 'Documents', icon: FileText },
   { id: 'assets', label: 'Assets', icon: FolderOpen },
+  { id: 'outcomes', label: 'Outcomes', icon: CheckCircle },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -997,7 +1002,7 @@ function RecurringTemplatesSection({ clientId }: { clientId: string }) {
 }
 
 export default function ClientPage() {
-  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], DOCUMENTS = [], ASSETS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], refresh, loading } = useAppData();
+  const { CLIENTS = [], SERVICES = [], CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], STRATEGIES = [], PROJECTS = [], TASKS = [], DOCUMENTS = [], ASSETS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], CLIENT_GOALS = [], GOAL_PILLAR_LINKS = [], FOCUS_AREAS = [], OUTCOMES = [], refresh, loading } = useAppData();
   const { clientId } = useParams<{ clientId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -1473,6 +1478,12 @@ export default function ClientPage() {
                               <span className="flex items-center gap-1"><FolderOpen size={11} />{linkedInitiatives.length} initiatives</span>
                               <span className="flex items-center gap-1"><CheckCircle size={11} />{linkedTasks.length} tasks</span>
                             </div>
+                            <FocusAreasSection
+                              pillarId={pillar.id}
+                              clientId={clientId}
+                              focusAreas={FOCUS_AREAS.filter(fa => fa.pillarId === pillar.id)}
+                              onRefresh={() => refresh?.()}
+                            />
                           </div>
                         </div>
                       );
@@ -1837,6 +1848,27 @@ export default function ClientPage() {
               );
             })()}
           </div>
+        )}
+
+        {activeTab === 'goals' && (
+          <GoalsTab
+            clientId={clientId}
+            goals={CLIENT_GOALS.filter(g => g.clientId === clientId)}
+            goalPillarLinks={GOAL_PILLAR_LINKS}
+            pillars={CLIENT_PILLARS.filter(p => p.clientId === clientId)}
+            onRefresh={() => refresh?.()}
+          />
+        )}
+
+        {activeTab === 'outcomes' && (
+          <OutcomesTab
+            clientId={clientId}
+            outcomes={OUTCOMES.filter(o => o.clientId === clientId)}
+            goals={CLIENT_GOALS.filter(g => g.clientId === clientId)}
+            pillars={CLIENT_PILLARS.filter(p => p.clientId === clientId)}
+            projects={PROJECTS.filter(p => p.clientId === clientId)}
+            onRefresh={() => refresh?.()}
+          />
         )}
 
         {activeTab === 'settings' && (

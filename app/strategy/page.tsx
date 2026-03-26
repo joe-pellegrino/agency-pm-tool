@@ -516,7 +516,7 @@ function StrategyView({
   onEdit: () => void;
   onArchive: () => void;
 }) {
-  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], CLIENTS = [], PROJECTS = [], TASKS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], refresh } = useAppData();
+  const { CLIENT_SERVICES = [], SERVICE_STRATEGIES = [], SERVICES = [], CLIENTS = [], PROJECTS = [], TASKS = [], CLIENT_PILLARS = [], CLIENT_PILLAR_KPIS = [], CLIENT_GOALS = [], GOAL_PILLAR_LINKS = [], refresh } = useAppData();
   const client = CLIENTS.find(c => c.id === strategy.clientId)!;
   const statusCfg = STATUS_CONFIG[strategy.status];
 
@@ -749,6 +749,27 @@ function StrategyView({
                   <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{pillar.name}</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{pillar.description}</p>
+                    {/* Linked goals chips */}
+                    {(() => {
+                      const linkedGoalIds = GOAL_PILLAR_LINKS
+                        .filter(l => l.pillarId === pillar.id)
+                        .map(l => l.goalId);
+                      const linkedGoals = CLIENT_GOALS.filter(g => linkedGoalIds.includes(g.id) && g.status !== 'archived');
+                      if (linkedGoals.length === 0) return null;
+                      return (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {linkedGoals.map(goal => (
+                            <span
+                              key={goal.id}
+                              className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                              title={goal.targetMetric || goal.title}
+                            >
+                              🎯 {goal.title.length > 24 ? goal.title.slice(0, 24) + '…' : goal.title}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
                     <div className="flex items-center gap-2 text-xs">
                       <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded font-medium">
                         {pillar.kpis.length} KPI{pillar.kpis.length !== 1 ? 's' : ''}
@@ -1027,7 +1048,7 @@ function StrategyModal({
 
 function StrategyPageContent() {
   const searchParams = useSearchParams();
-  const { STRATEGIES = [], CLIENTS = [], loading, refresh } = useAppData();
+  const { STRATEGIES = [], CLIENTS = [], CLIENT_GOALS = [], GOAL_PILLAR_LINKS = [], loading, refresh } = useAppData();
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [showStrategyModal, setShowStrategyModal] = useState(false);
   const [archiveId, setArchiveId] = useState<string | null>(null);
