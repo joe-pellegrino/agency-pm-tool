@@ -28,6 +28,8 @@ import ProjectModal from '@/components/projects/ProjectModal';
 import TaskDetailDrawer from '@/components/tasks/TaskDetailDrawer';
 import { TaskDetailModal } from '@/components/kanban/KanbanBoard';
 import YearRoadmap from '@/components/roadmap/YearRoadmap';
+import { PlanModeButton } from '@/components/plan/PlanModeButton';
+import { PlanMode } from '@/components/plan/PlanMode';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active: { label: 'Active', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -1023,6 +1025,7 @@ export default function ClientPage() {
   const [showNewTask, setShowNewTask] = useState(false);
   const [selectedClientTask, setSelectedClientTask] = useState<Task | null>(null);
   const [roadmapDetailTask, setRoadmapDetailTask] = useState<Task | null>(null);
+  const [planModeOpen, setPlanModeOpen] = useState(false);
   const [taskView, setTaskView] = useState<'list' | 'kanban'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem(`client-task-view-${clientId}`) as 'list' | 'kanban') ?? 'list';
@@ -1143,6 +1146,15 @@ export default function ClientPage() {
         onClose={() => setRoadmapDetailTask(null)}
       />
 
+      {/* Plan Mode Overlay */}
+      {planModeOpen && (
+        <PlanMode
+          clientId={clientId}
+          clientName={client.name}
+          onClose={() => setPlanModeOpen(false)}
+        />
+      )}
+
       {/* Edit Client Modal */}
       {showEditClientModal && client && (
         <ClientModal
@@ -1171,14 +1183,17 @@ export default function ClientPage() {
                 <div className="flex-1">
                   <p className="text-sm text-gray-500 mt-0.5">{client.industry} · {client.location}</p>
                 </div>
-                <button
-                  onClick={() => setShowEditClientModal(true)}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                  title="Edit client info"
-                >
-                  <Edit2 size={14} />
-                  Edit
-                </button>
+                <div className="flex items-center gap-2">
+                  <PlanModeButton onClick={() => setPlanModeOpen(true)} />
+                  <button
+                    onClick={() => setShowEditClientModal(true)}
+                    className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                    title="Edit client info"
+                  >
+                    <Edit2 size={14} />
+                    Edit
+                  </button>
+                </div>
               </div>
 
               {strategy && (
