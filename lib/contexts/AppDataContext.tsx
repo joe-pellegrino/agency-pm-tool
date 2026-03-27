@@ -28,8 +28,15 @@ function getEndpointForPath(pathname: string): string {
   if (pathname.startsWith('/settings')) return '/api/data/settings';
   if (pathname.startsWith('/knowledge-base')) return '/api/data/kb';
   if (pathname.startsWith('/dashboard')) return '/api/data/dashboard';
+  
+  // Client detail pages use scoped endpoint: /clients/[clientId]
+  const clientIdMatch = pathname.match(/^\/clients\/([^/?]+)/);
+  if (clientIdMatch) {
+    return `/api/data/clients/${clientIdMatch[1]}`;
+  }
+  
   // Default: fall back to full mega-fetch for pages not yet migrated
-  // (clients, projects, automations, templates, timeline, calendar, etc.)
+  // (projects, automations, templates, timeline, calendar, etc.)
   return '/api/data';
 }
 

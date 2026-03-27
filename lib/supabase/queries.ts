@@ -1156,3 +1156,249 @@ export async function getKBData(): Promise<KBData> {
     PRIORITY_DOT,
   };
 }
+
+// ─── Client Page Data (Scoped) ─────────────────────────────────────────────────
+// Fetches only the data needed for a single client's detail page
+// Filters all arrays to show only records related to the given client
+export type ClientPageData = Pick<AppData,
+  'CLIENTS' | 'CLIENT_PILLARS' | 'CLIENT_PILLAR_KPIS' | 'TEAM_MEMBERS' | 
+  'TASKS' | 'DOCUMENTS' | 'ASSETS' | 'SERVICES' | 'CLIENT_SERVICES' | 
+  'SERVICE_STRATEGIES' | 'STRATEGIES' | 'PROJECTS' | 'RECURRING_TEMPLATES' | 
+  'CLIENT_GOALS' | 'GOAL_PILLAR_LINKS' | 'FOCUS_AREAS' | 'OUTCOMES' | 'PRIORITY_DOT'
+>;
+
+export async function getClientPageData(clientId: string): Promise<ClientPageData> {
+  const db = createServerClient();
+
+  // Fetch all needed tables in parallel
+  const [
+    clientsRes, teamRes, tasksRes, taskDepsRes, approvalsRes,
+    clientPillarsRes, clientPillarKpisRes,
+    docsRes, docCollabRes, docVersionsRes, commentsRes,
+    assetsRes, assetVersionsRes, assetTagsRes,
+    servicesRes, clientServicesRes,
+    ssRes, ssPillarsRes, ssKpisRes,
+    strategiesRes, stratPillarsRes, stratKpisRes, stratPillarProjectsRes,
+    projectsRes, projectTasksRes,
+    recurringTemplatesRes,
+    clientGoalsRes, goalPillarLinksRes, focusAreasRes, outcomesRes,
+  ] = await Promise.all([
+    db.from('clients').select('*').eq('id', clientId).is('archived_at', null),
+    db.from('team_members').select('*').is('archived_at', null),
+    db.from('tasks').select('*').eq('client_id', clientId).is('archived_at', null),
+    db.from('task_dependencies').select('*'),
+    db.from('approval_history').select('*'),
+    db.from('client_pillars').select('*').eq('client_id', clientId),
+    db.from('client_pillar_kpis').select('*'),
+    db.from('documents').select('*').eq('client_id', clientId),
+    db.from('document_collaborators').select('*'),
+    db.from('document_versions').select('*'),
+    db.from('comments').select('*'),
+    db.from('assets').select('*').eq('client_id', clientId).is('archived_at', null),
+    db.from('asset_versions').select('*'),
+    db.from('asset_tags').select('*'),
+    db.from('services').select('*'),
+    db.from('client_services').select('*').eq('client_id', clientId).is('archived_at', null),
+    db.from('service_strategies').select('*'),
+    db.from('service_strategy_pillars').select('*'),
+    db.from('service_strategy_kpis').select('*'),
+    db.from('strategies').select('*').eq('client_id', clientId).is('archived_at', null),
+    db.from('strategy_pillars').select('*').is('archived_at', null),
+    db.from('strategy_kpis').select('*').is('archived_at', null),
+    db.from('strategy_pillar_projects').select('*'),
+    db.from('projects').select('*').is('archived_at', null),
+    db.from('project_task_links').select('*'),
+    db.from('recurring_task_templates').select('*').eq('client_id', clientId).eq('active', true),
+    db.from('client_goals').select('*').eq('client_id', clientId),
+    db.from('goal_pillar_links').select('*'),
+    db.from('focus_areas').select('*').eq('client_id', clientId),
+    db.from('outcomes').select('*').eq('client_id', clientId),
+  ]);
+
+  const clients = clientsRes.data ?? [];
+  const teamMembers = teamRes.data ?? [];
+  const taskRows = tasksRes.data ?? [];
+  const taskDeps = taskDepsRes.data ?? [];
+  const approvalRows = approvalsRes.data ?? [];
+  const clientPillarRows = clientPillarsRes.data ?? [];
+  const clientPillarKpiRows = clientPillarKpisRes.data ?? [];
+  const docRows = docsRes.data ?? [];
+  const docCollabs = docCollabRes.data ?? [];
+  const docVersionRows = docVersionsRes.data ?? [];
+  const commentRows = commentsRes.data ?? [];
+  const assetRows = assetsRes.data ?? [];
+  const assetVersionRows = assetVersionsRes.data ?? [];
+  const assetTagRows = assetTagsRes.data ?? [];
+  const serviceRows = servicesRes.data ?? [];
+  const clientServiceRows = clientServicesRes.data ?? [];
+  const ssRows = ssRes.data ?? [];
+  const ssPillarRows = ssPillarsRes.data ?? [];
+  const ssKpiRows = ssKpisRes.data ?? [];
+  const strategyRows = strategiesRes.data ?? [];
+  const stratPillarRows = stratPillarsRes.data ?? [];
+  const stratKpiRows = stratKpisRes.data ?? [];
+  const stratPillarProjectRows = stratPillarProjectsRes.data ?? [];
+  const projectRows = projectsRes.data ?? [];
+  const projectTaskRows = projectTasksRes.data ?? [];
+  const recurringTemplateRows = recurringTemplatesRes.data ?? [];
+  const clientGoalRows = clientGoalsRes.data ?? [];
+  const goalPillarLinkRows = goalPillarLinksRes.data ?? [];
+  const focusAreaRows = focusAreasRes.data ?? [];
+  const outcomeRows = outcomesRes.data ?? [];
+
+  // ── Build TASKS for this client ──
+  const TASKS: Task[] = taskRows.map((r) => {
+    const deps = taskDeps.filter(d => d.task_id === r.id).map(d => d.depends_on_id as string);
+    const approvals = approvalRows
+      .filter(a => a.task_id === r.id)
+      .map(toApprovalEntry);
+    return toTask(r, deps, approvals);
+  });
+
+  // ── Build DOCUMENTS for this client ──
+  const topComments = commentRows.filter(c => !c.parent_comment_id);
+  const buildComment = (r: Row): Comment => {
+    const replies = commentRows
+      .filter(c => c.parent_comment_id === r.id)
+      .map(buildComment);
+    return toComment(r, replies);
+  };
+  const DOCUMENTS: Document[] = docRows.map((r) => {
+    const collaborators = docCollabs
+      .filter(dc => dc.document_id === r.id)
+      .map(dc => dc.team_member_id as string);
+    const versions = docVersionRows
+      .filter(v => v.document_id === r.id)
+      .map(toDocumentVersion);
+    const comments = topComments
+      .filter(c => c.document_id === r.id)
+      .map(buildComment);
+    return toDocument(r, collaborators, versions, comments);
+  });
+
+  // ── Build ASSETS for this client ──
+  const ASSETS: Asset[] = assetRows.map((r) => {
+    const tags = assetTagRows
+      .filter(t => t.asset_id === r.id)
+      .map(t => t.tag as string);
+    const versions = assetVersionRows
+      .filter(v => v.asset_id === r.id)
+      .map(toAssetVersion);
+    return toAsset(r, tags, versions);
+  });
+
+  // ── Build STRATEGIES for this client ──
+  // Filter strategy pillars and KPIs to those belonging to strategies for this client
+  const strategyIdsForClient = new Set(strategyRows.map(s => s.id as string));
+  const clientStratPillarRows = stratPillarRows.filter(sp => strategyIdsForClient.has(sp.strategy_id as string));
+  const clientStratKpiRows = stratKpiRows.filter(kpi => clientStratPillarRows.some(p => p.id === kpi.pillar_id));
+  const clientStratPillarProjectRows = stratPillarProjectRows.filter(pp => clientStratPillarRows.some(p => p.id === pp.pillar_id));
+
+  const stratKpisMap = new Map<string, KPI[]>();
+  clientStratKpiRows.forEach(r => {
+    const pillarId = r.pillar_id as string;
+    if (!stratKpisMap.has(pillarId)) stratKpisMap.set(pillarId, []);
+    stratKpisMap.get(pillarId)!.push(toKPI(r));
+  });
+  const stratPillarProjectMap = new Map<string, string[]>();
+  clientStratPillarProjectRows.forEach(r => {
+    const pillarId = r.pillar_id as string;
+    if (!stratPillarProjectMap.has(pillarId)) stratPillarProjectMap.set(pillarId, []);
+    stratPillarProjectMap.get(pillarId)!.push(r.project_id as string);
+  });
+
+  const pillarsWithData: StrategyPillar[] = clientStratPillarRows.map(r => {
+    const kpis = stratKpisMap.get(r.id as string) ?? [];
+    const projects = stratPillarProjectMap.get(r.id as string) ?? [];
+    return toStrategyPillar(r, projects, kpis);
+  });
+
+  const STRATEGIES: Strategy[] = strategyRows.map(r => {
+    const pillars = pillarsWithData.filter(
+      p => clientStratPillarRows.find(sr => sr.id === p.id)?.strategy_id === r.id
+    );
+    return toStrategy(r, pillars);
+  });
+
+  // ── Build PROJECTS (all projects, but filtered task references) ──
+  // Projects can be shared across clients, but we only include tasks for this client
+  const clientTaskIds = new Set(taskRows.map(t => t.id as string));
+  const filteredProjectTaskRows = projectTaskRows.filter(pt => clientTaskIds.has(pt.task_id as string));
+  const PROJECTS: Project[] = projectRows.map(r => {
+    const tasks = filteredProjectTaskRows
+      .filter(pt => pt.project_id === r.id)
+      .map(pt => pt.task_id as string);
+    // Only include project if it has tasks for this client
+    if (tasks.length === 0) return null as any;
+    return toProject(r, tasks);
+  }).filter(Boolean);
+
+  // ── Build CLIENT_SERVICES for this client ──
+  const CLIENT_SERVICES: ClientService[] = clientServiceRows.map(r => {
+    const linked = (ssRes.data ?? [])
+      .filter(ss => ss.client_service_id === r.id)
+      .map(ss => ss.id as string);
+    return toClientService(r, linked);
+  });
+
+  // ── Build SERVICE_STRATEGIES for services linked to this client ──
+  const clientServiceIds = new Set(clientServiceRows.map(cs => cs.id as string));
+  const clientSsRows = ssRows.filter(ss => clientServiceIds.has(ss.client_service_id as string));
+  const clientSsPillarRows = ssPillarRows.filter(sp => clientSsRows.some(ss => ss.id === sp.service_strategy_id));
+  const clientSsKpiRows = ssKpiRows.filter(kpi => clientSsRows.some(ss => ss.id === kpi.service_strategy_id));
+
+  const ssPillarMap = new Map<string, ServiceStrategyPillar[]>();
+  clientSsPillarRows.forEach(r => {
+    const ssId = r.service_strategy_id as string;
+    if (!ssPillarMap.has(ssId)) ssPillarMap.set(ssId, []);
+    ssPillarMap.get(ssId)!.push(toServiceStrategyPillar(r));
+  });
+  const ssKpiMap = new Map<string, ServiceStrategyKPI[]>();
+  clientSsKpiRows.forEach(r => {
+    const ssId = r.service_strategy_id as string;
+    if (!ssKpiMap.has(ssId)) ssKpiMap.set(ssId, []);
+    ssKpiMap.get(ssId)!.push(toServiceStrategyKPI(r));
+  });
+
+  const SERVICE_STRATEGIES: ServiceStrategy[] = clientSsRows.map(r => {
+    const pillars = ssPillarMap.get(r.id as string) ?? [];
+    const kpis = ssKpiMap.get(r.id as string) ?? [];
+    return toServiceStrategy(r, pillars, kpis);
+  });
+
+  // ── Build RECURRING_TEMPLATES for this client ──
+  const RECURRING_TEMPLATES: RecurringTemplate[] = recurringTemplateRows.map(toRecurringTemplate);
+
+  // ── Build CLIENT_GOALS and GOAL_PILLAR_LINKS for this client ──
+  const CLIENT_GOALS = clientGoalRows.map(toClientGoal);
+  const clientGoalIds = new Set(clientGoalRows.map(cg => cg.id as string));
+  const filteredGoalPillarLinkRows = goalPillarLinkRows.filter(gpl => clientGoalIds.has(gpl.client_goal_id as string));
+  const GOAL_PILLAR_LINKS = filteredGoalPillarLinkRows.map(toGoalPillarLink);
+
+  // ── Build FOCUS_AREAS and OUTCOMES for this client ──
+  const FOCUS_AREAS = focusAreaRows.map(toFocusArea);
+  const OUTCOMES = outcomeRows.map(toOutcome);
+
+  return {
+    CLIENTS: clients.map(toClient),
+    CLIENT_PILLARS: clientPillarRows.map(toClientPillar),
+    CLIENT_PILLAR_KPIS: clientPillarKpiRows
+      .filter(kpi => clientPillarRows.some(cp => cp.id === kpi.client_pillar_id))
+      .map(toClientPillarKpi),
+    TEAM_MEMBERS: teamMembers.map(toTeamMember),
+    TASKS,
+    DOCUMENTS,
+    ASSETS,
+    SERVICES: serviceRows.map(toService),
+    CLIENT_SERVICES,
+    SERVICE_STRATEGIES,
+    STRATEGIES,
+    PROJECTS,
+    RECURRING_TEMPLATES,
+    CLIENT_GOALS,
+    GOAL_PILLAR_LINKS,
+    FOCUS_AREAS,
+    OUTCOMES,
+    PRIORITY_DOT,
+  };
+}
