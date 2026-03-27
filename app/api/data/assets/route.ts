@@ -8,7 +8,7 @@ export async function GET() {
     const data = await getAssetsData();
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 's-maxage=30, stale-while-revalidate=60',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {

@@ -5,6 +5,7 @@ import { Layers, Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { FocusArea } from '@/lib/data';
 import { createFocusArea, updateFocusArea, deleteFocusArea } from '@/lib/actions-goals';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 
 interface FocusAreasSectionProps {
   pillarId: string;
@@ -14,6 +15,7 @@ interface FocusAreasSectionProps {
 }
 
 export default function FocusAreasSection({ pillarId, clientId, focusAreas, onRefresh }: FocusAreasSectionProps) {
+  const { optimisticUpdate } = useAppData();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [addForm, setAddForm] = useState({ name: '', description: '' });
@@ -26,7 +28,7 @@ export default function FocusAreasSection({ pillarId, clientId, focusAreas, onRe
     if (!addForm.name.trim()) { toast.error('Name is required'); return; }
     startTransition(async () => {
       try {
-        await createFocusArea({
+        const newArea = await createFocusArea({
           pillarId,
           clientId,
           name: addForm.name.trim(),
@@ -34,52 +36,77 @@ export default function FocusAreasSection({ pillarId, clientId, focusAreas, onRe
         });
         setAddForm({ name: '', description: '' });
         setIsAdding(false);
-        onRefresh();
         toast.success('Focus area added');
+        // Optimistically add the new focus area
+        optimisticUpdate(prev => ({
+          ...prev,
+          FOCUS_AREAS: [...(prev.FOCUS_AREAS ?? []), newArea],
+        }));
       } catch {
         toast.error('Failed to add focus area');
+        onRefresh();
       }
     });
   }
 
   async function handleEdit(id: string) {
     if (!editForm.name.trim()) { toast.error('Name is required'); return; }
+    const updates = {
+      name: editForm.name.trim(),
+      description: editForm.description.trim() || null,
+    };
+    // Optimistically update
+    optimisticUpdate(prev => ({
+      ...prev,
+      FOCUS_AREAS: (prev.FOCUS_AREAS ?? []).map(fa =>
+        fa.id === id ? { ...fa, ...updates } : fa
+      ),
+    }));
+    setEditingId(null);
+    toast.success('Focus area updated');
     startTransition(async () => {
       try {
-        await updateFocusArea(id, {
-          name: editForm.name.trim(),
-          description: editForm.description.trim() || null,
-        });
-        setEditingId(null);
-        onRefresh();
-        toast.success('Focus area updated');
+        await updateFocusArea(id, updates);
       } catch {
         toast.error('Failed to update focus area');
+        onRefresh();
       }
     });
   }
 
   async function handleArchive(id: string) {
+    // Optimistically archive (remove from active list)
+    optimisticUpdate(prev => ({
+      ...prev,
+      FOCUS_AREAS: (prev.FOCUS_AREAS ?? []).map(fa =>
+        fa.id === id ? { ...fa, status: 'archived' as const } : fa
+      ),
+    }));
+    toast.success('Focus area archived');
     startTransition(async () => {
       try {
         await updateFocusArea(id, { status: 'archived' });
-        onRefresh();
-        toast.success('Focus area archived');
       } catch {
         toast.error('Failed to archive focus area');
+        onRefresh();
       }
     });
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this focus area?')) return;
+    // Optimistically remove
+    optimisticUpdate(prev => ({
+      ...prev,
+      FOCUS_AREAS: (prev.FOCUS_AREAS ?? []).filter(fa => fa.id !== id),
+    }));
+    toast.success('Focus area deleted');
     startTransition(async () => {
       try {
         await deleteFocusArea(id, clientId);
-        onRefresh();
-        toast.success('Focus area deleted');
       } catch {
         toast.error('Failed to delete focus area');
+        onRefresh();
       }
     });
   }

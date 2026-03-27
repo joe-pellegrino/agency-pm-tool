@@ -8,12 +8,14 @@ interface AppDataContextValue extends Partial<AppData> {
   loading: boolean;
   error: string | null;
   refresh: () => void;
+  optimisticUpdate: (updater: (prev: AppData) => AppData) => void;
 }
 
 const AppDataContext = createContext<AppDataContextValue>({
   loading: true,
   error: null,
   refresh: () => {},
+  optimisticUpdate: () => {},
 });
 
 // Map routes to their scoped endpoints
@@ -33,7 +35,7 @@ function getEndpointForPath(pathname: string): string {
 
 // In-memory cache keyed by endpoint
 const cache = new Map<string, { data: AppData; fetchedAt: number }>();
-const STALE_MS = 30_000; // 30 seconds
+const STALE_MS = 10_000; // 10 seconds (reduced from 30s for faster background revalidation)
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -95,8 +97,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     load(endpoint);
   }, [pathname, load]);
 
+  const optimisticUpdate = useCallback((updater: (prev: AppData) => AppData) => {
+    setData(prev => {
+      if (!prev) return prev;
+      const updated = updater(prev);
+      // Also update the cache so navigating away and back doesn't flash stale data
+      const endpoint = currentEndpoint.current || getEndpointForPath(pathname);
+      cache.set(endpoint, { data: updated, fetchedAt: Date.now() });
+      return updated;
+    });
+  }, [pathname]);
+
   return (
-    <AppDataContext.Provider value={{ loading, error, refresh, ...data }}>
+    <AppDataContext.Provider value={{ loading, error, refresh, optimisticUpdate, ...data }}>
       {children}
     </AppDataContext.Provider>
   );

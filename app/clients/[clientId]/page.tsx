@@ -1402,7 +1402,8 @@ export default function ClientPage() {
                 project={{ clientId } as any}
                 onClose={() => {
                   setShowNewInitiative(false);
-                  refresh?.();
+                  // Delay refresh to next tick so modal unmounts cleanly before re-render
+                  setTimeout(() => refresh?.(), 0);
                 }}
               />
             )}

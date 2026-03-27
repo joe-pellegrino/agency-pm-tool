@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Target, Plus, Trash2, Edit2, Save, X, Link, Unlink, CheckCircle2, Archive } from 'lucide-react';
+import { Target, Plus, Trash2, Edit2, Save, X, Link, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ClientGoal, GoalPillarLink, ClientPillar } from '@/lib/data';
 import {
@@ -12,6 +12,7 @@ import {
   unlinkGoalFromPillar,
 } from '@/lib/actions-goals';
 import Drawer from '@/components/ui/Drawer';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   active:   { label: 'Active',    cls: 'bg-blue-100 text-blue-700' },
@@ -28,6 +29,7 @@ interface GoalsTabProps {
 }
 
 export default function GoalsTab({ clientId, goals, goalPillarLinks, pillars, onRefresh }: GoalsTabProps) {
+  const { optimisticUpdate } = useAppData();
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkingGoalId, setLinkingGoalId] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function GoalsTab({ clientId, goals, goalPillarLinks, pillars, on
     if (!createForm.title.trim()) { toast.error('Title is required'); return; }
     startTransition(async () => {
       try {
-        await createClientGoal({
+        const newGoal = await createClientGoal({
           clientId,
           title: createForm.title.trim(),
           description: createForm.description.trim() || null,
@@ -59,71 +61,113 @@ export default function GoalsTab({ clientId, goals, goalPillarLinks, pillars, on
         });
         setCreateForm({ title: '', description: '', targetMetric: '' });
         setIsCreating(false);
-        onRefresh();
         toast.success('Goal created');
+        // Optimistically add the new goal
+        optimisticUpdate(prev => ({
+          ...prev,
+          CLIENT_GOALS: [...(prev.CLIENT_GOALS ?? []), newGoal],
+        }));
       } catch (e) {
         toast.error('Failed to create goal');
+        onRefresh();
       }
     });
   }
 
   async function handleUpdate(id: string) {
     if (!editForm.title?.trim()) { toast.error('Title is required'); return; }
+    const updates = {
+      title: editForm.title?.trim() ?? '',
+      description: editForm.description ?? null,
+      targetMetric: editForm.targetMetric ?? null,
+      status: (editForm.status ?? 'active') as ClientGoal['status'],
+    };
+    // Optimistically update
+    optimisticUpdate(prev => ({
+      ...prev,
+      CLIENT_GOALS: (prev.CLIENT_GOALS ?? []).map(g =>
+        g.id === id ? { ...g, ...updates } : g
+      ),
+    }));
+    setEditingId(null);
+    toast.success('Goal updated');
     startTransition(async () => {
       try {
-        await updateClientGoal(id, {
-          title: editForm.title?.trim(),
-          description: editForm.description ?? null,
-          targetMetric: editForm.targetMetric ?? null,
-          status: editForm.status,
-        });
-        setEditingId(null);
-        onRefresh();
-        toast.success('Goal updated');
+        await updateClientGoal(id, updates);
       } catch {
         toast.error('Failed to update goal');
+        onRefresh();
       }
     });
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this goal? This cannot be undone.')) return;
+    // Optimistically remove
+    optimisticUpdate(prev => ({
+      ...prev,
+      CLIENT_GOALS: (prev.CLIENT_GOALS ?? []).filter(g => g.id !== id),
+      GOAL_PILLAR_LINKS: (prev.GOAL_PILLAR_LINKS ?? []).filter(l => l.goalId !== id),
+    }));
+    toast.success('Goal deleted');
     startTransition(async () => {
       try {
         await deleteClientGoal(id, clientId);
-        onRefresh();
-        toast.success('Goal deleted');
       } catch {
         toast.error('Failed to delete goal');
+        onRefresh();
       }
     });
   }
 
   async function handleStatusChange(id: string, status: ClientGoal['status']) {
+    // Optimistically update status
+    optimisticUpdate(prev => ({
+      ...prev,
+      CLIENT_GOALS: (prev.CLIENT_GOALS ?? []).map(g =>
+        g.id === id ? { ...g, status } : g
+      ),
+    }));
+    toast.success('Status updated');
     startTransition(async () => {
       try {
         await updateClientGoal(id, { status });
-        onRefresh();
-        toast.success('Status updated');
       } catch {
         toast.error('Failed to update status');
+        onRefresh();
       }
     });
   }
 
   async function handleLinkPillar(goalId: string, pillarId: string, isLinked: boolean) {
+    // Optimistically update pillar links
+    if (isLinked) {
+      optimisticUpdate(prev => ({
+        ...prev,
+        GOAL_PILLAR_LINKS: (prev.GOAL_PILLAR_LINKS ?? []).filter(
+          l => !(l.goalId === goalId && l.pillarId === pillarId)
+        ),
+      }));
+      toast.success('Pillar unlinked');
+    } else {
+      const tempLink: GoalPillarLink = { id: `temp-${Date.now()}`, goalId, pillarId };
+      optimisticUpdate(prev => ({
+        ...prev,
+        GOAL_PILLAR_LINKS: [...(prev.GOAL_PILLAR_LINKS ?? []), tempLink],
+      }));
+      toast.success('Pillar linked');
+    }
     startTransition(async () => {
       try {
         if (isLinked) {
           await unlinkGoalFromPillar(goalId, pillarId);
-          toast.success('Pillar unlinked');
         } else {
           await linkGoalToPillar(goalId, pillarId);
-          toast.success('Pillar linked');
         }
-        onRefresh();
+        onRefresh(); // refresh to get real IDs for any temp links
       } catch {
         toast.error('Failed to update pillar link');
+        onRefresh();
       }
     });
   }

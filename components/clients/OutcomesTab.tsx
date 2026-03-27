@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import type { Outcome, ClientGoal, ClientPillar, Project } from '@/lib/data';
 import { createOutcome, updateOutcome, deleteOutcome } from '@/lib/actions-goals';
 import Drawer from '@/components/ui/Drawer';
+import { useAppData } from '@/lib/contexts/AppDataContext';
 
 interface OutcomesTabProps {
   clientId: string;
@@ -103,6 +104,7 @@ const EMPTY_FORM = {
 };
 
 export default function OutcomesTab({ clientId, outcomes, goals, pillars, projects, onRefresh }: OutcomesTabProps) {
+  const { optimisticUpdate } = useAppData();
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -125,53 +127,72 @@ export default function OutcomesTab({ clientId, outcomes, goals, pillars, projec
 
   async function handleSave() {
     if (!form.title.trim()) { toast.error('Title is required'); return; }
-    startTransition(async () => {
-      try {
-        if (editingId) {
-          await updateOutcome(editingId, {
-            title: form.title.trim(),
-            description: form.description.trim() || null,
-            metricValue: form.metricValue.trim() || null,
-            period: form.period.trim() || null,
-            goalId: form.goalId || null,
-            pillarId: form.pillarId || null,
-            initiativeId: form.initiativeId || null,
-            evidenceUrl: form.evidenceUrl.trim() || null,
-          });
-          toast.success('Outcome updated');
-        } else {
-          await createOutcome({
-            clientId,
-            title: form.title.trim(),
-            description: form.description.trim() || null,
-            metricValue: form.metricValue.trim() || null,
-            period: form.period.trim() || null,
-            goalId: form.goalId || null,
-            pillarId: form.pillarId || null,
-            initiativeId: form.initiativeId || null,
-            evidenceUrl: form.evidenceUrl.trim() || null,
-          });
-          toast.success('Outcome created');
+    const outcomeData = {
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      metricValue: form.metricValue.trim() || null,
+      period: form.period.trim() || null,
+      goalId: form.goalId || null,
+      pillarId: form.pillarId || null,
+      initiativeId: form.initiativeId || null,
+      evidenceUrl: form.evidenceUrl.trim() || null,
+    };
+
+    if (editingId) {
+      // Optimistically update
+      optimisticUpdate(prev => ({
+        ...prev,
+        OUTCOMES: (prev.OUTCOMES ?? []).map(o =>
+          o.id === editingId ? { ...o, ...outcomeData } : o
+        ),
+      }));
+      setIsCreating(false);
+      setEditingId(null);
+      setForm({ ...EMPTY_FORM });
+      toast.success('Outcome updated');
+      startTransition(async () => {
+        try {
+          await updateOutcome(editingId, outcomeData);
+        } catch {
+          toast.error('Failed to update outcome');
+          onRefresh();
         }
-        setIsCreating(false);
-        setEditingId(null);
-        setForm({ ...EMPTY_FORM });
-        onRefresh();
-      } catch {
-        toast.error('Failed to save outcome');
-      }
-    });
+      });
+    } else {
+      startTransition(async () => {
+        try {
+          const newOutcome = await createOutcome({ clientId, ...outcomeData });
+          setIsCreating(false);
+          setEditingId(null);
+          setForm({ ...EMPTY_FORM });
+          toast.success('Outcome created');
+          // Optimistically add
+          optimisticUpdate(prev => ({
+            ...prev,
+            OUTCOMES: [...(prev.OUTCOMES ?? []), newOutcome],
+          }));
+        } catch {
+          toast.error('Failed to save outcome');
+          onRefresh();
+        }
+      });
+    }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this outcome? This cannot be undone.')) return;
+    // Optimistically remove
+    optimisticUpdate(prev => ({
+      ...prev,
+      OUTCOMES: (prev.OUTCOMES ?? []).filter(o => o.id !== id),
+    }));
+    toast.success('Outcome deleted');
     startTransition(async () => {
       try {
         await deleteOutcome(id, clientId);
-        onRefresh();
-        toast.success('Outcome deleted');
       } catch {
         toast.error('Failed to delete outcome');
+        onRefresh();
       }
     });
   }

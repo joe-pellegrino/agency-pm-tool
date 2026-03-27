@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.json(data ?? [], {
       headers: {
         // Short cache — notifications should be fairly fresh
-        'Cache-Control': 's-maxage=10, stale-while-revalidate=20',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {
