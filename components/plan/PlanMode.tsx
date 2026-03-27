@@ -125,90 +125,83 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
     const sourceNode = nodes.find(n => n.id === sourceId);
     const targetNode = nodes.find(n => n.id === targetId?.replace(/-source.*|-target.*/g, ''));
 
-    // --- Dashed cross-reference edge: goal → initiative ---
-    if (dashed && sourceId.startsWith('goal-') && edge.target?.startsWith('proj-')) {
-      // Find the goal_pillar_link to delete
-      const goalId = sourceId.replace('goal-', '');
-      // Extract project id from target node id: "proj-{projectId}-strat-..."
-      const projIdMatch = edge.target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
-      if (projIdMatch) {
-        const projectId = projIdMatch[1];
-        const project = PROJECTS.find(p => p.id === projectId);
-        if (project?.clientPillarId) {
-          try {
+    // Optimistically remove edge immediately (no loading flash)
+    const originalEdges = edges;
+    setEdges(prev => prev.filter(e => e.id !== edgeId));
+
+    try {
+      // --- Dashed cross-reference edge: goal → initiative ---
+      if (dashed && sourceId.startsWith('goal-') && edge.target?.startsWith('proj-')) {
+        // Find the goal_pillar_link to delete
+        const goalId = sourceId.replace('goal-', '');
+        // Extract project id from target node id: "proj-{projectId}-strat-..."
+        const projIdMatch = edge.target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
+        if (projIdMatch) {
+          const projectId = projIdMatch[1];
+          const project = PROJECTS.find(p => p.id === projectId);
+          if (project?.clientPillarId) {
             await unlinkGoalFromPillar(goalId, project.clientPillarId);
-          } catch (err) {
-            console.error('[PlanMode] Failed to unlink goal from pillar:', err);
+            // Background refresh (no loading flash)
+            refresh?.();
             return;
           }
         }
+        throw new Error('Could not parse goal-pillar link');
       }
-      // Optimistically remove edge
-      setEdges(prev => prev.filter(e => e.id !== edgeId));
-      refresh?.();
-      return;
-    }
 
-    // --- pillar → initiative edge: set clientPillarId = null ---
-    if (sourceId.includes('pillar-') && edge.target?.startsWith('proj-')) {
-      const projIdMatch = edge.target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
-      if (projIdMatch) {
-        const projectId = projIdMatch[1];
-        try {
+      // --- pillar → initiative edge: set clientPillarId = null ---
+      if (sourceId.includes('pillar-') && edge.target?.startsWith('proj-')) {
+        const projIdMatch = edge.target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
+        if (projIdMatch) {
+          const projectId = projIdMatch[1];
           await updateProject(projectId, { clientPillarId: null });
-        } catch (err) {
-          console.error('[PlanMode] Failed to unset pillar on project:', err);
+          // Background refresh (no loading flash)
+          refresh?.();
           return;
         }
-        setEdges(prev => prev.filter(e => e.id !== edgeId));
-        refresh?.();
+        throw new Error('Could not parse pillar-initiative link');
       }
-      return;
-    }
 
-    // --- initiative → task edge: delete project_task_links row ---
-    if (edge.source?.startsWith('proj-') && edge.target?.startsWith('task-')) {
-      // task node id: "task-{taskId}-proj-{projectId}-strat-..."
-      const taskIdMatch = edge.target.match(/^task-([^-]+(?:-[^-]+)*?)-proj-/);
-      const projIdMatch = edge.source.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
-      if (taskIdMatch && projIdMatch) {
-        const taskId = taskIdMatch[1];
-        const projectId = projIdMatch[1];
-        try {
+      // --- initiative → task edge: delete project_task_links row ---
+      if (edge.source?.startsWith('proj-') && edge.target?.startsWith('task-')) {
+        // task node id: "task-{taskId}-proj-{projectId}-strat-..."
+        const taskIdMatch = edge.target.match(/^task-([^-]+(?:-[^-]+)*?)-proj-/);
+        const projIdMatch = edge.source.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
+        if (taskIdMatch && projIdMatch) {
+          const taskId = taskIdMatch[1];
+          const projectId = projIdMatch[1];
           await unlinkTaskFromProject(projectId, taskId);
-        } catch (err) {
-          console.error('[PlanMode] Failed to unlink task from project:', err);
+          // Background refresh (no loading flash)
+          refresh?.();
           return;
         }
-        setEdges(prev => prev.filter(e => e.id !== edgeId));
-        refresh?.();
+        throw new Error('Could not parse initiative-task link');
       }
-      return;
-    }
 
-    // --- strategy LEFT → goal edge: delete from strategy_goal_links ---
-    if (edge.source?.startsWith('strategy-') && edge.target?.startsWith('goal-')) {
-      const strategyId = sourceId.replace('strategy-', '');
-      const goalId = edge.target.replace('goal-', '');
-      try {
+      // --- strategy LEFT → goal edge: delete from strategy_goal_links ---
+      if (edge.source?.startsWith('strategy-') && edge.target?.startsWith('goal-')) {
+        const strategyId = sourceId.replace('strategy-', '');
+        const goalId = edge.target.replace('goal-', '');
         await unlinkStrategyFromGoal(strategyId, goalId);
-      } catch (err) {
-        console.error('[PlanMode] Failed to unlink strategy from goal:', err);
+        // Background refresh (no loading flash)
+        refresh?.();
         return;
       }
-      setEdges(prev => prev.filter(e => e.id !== edgeId));
-      refresh?.();
-      return;
-    }
 
-    // --- strategy → pillar edge: derived, warn and skip ---
-    if (edge.source?.startsWith('strategy-') && edge.target?.includes('pillar-')) {
-      alert('Strategy–pillar connections are derived from initiatives. To remove a pillar, unassign all its initiatives from this strategy.');
-      return;
-    }
+      // --- strategy → pillar edge: derived, warn and skip ---
+      if (edge.source?.startsWith('strategy-') && edge.target?.includes('pillar-')) {
+        setEdges(originalEdges); // Restore edge
+        alert('Strategy–pillar connections are derived from initiatives. To remove a pillar, unassign all its initiatives from this strategy.');
+        return;
+      }
 
-    // --- Fallback: just visually remove ---
-    setEdges(prev => prev.filter(e => e.id !== edgeId));
+      // --- Fallback: edge already removed optimistically ---
+    } catch (err) {
+      // Rollback on failure
+      console.error('[PlanMode] Failed to delete edge:', err);
+      setEdges(originalEdges);
+      alert('Failed to delete connection. Please try again.');
+    }
   }, [edges, nodes, PROJECTS, refresh, setEdges]);
 
   // Inject onDelete handler into each edge's data when it's selected
@@ -350,8 +343,7 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
           const strategyId = extractIdFromNodeId(source, /^strategy-(.+)$/) ?? source.replace('strategy-', '');
           const goalId = extractIdFromNodeId(target, /^goal-(.+)$/) ?? target.replace('goal-', '');
 
-          await linkStrategyToGoal(strategyId, goalId);
-          // Optimistically add edge with handles
+          // Optimistically add edge with handles (no loading flash)
           const edgeId = `${source}->${target}${sourceHandle ? `-${sourceHandle}` : ''}`;
           setEdges(prev => {
             if (prev.some(e => e.id === edgeId)) return prev;
@@ -370,7 +362,19 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
               },
             ];
           });
-          refresh?.();
+
+          // Persist in background
+          linkStrategyToGoal(strategyId, goalId)
+            .then(() => {
+              // Silent background refresh if needed
+              refresh?.();
+            })
+            .catch(err => {
+              console.error('[PlanMode] Failed to link strategy to goal:', err);
+              // Rollback: remove the optimistically added edge
+              setEdges(prev => prev.filter(e => e.id !== edgeId));
+              alert('Failed to create connection. Please try again.');
+            });
           return;
         }
 
@@ -380,9 +384,16 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
           const projectId = extractIdFromNodeId(target, /^proj-([^-]+(?:-[^-]+)*?)-strat-/) ?? target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
 
           if (pillarId && projectId) {
-            await updateProject(projectId, { clientPillarId: pillarId });
-            // Edge already exists in graph from layout; just refresh
-            refresh?.();
+            // Persist in background (no loading flash)
+            updateProject(projectId, { clientPillarId: pillarId })
+              .then(() => {
+                // Silent background refresh
+                refresh?.();
+              })
+              .catch(err => {
+                console.error('[PlanMode] Failed to set pillar on initiative:', err);
+                alert('Failed to create connection. Please try again.');
+              });
           }
           return;
         }
@@ -393,8 +404,16 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
           const projectId = extractIdFromNodeId(target, /^proj-([^-]+(?:-[^-]+)*?)-strat-/) ?? target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
 
           if (projectId) {
-            await updateProject(projectId, { strategyId });
-            refresh?.();
+            // Persist in background (no loading flash)
+            updateProject(projectId, { strategyId })
+              .then(() => {
+                // Silent background refresh
+                refresh?.();
+              })
+              .catch(err => {
+                console.error('[PlanMode] Failed to set strategy on initiative:', err);
+                alert('Failed to create connection. Please try again.');
+              });
           }
           return;
         }
@@ -405,9 +424,16 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
           const taskId = extractIdFromNodeId(target, /^task-([^-]+(?:-[^-]+)*?)-proj-/) ?? target.match(/^task-([^-]+(?:-[^-]+)*?)-proj-/)?.[1];
 
           if (projectId && taskId) {
-            await linkTaskToProject(projectId, taskId);
-            // Edge already exists in graph; just refresh
-            refresh?.();
+            // Persist in background (no loading flash)
+            linkTaskToProject(projectId, taskId)
+              .then(() => {
+                // Silent background refresh
+                refresh?.();
+              })
+              .catch(err => {
+                console.error('[PlanMode] Failed to link task to initiative:', err);
+                alert('Failed to create connection. Please try again.');
+              });
           }
           return;
         }
@@ -421,8 +447,7 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
             // Find the project to get its clientPillarId
             const project = PROJECTS.find(p => p.id === projectId);
             if (project?.clientPillarId) {
-              await linkGoalToPillar(goalId, project.clientPillarId);
-              // Optimistically add dashed cross-ref edge with handles
+              // Optimistically add dashed cross-ref edge with handles (no loading flash)
               const edgeId = `${source}->${target}${sourceHandle ? `-${sourceHandle}` : ''}`;
               setEdges(prev => {
                 if (prev.some(e => e.id === edgeId)) return prev;
@@ -441,7 +466,19 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
                   },
                 ];
               });
-              refresh?.();
+
+              // Persist in background
+              linkGoalToPillar(goalId, project.clientPillarId)
+                .then(() => {
+                  // Silent background refresh
+                  refresh?.();
+                })
+                .catch(err => {
+                  console.error('[PlanMode] Failed to link goal to pillar:', err);
+                  // Rollback: remove the optimistically added edge
+                  setEdges(prev => prev.filter(e => e.id !== edgeId));
+                  alert('Failed to create connection. Please try again.');
+                });
             }
           }
           return;
@@ -452,9 +489,16 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
           const goalId = extractIdFromNodeId(source, /^goal-(.+)$/) ?? source.replace('goal-', '');
           const outcomeId = extractIdFromNodeId(target, /^outcome-(.+)$/) ?? target.replace('outcome-', '');
 
-          await linkGoalToOutcome(goalId, outcomeId);
-          // Edge already exists in graph; just refresh
-          refresh?.();
+          // Persist in background (no loading flash)
+          linkGoalToOutcome(goalId, outcomeId)
+            .then(() => {
+              // Silent background refresh
+              refresh?.();
+            })
+            .catch(err => {
+              console.error('[PlanMode] Failed to link goal to outcome:', err);
+              alert('Failed to create connection. Please try again.');
+            });
           return;
         }
       } catch (err) {
