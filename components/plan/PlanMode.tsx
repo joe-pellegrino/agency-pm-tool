@@ -329,8 +329,8 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
 
   // ─── ON CONNECT: Snap handler with persistence ──────────────────────────────
   const onConnect = useCallback(
-    async (connection: { source: string; target: string }) => {
-      const { source, target } = connection;
+    async (connection: { source: string; target: string; sourceHandle: string | null; targetHandle: string | null }) => {
+      const { source, target, sourceHandle, targetHandle } = connection;
 
       // Validate connection type
       if (!isValidConnection(source, target)) {
@@ -351,8 +351,8 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
           const goalId = extractIdFromNodeId(target, /^goal-(.+)$/) ?? target.replace('goal-', '');
 
           await linkStrategyToGoal(strategyId, goalId);
-          // Optimistically add edge
-          const edgeId = `${source}->${target}`;
+          // Optimistically add edge with handles
+          const edgeId = `${source}->${target}${sourceHandle ? `-${sourceHandle}` : ''}`;
           setEdges(prev => {
             if (prev.some(e => e.id === edgeId)) return prev;
             return [
@@ -361,6 +361,8 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
                 id: edgeId,
                 source,
                 target,
+                sourceHandle,
+                targetHandle,
                 type: 'smoothstep',
                 animated: true,
                 style: { stroke: '#d97706', strokeWidth: 2 },
@@ -420,7 +422,25 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
             const project = PROJECTS.find(p => p.id === projectId);
             if (project?.clientPillarId) {
               await linkGoalToPillar(goalId, project.clientPillarId);
-              // Edge already rendered as dashed cross-ref; just refresh
+              // Optimistically add dashed cross-ref edge with handles
+              const edgeId = `${source}->${target}${sourceHandle ? `-${sourceHandle}` : ''}`;
+              setEdges(prev => {
+                if (prev.some(e => e.id === edgeId)) return prev;
+                return [
+                  ...prev,
+                  {
+                    id: edgeId,
+                    source,
+                    target,
+                    sourceHandle,
+                    targetHandle,
+                    type: 'smoothstep',
+                    animated: false,
+                    style: { stroke: '#94a3b8', strokeWidth: 1.5, strokeDasharray: '5 4' },
+                    data: { dashed: true, crossRef: true },
+                  },
+                ];
+              });
               refresh?.();
             }
           }
