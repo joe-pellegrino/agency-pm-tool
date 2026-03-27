@@ -29,8 +29,15 @@ import { OutcomeNode } from './nodes/OutcomeNode';
 import { DeletableEdge } from './DeletableEdge';
 import { PlanContextMenu, type PlanAction } from './PlanContextMenu';
 import { PlanDetailPanel, type CreateFormConfig } from './PlanDetailPanel';
-import { updateProject, unlinkTaskFromProject } from '@/lib/actions';
-import { unlinkGoalFromPillar } from '@/lib/actions-goals';
+import { updateProject, unlinkTaskFromProject, linkTaskToProject } from '@/lib/actions';
+import {
+  unlinkGoalFromPillar,
+  linkGoalToPillar,
+  linkStrategyToGoal,
+  unlinkStrategyFromGoal,
+  linkGoalToOutcome,
+  unlinkGoalFromOutcome,
+} from '@/lib/actions-goals';
 
 const NODE_TYPES = {
   planRoot: RootNode,
@@ -63,6 +70,7 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
     TASKS = [],
     CLIENT_GOALS = [],
     GOAL_PILLAR_LINKS = [],
+    STRATEGY_GOAL_LINKS = [],
     OUTCOMES = [],
     refresh,
     optimisticUpdate,
@@ -82,6 +90,7 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
     TASKS,
     CLIENT_GOALS,
     GOAL_PILLAR_LINKS,
+    STRATEGY_GOAL_LINKS,
     OUTCOMES,
   });
 
@@ -177,9 +186,18 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
       return;
     }
 
-    // --- strategy LEFT → goal edge: display-only, just visually remove ---
+    // --- strategy LEFT → goal edge: delete from strategy_goal_links ---
     if (edge.source?.startsWith('strategy-') && edge.target?.startsWith('goal-')) {
+      const strategyId = sourceId.replace('strategy-', '');
+      const goalId = edge.target.replace('goal-', '');
+      try {
+        await unlinkStrategyFromGoal(strategyId, goalId);
+      } catch (err) {
+        console.error('[PlanMode] Failed to unlink strategy from goal:', err);
+        return;
+      }
       setEdges(prev => prev.filter(e => e.id !== edgeId));
+      refresh?.();
       return;
     }
 
@@ -230,6 +248,200 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
       connectingNode.current = null;
     },
     [],
+  );
+
+  // ─── VALIDATE CONNECTION ──────────────────────────────────────────────────────
+  const isValidConnection = useCallback(
+    (sourceNodeId: string, targetNodeId: string): boolean => {
+      // Extract node types and IDs from node IDs
+      // Format examples:
+      // strategy-{id}, goal-{id}, pillar-{id}-strat-{sid}, proj-{id}-strat-{sid}-pillar-{pid}
+      // task-{id}-proj-{pid}-strat-{sid}, outcome-{id}
+
+      // Valid snap pairs (approved):
+      // 1. strategy → goal
+      // 2. pillar → initiative (project)
+      // 3. strategy → initiative (project)
+      // 4. initiative → task (project)
+      // 5. goal → initiative (via pillar link)
+      // 6. goal → outcome
+      
+      // Invalid pairs (reject):
+      // - goal → task
+      // - strategy → pillar
+      // - pillar → task
+      // - outcome → anything
+      // - anything → outcome (except goal)
+      // - random node-to-node links
+
+      const sourceIsStrategy = sourceNodeId.startsWith('strategy-');
+      const sourceIsGoal = sourceNodeId.startsWith('goal-');
+      const sourceIsPillar = sourceNodeId.includes('pillar-') && !sourceNodeId.includes('unassigned');
+      const sourceIsInitiative = sourceNodeId.startsWith('proj-');
+      const sourceIsTask = sourceNodeId.startsWith('task-');
+      const sourceIsOutcome = sourceNodeId.startsWith('outcome-');
+
+      const targetIsStrategy = targetNodeId.startsWith('strategy-');
+      const targetIsGoal = targetNodeId.startsWith('goal-');
+      const targetIsPillar = targetNodeId.includes('pillar-') && !targetNodeId.includes('unassigned');
+      const targetIsInitiative = targetNodeId.startsWith('proj-');
+      const targetIsTask = targetNodeId.startsWith('task-');
+      const targetIsOutcome = targetNodeId.startsWith('outcome-');
+
+      // Invalid: outcome as source (outcomes are leaf nodes)
+      if (sourceIsOutcome) return false;
+
+      // Invalid: anything → outcome except goal
+      if (targetIsOutcome && !sourceIsGoal) return false;
+
+      // Valid: strategy → goal
+      if (sourceIsStrategy && targetIsGoal) return true;
+
+      // Valid: pillar → initiative
+      if (sourceIsPillar && targetIsInitiative) return true;
+
+      // Valid: strategy → initiative
+      if (sourceIsStrategy && targetIsInitiative) return true;
+
+      // Valid: initiative → task
+      if (sourceIsInitiative && targetIsTask) return true;
+
+      // Valid: goal → initiative (cross-ref, pillar-based)
+      if (sourceIsGoal && targetIsInitiative) return true;
+
+      // Valid: goal → outcome
+      if (sourceIsGoal && targetIsOutcome) return true;
+
+      // Invalid: goal → task (explicit reject)
+      if (sourceIsGoal && targetIsTask) return false;
+
+      // Invalid: strategy → pillar (direct; must use initiatives)
+      if (sourceIsStrategy && targetIsPillar) return false;
+
+      // Invalid: pillar → task (direct; must use initiatives)
+      if (sourceIsPillar && targetIsTask) return false;
+
+      // Default: reject anything else
+      return false;
+    },
+    [],
+  );
+
+  // ─── ON CONNECT: Snap handler with persistence ──────────────────────────────
+  const onConnect = useCallback(
+    async (connection: { source: string; target: string }) => {
+      const { source, target } = connection;
+
+      // Validate connection type
+      if (!isValidConnection(source, target)) {
+        console.warn(`[PlanMode] Invalid connection: ${source} → ${target}`);
+        return;
+      }
+
+      // Extract IDs from node IDs using regex patterns
+      const extractIdFromNodeId = (nodeId: string, pattern: RegExp): string | null => {
+        const match = nodeId.match(pattern);
+        return match ? match[1] : null;
+      };
+
+      try {
+        // ─── strategy → goal ─────────────────────────────────────────────
+        if (source.startsWith('strategy-') && target.startsWith('goal-')) {
+          const strategyId = extractIdFromNodeId(source, /^strategy-(.+)$/) ?? source.replace('strategy-', '');
+          const goalId = extractIdFromNodeId(target, /^goal-(.+)$/) ?? target.replace('goal-', '');
+
+          await linkStrategyToGoal(strategyId, goalId);
+          // Optimistically add edge
+          const edgeId = `${source}->${target}`;
+          setEdges(prev => {
+            if (prev.some(e => e.id === edgeId)) return prev;
+            return [
+              ...prev,
+              {
+                id: edgeId,
+                source,
+                target,
+                type: 'smoothstep',
+                animated: true,
+                style: { stroke: '#d97706', strokeWidth: 2 },
+                data: { dashed: false },
+              },
+            ];
+          });
+          refresh?.();
+          return;
+        }
+
+        // ─── pillar → initiative ─────────────────────────────────────────
+        if (source.includes('pillar-') && target.startsWith('proj-')) {
+          const pillarId = extractIdFromNodeId(source, /pillar-([^-]+)/) ?? source.split('pillar-')[1]?.split('-')[0];
+          const projectId = extractIdFromNodeId(target, /^proj-([^-]+(?:-[^-]+)*?)-strat-/) ?? target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
+
+          if (pillarId && projectId) {
+            await updateProject(projectId, { clientPillarId: pillarId });
+            // Edge already exists in graph from layout; just refresh
+            refresh?.();
+          }
+          return;
+        }
+
+        // ─── strategy → initiative ───────────────────────────────────────
+        if (source.startsWith('strategy-') && target.startsWith('proj-')) {
+          const strategyId = extractIdFromNodeId(source, /^strategy-(.+)$/) ?? source.replace('strategy-', '');
+          const projectId = extractIdFromNodeId(target, /^proj-([^-]+(?:-[^-]+)*?)-strat-/) ?? target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
+
+          if (projectId) {
+            await updateProject(projectId, { strategyId });
+            refresh?.();
+          }
+          return;
+        }
+
+        // ─── initiative → task ───────────────────────────────────────────
+        if (source.startsWith('proj-') && target.startsWith('task-')) {
+          const projectId = extractIdFromNodeId(source, /^proj-([^-]+(?:-[^-]+)*?)-strat-/) ?? source.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
+          const taskId = extractIdFromNodeId(target, /^task-([^-]+(?:-[^-]+)*?)-proj-/) ?? target.match(/^task-([^-]+(?:-[^-]+)*?)-proj-/)?.[1];
+
+          if (projectId && taskId) {
+            await linkTaskToProject(projectId, taskId);
+            // Edge already exists in graph; just refresh
+            refresh?.();
+          }
+          return;
+        }
+
+        // ─── goal → initiative (creates goal_pillar_link) ─────────────────
+        if (source.startsWith('goal-') && target.startsWith('proj-')) {
+          const goalId = extractIdFromNodeId(source, /^goal-(.+)$/) ?? source.replace('goal-', '');
+          const projectId = extractIdFromNodeId(target, /^proj-([^-]+(?:-[^-]+)*?)-strat-/) ?? target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
+
+          if (projectId && goalId) {
+            // Find the project to get its clientPillarId
+            const project = PROJECTS.find(p => p.id === projectId);
+            if (project?.clientPillarId) {
+              await linkGoalToPillar(goalId, project.clientPillarId);
+              // Edge already rendered as dashed cross-ref; just refresh
+              refresh?.();
+            }
+          }
+          return;
+        }
+
+        // ─── goal → outcome ─────────────────────────────────────────────
+        if (source.startsWith('goal-') && target.startsWith('outcome-')) {
+          const goalId = extractIdFromNodeId(source, /^goal-(.+)$/) ?? source.replace('goal-', '');
+          const outcomeId = extractIdFromNodeId(target, /^outcome-(.+)$/) ?? target.replace('outcome-', '');
+
+          await linkGoalToOutcome(goalId, outcomeId);
+          // Edge already exists in graph; just refresh
+          refresh?.();
+          return;
+        }
+      } catch (err) {
+        console.error('[PlanMode] Connection failed:', err);
+      }
+    },
+    [isValidConnection, PROJECTS, refresh, setEdges],
   );
 
   // ─── CONTEXT MENU → OPEN CREATE FORM ────────────────────────────────────────
@@ -391,6 +603,7 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
             onNodeClick={handleNodeClick}
             onConnectStart={onConnectStart as any}
             onConnectEnd={onConnectEnd as any}
+            onConnect={onConnect}
             onPaneClick={() => {
               setSelectedNode(null);
               setContextMenu(null);

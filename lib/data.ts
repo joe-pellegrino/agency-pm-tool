@@ -2285,6 +2285,13 @@ export interface GoalPillarLink {
   pillarId: string;
 }
 
+export interface StrategyGoalLink {
+  id: string;
+  strategyId: string;
+  goalId: string;
+  createdAt: string;
+}
+
 export interface FocusArea {
   id: string;
   pillarId: string;

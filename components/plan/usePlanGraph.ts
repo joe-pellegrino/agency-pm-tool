@@ -12,6 +12,7 @@ import type {
   ClientGoal,
   GoalPillarLink,
   Outcome,
+  StrategyGoalLink,
 } from '@/lib/data';
 import { layoutPlanGraph } from './planLayout';
 
@@ -27,6 +28,7 @@ interface PlanGraphInput {
   TASKS: Task[];
   CLIENT_GOALS: ClientGoal[];
   GOAL_PILLAR_LINKS: GoalPillarLink[];
+  STRATEGY_GOAL_LINKS: StrategyGoalLink[];
   OUTCOMES: Outcome[];
 }
 
@@ -77,6 +79,7 @@ export function usePlanGraph({
   TASKS,
   CLIENT_GOALS,
   GOAL_PILLAR_LINKS,
+  STRATEGY_GOAL_LINKS,
   OUTCOMES,
 }: PlanGraphInput): { nodes: Node[]; edges: Edge[] } {
   return useMemo(() => {
@@ -291,28 +294,39 @@ export function usePlanGraph({
 
     goals.forEach(goal => {
       const goalNodeId = `goal-${goal.id}`;
+
+      // Get linked outcomes and initiatives for progress calculation
+      const linkedOutcomes = OUTCOMES.filter(o => o.goalId === goal.id && o.clientId === clientId);
+      const linkedPillarIds = GOAL_PILLAR_LINKS
+        .filter(l => l.goalId === goal.id)
+        .map(l => l.pillarId);
+      const linkedInitiatives = PROJECTS.filter(p =>
+        p.clientId === clientId &&
+        p.clientPillarId &&
+        linkedPillarIds.includes(p.clientPillarId),
+      );
+
       nodes.push({
         id: goalNodeId,
         type: 'planGoal',
         position: { x: 0, y: 0 },
-        data: { goal },
+        data: { goal, linkedOutcomes, linkedInitiatives },
       });
 
-      // Strategy LEFT → Goal LEFT (horizontal edge going left)
-      if (activeStratNodeId) {
-        treeEdges.push(makeEdge(activeStratNodeId, goalNodeId, '#d97706', false, {
-          sourceHandle: 'source-left',
-          targetHandle: 'target-left',
-        }));
-      }
+      // Strategy ↔ Goal (read from strategy_goal_links table — real persisted edges)
+      STRATEGY_GOAL_LINKS
+        .filter(l => l.goalId === goal.id)
+        .forEach(link => {
+          const stratNodeId = `strategy-${link.strategyId}`;
+          treeEdges.push(makeEdge(stratNodeId, goalNodeId, '#d97706', false, {
+            sourceHandle: 'source-left',
+            targetHandle: 'target-left',
+          }));
+        });
 
       // ── Cross-reference edges: Goal RIGHT → Initiative LEFT ───────────────
       // Find which initiatives this goal drives:
       // 1. Via goal_pillar_links → pillars → projects under those pillars in active strategy
-      const linkedPillarIds = GOAL_PILLAR_LINKS
-        .filter(l => l.goalId === goal.id)
-        .map(l => l.pillarId);
-
       const drivenProjectIds = new Set<string>();
 
       if (activeStrategy) {
@@ -423,6 +437,7 @@ export function usePlanGraph({
     TASKS,
     CLIENT_GOALS,
     GOAL_PILLAR_LINKS,
+    STRATEGY_GOAL_LINKS,
     OUTCOMES,
   ]);
 }

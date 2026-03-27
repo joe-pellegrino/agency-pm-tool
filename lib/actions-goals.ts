@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerClient } from '@/lib/supabase/client';
-import type { ClientGoal, GoalPillarLink, FocusArea, Outcome } from '@/lib/data';
+import type { ClientGoal, GoalPillarLink, FocusArea, Outcome, StrategyGoalLink } from '@/lib/data';
 
 const db = () => createServerClient();
 
@@ -120,6 +120,75 @@ export async function unlinkGoalFromPillar(goalId: string, pillarId: string): Pr
     .delete()
     .eq('goal_id', goalId)
     .eq('pillar_id', pillarId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+  revalidatePath('/strategy');
+}
+
+// ─── STRATEGY GOAL LINKS ──────────────────────────────────────────────────────
+
+export async function getStrategyGoalLinks(): Promise<StrategyGoalLink[]> {
+  const { data, error } = await db()
+    .from('strategy_goal_links')
+    .select('*');
+
+  if (error) throw new Error(error.message);
+  return (data || []).map((r) => ({
+    id: r.id as string,
+    strategyId: r.strategy_id as string,
+    goalId: r.goal_id as string,
+    createdAt: r.created_at as string,
+  }));
+}
+
+export async function linkStrategyToGoal(strategyId: string, goalId: string): Promise<StrategyGoalLink> {
+  const { data, error } = await db()
+    .from('strategy_goal_links')
+    .insert({ strategy_id: strategyId, goal_id: goalId })
+    .select()
+    .single();
+
+  if (error && !error.message.includes('duplicate')) throw new Error(error.message);
+
+  if (!data) {
+    // Already exists, fetch it
+    const { data: existing, error: fetchError } = await db()
+      .from('strategy_goal_links')
+      .select('*')
+      .eq('strategy_id', strategyId)
+      .eq('goal_id', goalId)
+      .single();
+
+    if (fetchError) throw new Error(fetchError.message);
+    revalidatePath('/clients');
+    revalidatePath('/strategy');
+
+    return {
+      id: existing.id as string,
+      strategyId: existing.strategy_id as string,
+      goalId: existing.goal_id as string,
+      createdAt: existing.created_at as string,
+    };
+  }
+
+  revalidatePath('/clients');
+  revalidatePath('/strategy');
+
+  return {
+    id: data.id as string,
+    strategyId: data.strategy_id as string,
+    goalId: data.goal_id as string,
+    createdAt: data.created_at as string,
+  };
+}
+
+export async function unlinkStrategyFromGoal(strategyId: string, goalId: string): Promise<void> {
+  const { error } = await db()
+    .from('strategy_goal_links')
+    .delete()
+    .eq('strategy_id', strategyId)
+    .eq('goal_id', goalId);
 
   if (error) throw new Error(error.message);
   revalidatePath('/clients');
@@ -323,4 +392,26 @@ export async function deleteOutcome(id: string, clientId: string): Promise<void>
   const { error } = await db().from('outcomes').delete().eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath(`/clients/${clientId}`);
+}
+
+// ─── GOAL OUTCOME LINKS ────────────────────────────────────────────────────────
+
+export async function linkGoalToOutcome(goalId: string, outcomeId: string): Promise<void> {
+  const { error } = await db()
+    .from('outcomes')
+    .update({ goal_id: goalId })
+    .eq('id', outcomeId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
+}
+
+export async function unlinkGoalFromOutcome(outcomeId: string): Promise<void> {
+  const { error } = await db()
+    .from('outcomes')
+    .update({ goal_id: null })
+    .eq('id', outcomeId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/clients');
 }

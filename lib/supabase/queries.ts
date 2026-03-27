@@ -10,7 +10,7 @@ import type {
   WorkflowStep, Strategy, StrategyPillar, KPI, Project, Service,
   ClientService, ServiceStrategy, ServiceStrategyPillar, ServiceStrategyKPI,
   KBCategory, KBArticle, KBArticleVersion,
-  ClientGoal, GoalPillarLink, FocusArea, Outcome,
+  ClientGoal, GoalPillarLink, FocusArea, Outcome, StrategyGoalLink,
 } from '@/lib/data';
 
 type AssetVersion = { id: string; date: string; note: string };
@@ -418,6 +418,7 @@ export interface AppData {
   PRIORITY_DOT: Record<string, string>;
   CLIENT_GOALS: ClientGoal[];
   GOAL_PILLAR_LINKS: GoalPillarLink[];
+  STRATEGY_GOAL_LINKS: StrategyGoalLink[];
   FOCUS_AREAS: FocusArea[];
   OUTCOMES: Outcome[];
 }
@@ -442,6 +443,15 @@ function toGoalPillarLink(r: Row): GoalPillarLink {
     id: r.id as string,
     goalId: r.goal_id as string,
     pillarId: r.pillar_id as string,
+  };
+}
+
+function toStrategyGoalLink(r: Row): StrategyGoalLink {
+  return {
+    id: r.id as string,
+    strategyId: r.strategy_id as string,
+    goalId: r.goal_id as string,
+    createdAt: r.created_at as string,
   };
 }
 
@@ -550,7 +560,7 @@ export async function getAllData(): Promise<AppData> {
     kbCategoriesRes, kbArticlesRes,
     docFoldersRes,
     recurringTemplatesRes,
-    clientGoalsRes, goalPillarLinksRes, focusAreasRes, outcomesRes,
+    clientGoalsRes, goalPillarLinksRes, strategyGoalLinksRes, focusAreasRes, outcomesRes,
   ] = await Promise.all([
     db.from('clients').select('*').is('archived_at', null),
     db.from('team_members').select('*').is('archived_at', null),
@@ -591,6 +601,7 @@ export async function getAllData(): Promise<AppData> {
     db.from('recurring_task_templates').select('*').eq('active', true),
     db.from('client_goals').select('*'),
     db.from('goal_pillar_links').select('*'),
+    db.from('strategy_goal_links').select('*'),
     db.from('focus_areas').select('*'),
     db.from('outcomes').select('*'),
   ]);
@@ -773,6 +784,7 @@ export async function getAllData(): Promise<AppData> {
     PRIORITY_DOT,
     CLIENT_GOALS: (clientGoalsRes.data ?? []).map(toClientGoal),
     GOAL_PILLAR_LINKS: (goalPillarLinksRes.data ?? []).map(toGoalPillarLink),
+    STRATEGY_GOAL_LINKS: (strategyGoalLinksRes.data ?? []).map(toStrategyGoalLink),
     FOCUS_AREAS: (focusAreasRes.data ?? []).map(toFocusArea),
     OUTCOMES: (outcomesRes.data ?? []).map(toOutcome),
   };
