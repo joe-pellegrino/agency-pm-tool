@@ -17,7 +17,9 @@ export function GoalNode({ data }: { data: GoalNodeData }) {
   const { goal } = data;
   return (
     <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 min-w-[170px] shadow-sm select-none">
-      <Handle type="target" position={Position.Top} id="target" className="!w-3 !h-3 !bg-amber-300" />
+      {/* LEFT handle — target from strategy's left handle */}
+      <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-amber-400" />
+
       <div className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider mb-0.5 text-center">Goal</div>
       <div className="font-semibold text-sm text-amber-900 leading-tight text-center">{goal.title}</div>
       {goal.targetMetric && (
@@ -28,7 +30,9 @@ export function GoalNode({ data }: { data: GoalNodeData }) {
           {goal.status}
         </span>
       </div>
-      <Handle type="source" position={Position.Bottom} id="source" className="!w-3 !h-3 !bg-amber-300" />
+
+      {/* RIGHT handle — source to initiatives (cross-reference dashed edges) */}
+      <Handle type="source" position={Position.Right} id="source-right" className="!w-3 !h-3 !bg-amber-400" />
     </div>
   );
 }

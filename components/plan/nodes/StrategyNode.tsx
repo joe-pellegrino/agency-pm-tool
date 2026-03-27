@@ -25,7 +25,13 @@ export function StrategyNode({ data }: { data: StrategyNodeData }) {
         dimmed ? 'opacity-50 bg-indigo-900/60' : 'bg-indigo-950'
       } ${isActive ? 'ring-2 ring-green-400 ring-offset-1 border-indigo-800' : 'border-indigo-800'}`}
     >
-      <Handle type="target" position={Position.Top} id="target" className="!w-3 !h-3 !bg-indigo-700" />
+      {/* TOP handle — target from root */}
+      <Handle type="target" position={Position.Top} id="target-top" className="!w-3 !h-3 !bg-indigo-700" />
+
+      {/* LEFT handle — source to goals (active strategy only) */}
+      {isActive && (
+        <Handle type="source" position={Position.Left} id="source-left" className="!w-3 !h-3 !bg-amber-500" />
+      )}
 
       {isActive && (
         <div className="flex justify-center mb-1">
@@ -48,7 +54,8 @@ export function StrategyNode({ data }: { data: StrategyNodeData }) {
         </span>
       </div>
 
-      <Handle type="source" position={Position.Bottom} id="source" className="!w-3 !h-3 !bg-indigo-700" />
+      {/* BOTTOM handle — source to pillars */}
+      <Handle type="source" position={Position.Bottom} id="source-bottom" className="!w-3 !h-3 !bg-indigo-700" />
     </div>
   );
 }

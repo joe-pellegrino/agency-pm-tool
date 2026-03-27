@@ -35,11 +35,18 @@ function makeEdge(
   target: string,
   color: string,
   dashed = false,
+  options?: {
+    sourceHandle?: string;
+    targetHandle?: string;
+    crossRef?: boolean;
+  },
 ): Edge {
   return {
-    id: `${source}->${target}`,
+    id: `${source}->${target}${options?.sourceHandle ? `-${options.sourceHandle}` : ''}`,
     source,
     target,
+    sourceHandle: options?.sourceHandle,
+    targetHandle: options?.targetHandle,
     type: 'smoothstep',
     animated: !dashed,
     style: {
@@ -47,7 +54,7 @@ function makeEdge(
       strokeWidth: dashed ? 1.5 : 2,
       strokeDasharray: dashed ? '5 4' : undefined,
     },
-    data: { dashed },
+    data: { dashed, crossRef: options?.crossRef ?? false },
   };
 }
 
@@ -74,9 +81,17 @@ export function usePlanGraph({
 }: PlanGraphInput): { nodes: Node[]; edges: Edge[] } {
   return useMemo(() => {
     const nodes: Node[] = [];
-    const edges: Edge[] = [];
+    // Collect edges in two buckets:
+    // - treeEdges: solid edges that participate in layout
+    // - crossRefEdges: dashed horizontal edges added AFTER layout
+    const treeEdges: Edge[] = [];
+    const crossRefEdges: Edge[] = [];
 
-    // ── 1. Root Node ─────────────────────────────────────────────────────────
+    // goalParentMap: maps outcome node id → parent goal node id
+    // (used by planLayout for outcome positioning)
+    const goalParentMap = new Map<string, string>();
+
+    // ── 1. Root Node ──────────────────────────────────────────────────────────
     nodes.push({
       id: 'root',
       type: 'planRoot',
@@ -84,10 +99,14 @@ export function usePlanGraph({
       data: { label: clientName, year },
     });
 
-    // ── 2. Strategies (sorted: active first, queued, draft, complete) ────────
+    // ── 2. Strategies ─────────────────────────────────────────────────────────
     const strategies = STRATEGIES
       .filter(s => s.clientId === clientId)
       .sort((a, b) => (STRATEGY_STATUS_ORDER[a.status] ?? 99) - (STRATEGY_STATUS_ORDER[b.status] ?? 99));
+
+    // Track initiative nodes built per project id (for cross-ref edges)
+    // projectId → array of node IDs (since a project can appear once per strategy/pillar combo)
+    const initiativeNodesByProjectId = new Map<string, string[]>();
 
     strategies.forEach(strategy => {
       const isActive = strategy.status === 'active';
@@ -99,14 +118,18 @@ export function usePlanGraph({
         position: { x: 0, y: 0 },
         data: { strategy, dimmed: !isActive },
       });
-      edges.push(makeEdge('root', stratNodeId, '#4f46e5'));
 
-      // ── 3. For each strategy: find pillars it touches via projects ─────────
+      // Root → Strategy (vertical, top-to-bottom)
+      treeEdges.push(makeEdge('root', stratNodeId, '#4f46e5', false, {
+        sourceHandle: 'source',
+        targetHandle: 'target-top',
+      }));
+
+      // ── 3. Pillars under this strategy ───────────────────────────────────
       const stratProjects = PROJECTS.filter(
         p => p.clientId === clientId && p.strategyId === strategy.id,
       );
 
-      // Group projects by clientPillarId
       const pillarIdSet = new Set<string>();
       const unassignedProjects: Project[] = [];
 
@@ -118,7 +141,6 @@ export function usePlanGraph({
         }
       });
 
-      // ── 4. Pillar nodes under this strategy ───────────────────────────────
       pillarIdSet.forEach(pillarId => {
         const pillar = CLIENT_PILLARS.find(p => p.id === pillarId);
         if (!pillar) return;
@@ -140,10 +162,15 @@ export function usePlanGraph({
             dimmed: !isActive,
           },
         });
-        edges.push(makeEdge(stratNodeId, pillarNodeId, '#6366f1'));
 
-        // ── 5. Focus Areas under this Pillar ──────────────────────────────
+        // Strategy BOTTOM → Pillar TOP
+        treeEdges.push(makeEdge(stratNodeId, pillarNodeId, '#6366f1', false, {
+          sourceHandle: 'source-bottom',
+          targetHandle: 'target',
+        }));
+
         if (isActive) {
+          // ── Focus Areas ─────────────────────────────────────────────────
           focusAreas.forEach(fa => {
             const faNodeId = `fa-${fa.id}-strat-${strategy.id}`;
             nodes.push({
@@ -152,23 +179,32 @@ export function usePlanGraph({
               position: { x: 0, y: 0 },
               data: { focusArea: fa },
             });
-            edges.push(makeEdge(pillarNodeId, faNodeId, '#14b8a6'));
+            treeEdges.push(makeEdge(pillarNodeId, faNodeId, '#14b8a6'));
           });
 
-          // ── 6. Initiatives under this Pillar+Strategy ─────────────────
+          // ── Initiatives ──────────────────────────────────────────────────
           const pillarProjects = stratProjects.filter(p => p.clientPillarId === pillarId);
           pillarProjects.forEach(proj => {
             const projNodeId = `proj-${proj.id}-strat-${strategy.id}-pillar-${pillarId}`;
             const taskCount = (proj.taskIds ?? []).length;
+
             nodes.push({
               id: projNodeId,
               type: 'planInitiative',
               position: { x: 0, y: 0 },
-              data: { project: proj, taskCount },
+              data: { project: proj, taskCount, hasGoalLink: false }, // hasGoalLink updated below
             });
-            edges.push(makeEdge(pillarNodeId, projNodeId, '#3b82f6'));
+            treeEdges.push(makeEdge(pillarNodeId, projNodeId, '#3b82f6', false, {
+              sourceHandle: 'source',
+              targetHandle: 'target-top',
+            }));
 
-            // ── 7. Tasks ───────────────────────────────────────────────
+            // Track this initiative node by project id
+            const existing = initiativeNodesByProjectId.get(proj.id) ?? [];
+            existing.push(projNodeId);
+            initiativeNodesByProjectId.set(proj.id, existing);
+
+            // ── Tasks ──────────────────────────────────────────────────
             const projectTasks = TASKS.filter(t => (proj.taskIds ?? []).includes(t.id));
             projectTasks.forEach(task => {
               const taskNodeId = `task-${task.id}-proj-${proj.id}-strat-${strategy.id}`;
@@ -178,13 +214,13 @@ export function usePlanGraph({
                 position: { x: 0, y: 0 },
                 data: { task },
               });
-              edges.push(makeEdge(projNodeId, taskNodeId, '#64748b'));
+              treeEdges.push(makeEdge(projNodeId, taskNodeId, '#64748b'));
             });
           });
         }
       });
 
-      // ── 8. Unassigned initiatives (no clientPillarId) ─────────────────────
+      // ── Unassigned initiatives ────────────────────────────────────────────
       if (isActive && unassignedProjects.length > 0) {
         const unassignedNodeId = `unassigned-pillar-strat-${strategy.id}`;
         nodes.push({
@@ -205,7 +241,10 @@ export function usePlanGraph({
             dimmed: false,
           },
         });
-        edges.push(makeEdge(stratNodeId, unassignedNodeId, '#94a3b8'));
+        treeEdges.push(makeEdge(stratNodeId, unassignedNodeId, '#94a3b8', false, {
+          sourceHandle: 'source-bottom',
+          targetHandle: 'target',
+        }));
 
         unassignedProjects.forEach(proj => {
           const projNodeId = `proj-${proj.id}-strat-${strategy.id}-unassigned`;
@@ -214,9 +253,16 @@ export function usePlanGraph({
             id: projNodeId,
             type: 'planInitiative',
             position: { x: 0, y: 0 },
-            data: { project: proj, taskCount },
+            data: { project: proj, taskCount, hasGoalLink: false },
           });
-          edges.push(makeEdge(unassignedNodeId, projNodeId, '#3b82f6'));
+          treeEdges.push(makeEdge(unassignedNodeId, projNodeId, '#3b82f6', false, {
+            sourceHandle: 'source',
+            targetHandle: 'target-top',
+          }));
+
+          const existing = initiativeNodesByProjectId.get(proj.id) ?? [];
+          existing.push(projNodeId);
+          initiativeNodesByProjectId.set(proj.id, existing);
 
           const projectTasks = TASKS.filter(t => (proj.taskIds ?? []).includes(t.id));
           projectTasks.forEach(task => {
@@ -227,101 +273,144 @@ export function usePlanGraph({
               position: { x: 0, y: 0 },
               data: { task },
             });
-            edges.push(makeEdge(projNodeId, taskNodeId, '#64748b'));
+            treeEdges.push(makeEdge(projNodeId, taskNodeId, '#64748b'));
           });
         });
       }
     });
 
-    // ── 9. Goals Branch (separate from strategies) ───────────────────────────
+    // ── 4. Goals — lateral column off strategy's LEFT handle ─────────────────
+    // Find active strategy node id
+    const activeStrategy = strategies.find(s => s.status === 'active');
+    const activeStratNodeId = activeStrategy ? `strategy-${activeStrategy.id}` : null;
+
     const goals = CLIENT_GOALS.filter(g => g.clientId === clientId);
-    if (goals.length > 0) {
-      const goalsGroupId = 'goals-group';
+
+    // Set of initiative node IDs that have goal cross-refs (to enable their left handle)
+    const initiativeNodesWithGoalLink = new Set<string>();
+
+    goals.forEach(goal => {
+      const goalNodeId = `goal-${goal.id}`;
       nodes.push({
-        id: goalsGroupId,
+        id: goalNodeId,
         type: 'planGoal',
         position: { x: 0, y: 0 },
-        data: {
-          goal: {
-            id: '__goals_group__',
-            clientId,
-            title: 'Goals',
-            description: null,
-            targetMetric: null,
-            status: 'active' as const,
-            createdAt: '',
-            updatedAt: '',
-          },
-          isGroupHeader: true,
-        },
+        data: { goal },
       });
-      edges.push(makeEdge('root', goalsGroupId, '#d97706'));
 
-      goals.forEach(goal => {
-        const goalNodeId = `goal-${goal.id}`;
-        nodes.push({
-          id: goalNodeId,
-          type: 'planGoal',
-          position: { x: 0, y: 0 },
-          data: { goal },
+      // Strategy LEFT → Goal LEFT (horizontal edge going left)
+      if (activeStratNodeId) {
+        treeEdges.push(makeEdge(activeStratNodeId, goalNodeId, '#d97706', false, {
+          sourceHandle: 'source-left',
+          targetHandle: 'target-left',
+        }));
+      }
+
+      // ── Cross-reference edges: Goal RIGHT → Initiative LEFT ───────────────
+      // Find which initiatives this goal drives:
+      // 1. Via goal_pillar_links → pillars → projects under those pillars in active strategy
+      const linkedPillarIds = GOAL_PILLAR_LINKS
+        .filter(l => l.goalId === goal.id)
+        .map(l => l.pillarId);
+
+      const drivenProjectIds = new Set<string>();
+
+      if (activeStrategy) {
+        PROJECTS
+          .filter(p =>
+            p.clientId === clientId &&
+            p.strategyId === activeStrategy.id &&
+            p.clientPillarId &&
+            linkedPillarIds.includes(p.clientPillarId),
+          )
+          .forEach(p => drivenProjectIds.add(p.id));
+      }
+
+      // 2. Also via outcomes.initiative_id
+      OUTCOMES
+        .filter(o => o.goalId === goal.id && o.clientId === clientId && o.initiativeId)
+        .forEach(o => {
+          if (o.initiativeId) drivenProjectIds.add(o.initiativeId);
         });
-        edges.push(makeEdge(goalsGroupId, goalNodeId, '#d97706'));
 
-        // Dashed cross-edges to linked pillars (appear under any strategy)
-        const linkedPillarIds = GOAL_PILLAR_LINKS.filter(l => l.goalId === goal.id).map(l => l.pillarId);
-        linkedPillarIds.forEach(pid => {
-          // Find the first pillar node ID that matches this pillar (from active strategy preferably)
-          const pillarNode = nodes.find(n =>
-            n.type === 'planPillar' &&
-            (n.data as any)?.pillar?.id === pid &&
-            !String(n.id).includes('unassigned'),
+      // Create dashed cross-ref edges for each driven project
+      drivenProjectIds.forEach(projId => {
+        const projNodeIds = initiativeNodesByProjectId.get(projId) ?? [];
+        projNodeIds.forEach(projNodeId => {
+          initiativeNodesWithGoalLink.add(projNodeId);
+          crossRefEdges.push(makeEdge(goalNodeId, projNodeId, '#d97706', true, {
+            sourceHandle: 'source-right',
+            targetHandle: 'target-left',
+            crossRef: true,
+          }));
+        });
+      });
+
+      // ── Outcomes below this goal ──────────────────────────────────────────
+      const outcomes = OUTCOMES.filter(o => o.goalId === goal.id && o.clientId === clientId);
+      outcomes.forEach(outcome => {
+        const outcomeNodeId = `outcome-${outcome.id}`;
+        goalParentMap.set(outcomeNodeId, goalNodeId);
+
+        nodes.push({
+          id: outcomeNodeId,
+          type: 'planOutcome',
+          position: { x: 0, y: 0 },
+          data: { outcome },
+        });
+
+        // Solid edge goal → outcome (vertical, within goal column)
+        treeEdges.push(makeEdge(goalNodeId, outcomeNodeId, '#10b981'));
+
+        // Dashed traceability: outcome → linked initiative
+        if (outcome.initiativeId) {
+          const projNodeIds = initiativeNodesByProjectId.get(outcome.initiativeId) ?? [];
+          projNodeIds.forEach(projNodeId => {
+            crossRefEdges.push(makeEdge(outcomeNodeId, projNodeId, '#10b981', true, {
+              crossRef: true,
+            }));
+          });
+        }
+
+        // Dashed traceability: outcome → linked pillar
+        if (outcome.pillarId && activeStrategy) {
+          const pillarNode = nodes.find(
+            n =>
+              n.type === 'planPillar' &&
+              (n.data as Record<string, unknown> & { pillar?: { id?: string } })?.pillar?.id === outcome.pillarId &&
+              !String(n.id).includes('unassigned'),
           );
           if (pillarNode) {
-            edges.push(makeEdge(goalNodeId, pillarNode.id, '#d97706', true));
+            crossRefEdges.push(makeEdge(outcomeNodeId, pillarNode.id, '#10b981', true, {
+              crossRef: true,
+            }));
           }
-        });
-
-        // ── 10. Outcomes ───────────────────────────────────────────────────
-        const outcomes = OUTCOMES.filter(o => o.goalId === goal.id && o.clientId === clientId);
-        outcomes.forEach(outcome => {
-          const outcomeNodeId = `outcome-${outcome.id}`;
-          nodes.push({
-            id: outcomeNodeId,
-            type: 'planOutcome',
-            position: { x: 0, y: 0 },
-            data: { outcome },
-          });
-          edges.push(makeEdge(goalNodeId, outcomeNodeId, '#10b981'));
-
-          // Dashed traceability edge to linked initiative
-          if (outcome.initiativeId) {
-            const projNode = nodes.find(
-              n =>
-                n.type === 'planInitiative' &&
-                (n.data as any)?.project?.id === outcome.initiativeId,
-            );
-            if (projNode) {
-              edges.push(makeEdge(outcomeNodeId, projNode.id, '#10b981', true));
-            }
-          }
-
-          // Dashed edge to linked pillar
-          if (outcome.pillarId) {
-            const pillarNode = nodes.find(
-              n =>
-                n.type === 'planPillar' &&
-                (n.data as any)?.pillar?.id === outcome.pillarId &&
-                !String(n.id).includes('unassigned'),
-            );
-            if (pillarNode) {
-              edges.push(makeEdge(outcomeNodeId, pillarNode.id, '#10b981', true));
-            }
-          }
-        });
+        }
       });
-    }
+    });
 
-    return layoutPlanGraph(nodes, edges);
+    // Patch hasGoalLink on initiative nodes that have cross-refs
+    initiativeNodesWithGoalLink.forEach(nodeId => {
+      const idx = nodes.findIndex(n => n.id === nodeId);
+      if (idx !== -1) {
+        nodes[idx] = {
+          ...nodes[idx],
+          data: { ...nodes[idx].data, hasGoalLink: true },
+        };
+      }
+    });
+
+    // ── Pass 1+2 layout, then add cross-ref edges (Pass 3) ─────────────────
+    const { nodes: laidOutNodes, edges: laidOutEdges } = layoutPlanGraph(
+      nodes,
+      treeEdges,
+      goalParentMap,
+    );
+
+    return {
+      nodes: laidOutNodes,
+      edges: [...laidOutEdges, ...crossRefEdges],
+    };
   }, [
     clientId,
     clientName,

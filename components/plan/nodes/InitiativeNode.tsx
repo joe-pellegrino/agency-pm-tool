@@ -6,6 +6,7 @@ import type { Project } from '@/lib/data';
 interface InitiativeNodeData {
   project: Project;
   taskCount: number;
+  hasGoalLink?: boolean;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -16,11 +17,18 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export function InitiativeNode({ data }: { data: InitiativeNodeData }) {
-  const { project, taskCount } = data;
+  const { project, taskCount, hasGoalLink } = data;
   const progress = project.progress ?? 0;
   return (
     <div className="px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 min-w-[180px] shadow-sm select-none">
-      <Handle type="target" position={Position.Top} id="target" className="!w-3 !h-3 !bg-blue-300" />
+      {/* TOP handle — target from pillar (vertical tree) */}
+      <Handle type="target" position={Position.Top} id="target-top" className="!w-3 !h-3 !bg-blue-300" />
+
+      {/* LEFT handle — optional target from goal right handle (cross-reference) */}
+      {hasGoalLink && (
+        <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-amber-400" />
+      )}
+
       <div className="font-semibold text-sm text-blue-900 leading-tight text-center">{project.name}</div>
       <div className="flex items-center justify-center gap-1.5 mt-1.5">
         <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${STATUS_STYLES[project.status] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -38,7 +46,9 @@ export function InitiativeNode({ data }: { data: InitiativeNodeData }) {
         />
       </div>
       <div className="text-[10px] text-blue-400 text-right mt-0.5">{progress}%</div>
-      <Handle type="source" position={Position.Bottom} id="source" className="!w-3 !h-3 !bg-blue-300" />
+
+      {/* BOTTOM handle — source to tasks */}
+      <Handle type="source" position={Position.Bottom} id="source-bottom" className="!w-3 !h-3 !bg-blue-300" />
     </div>
   );
 }
