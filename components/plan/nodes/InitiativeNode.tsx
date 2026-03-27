@@ -24,10 +24,8 @@ export function InitiativeNode({ data }: { data: InitiativeNodeData }) {
       {/* TOP handle — target from pillar (vertical tree) */}
       <Handle type="target" position={Position.Top} id="target-top" className="!w-3 !h-3 !bg-blue-300" />
 
-      {/* LEFT handle — optional target from goal right handle (cross-reference) */}
-      {hasGoalLink && (
-        <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-amber-400" />
-      )}
+      {/* LEFT handle — always visible, target from goal right handle (cross-reference) */}
+      <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-amber-400" />
 
       <div className="font-semibold text-sm text-blue-900 leading-tight text-center">{project.name}</div>
       <div className="flex items-center justify-center gap-1.5 mt-1.5">
