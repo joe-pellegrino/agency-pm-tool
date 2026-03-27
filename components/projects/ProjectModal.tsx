@@ -79,7 +79,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
 
     startTransition(async () => {
       try {
-        if (project) {
+        if (project?.id) {
           await updateProject(project.id, {
             name: form.name,
             description: form.description,
