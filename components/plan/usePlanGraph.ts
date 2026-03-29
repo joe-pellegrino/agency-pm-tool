@@ -173,7 +173,21 @@ export function usePlanGraph({
         }));
 
         if (isActive) {
-          // ── Focus Areas ─────────────────────────────────────────────────
+          // ── Get all projects for this pillar ─────────────────────────────
+          const pillarProjects = stratProjects.filter(p => p.clientPillarId === pillarId);
+
+          // ── Group initiatives by focusAreaId ────────────────────────────
+          const initiativesByFocusAreaId = new Map<string | null, Project[]>();
+          
+          pillarProjects.forEach(proj => {
+            const faId = proj.focusAreaId ?? null;
+            if (!initiativesByFocusAreaId.has(faId)) {
+              initiativesByFocusAreaId.set(faId, []);
+            }
+            initiativesByFocusAreaId.get(faId)!.push(proj);
+          });
+
+          // ── Create focus area nodes and their initiatives ────────────────
           focusAreas.forEach(fa => {
             const faNodeId = `fa-${fa.id}-strat-${strategy.id}`;
             nodes.push({
@@ -182,12 +196,50 @@ export function usePlanGraph({
               position: { x: 0, y: 0 },
               data: { focusArea: fa },
             });
+            // Pillar → Focus Area
             treeEdges.push(makeEdge(pillarNodeId, faNodeId, '#14b8a6'));
+
+            // ── Initiatives UNDER this focus area ────────────────────────
+            const initiativesInFA = initiativesByFocusAreaId.get(fa.id) ?? [];
+            initiativesInFA.forEach(proj => {
+              const projNodeId = `proj-${proj.id}-strat-${strategy.id}-pillar-${pillarId}`;
+              const taskCount = (proj.taskIds ?? []).length;
+
+              nodes.push({
+                id: projNodeId,
+                type: 'planInitiative',
+                position: { x: 0, y: 0 },
+                data: { project: proj, taskCount, hasGoalLink: false },
+              });
+              // Focus Area → Initiative
+              treeEdges.push(makeEdge(faNodeId, projNodeId, '#3b82f6', false, {
+                sourceHandle: 'source',
+                targetHandle: 'target-top',
+              }));
+
+              // Track this initiative node by project id
+              const existing = initiativeNodesByProjectId.get(proj.id) ?? [];
+              existing.push(projNodeId);
+              initiativeNodesByProjectId.set(proj.id, existing);
+
+              // ── Tasks ──────────────────────────────────────────────────
+              const projectTasks = TASKS.filter(t => (proj.taskIds ?? []).includes(t.id));
+              projectTasks.forEach(task => {
+                const taskNodeId = `task-${task.id}-proj-${proj.id}-strat-${strategy.id}`;
+                nodes.push({
+                  id: taskNodeId,
+                  type: 'planTask',
+                  position: { x: 0, y: 0 },
+                  data: { task },
+                });
+                treeEdges.push(makeEdge(projNodeId, taskNodeId, '#64748b'));
+              });
+            });
           });
 
-          // ── Initiatives ──────────────────────────────────────────────────
-          const pillarProjects = stratProjects.filter(p => p.clientPillarId === pillarId);
-          pillarProjects.forEach(proj => {
+          // ── Initiatives WITHOUT a focus area (direct pillar children) ────
+          const initiativesWithoutFA = initiativesByFocusAreaId.get(null) ?? [];
+          initiativesWithoutFA.forEach(proj => {
             const projNodeId = `proj-${proj.id}-strat-${strategy.id}-pillar-${pillarId}`;
             const taskCount = (proj.taskIds ?? []).length;
 
@@ -195,8 +247,9 @@ export function usePlanGraph({
               id: projNodeId,
               type: 'planInitiative',
               position: { x: 0, y: 0 },
-              data: { project: proj, taskCount, hasGoalLink: false }, // hasGoalLink updated below
+              data: { project: proj, taskCount, hasGoalLink: false },
             });
+            // Pillar → Initiative (direct, when no focus area)
             treeEdges.push(makeEdge(pillarNodeId, projNodeId, '#3b82f6', false, {
               sourceHandle: 'source',
               targetHandle: 'target-top',

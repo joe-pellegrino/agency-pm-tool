@@ -149,6 +149,18 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
         throw new Error('Could not parse goal-pillar link');
       }
 
+      // --- focus area → initiative edge: set focusAreaId = null ---
+      if (sourceId.startsWith('fa-') && edge.target?.startsWith('proj-')) {
+        const projIdMatch = edge.target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
+        if (projIdMatch) {
+          const projectId = projIdMatch[1];
+          await updateProject(projectId, { focusAreaId: null });
+          refresh?.();
+          return;
+        }
+        throw new Error('Could not parse focus-area-initiative link');
+      }
+
       // --- pillar → initiative edge: set clientPillarId = null ---
       if (sourceId.includes('pillar-') && edge.target?.startsWith('proj-')) {
         const projIdMatch = edge.target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/);
@@ -253,15 +265,19 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
 
       // Valid snap pairs (approved):
       // 1. strategy → goal
-      // 2. pillar → initiative (project)
-      // 3. strategy → initiative (project)
-      // 4. initiative → task (project)
-      // 5. goal → initiative (via pillar link)
-      // 6. goal → outcome
+      // 2. pillar → focus area (derived, not user-created)
+      // 3. focus area → initiative (sets focusAreaId on project)
+      // 4. pillar → initiative (for initiatives without focus area, sets clientPillarId)
+      // 5. strategy → initiative (project)
+      // 6. initiative → task (project)
+      // 7. goal → initiative (via pillar link)
+      // 8. goal → outcome
       
       // Invalid pairs (reject):
       // - goal → task
       // - strategy → pillar
+      // - pillar → focus area (derived from focusArea.pillarId)
+      // - focus area → task (must go through initiative)
       // - pillar → task
       // - outcome → anything
       // - anything → outcome (except goal)
@@ -270,6 +286,7 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
       const sourceIsStrategy = sourceNodeId.startsWith('strategy-');
       const sourceIsGoal = sourceNodeId.startsWith('goal-');
       const sourceIsPillar = sourceNodeId.includes('pillar-') && !sourceNodeId.includes('unassigned');
+      const sourceIsFocusArea = sourceNodeId.startsWith('fa-');
       const sourceIsInitiative = sourceNodeId.startsWith('proj-');
       const sourceIsTask = sourceNodeId.startsWith('task-');
       const sourceIsOutcome = sourceNodeId.startsWith('outcome-');
@@ -277,6 +294,7 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
       const targetIsStrategy = targetNodeId.startsWith('strategy-');
       const targetIsGoal = targetNodeId.startsWith('goal-');
       const targetIsPillar = targetNodeId.includes('pillar-') && !targetNodeId.includes('unassigned');
+      const targetIsFocusArea = targetNodeId.startsWith('fa-');
       const targetIsInitiative = targetNodeId.startsWith('proj-');
       const targetIsTask = targetNodeId.startsWith('task-');
       const targetIsOutcome = targetNodeId.startsWith('outcome-');
@@ -290,7 +308,13 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
       // Valid: strategy → goal
       if (sourceIsStrategy && targetIsGoal) return true;
 
-      // Valid: pillar → initiative
+      // Invalid: pillar → focus area (derived from focusArea.pillarId, not user-created)
+      if (sourceIsPillar && targetIsFocusArea) return false;
+
+      // Valid: focus area → initiative (sets focusAreaId on project)
+      if (sourceIsFocusArea && targetIsInitiative) return true;
+
+      // Valid: pillar → initiative (when initiative has no focus area, sets clientPillarId)
       if (sourceIsPillar && targetIsInitiative) return true;
 
       // Valid: strategy → initiative
@@ -310,6 +334,9 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
 
       // Invalid: strategy → pillar (direct; must use initiatives)
       if (sourceIsStrategy && targetIsPillar) return false;
+
+      // Invalid: focus area → task (must go through initiative)
+      if (sourceIsFocusArea && targetIsTask) return false;
 
       // Invalid: pillar → task (direct; must use initiatives)
       if (sourceIsPillar && targetIsTask) return false;
@@ -375,6 +402,24 @@ function PlanModeInner({ clientId, clientName, onClose }: PlanModeProps) {
               setEdges(prev => prev.filter(e => e.id !== edgeId));
               alert('Failed to create connection. Please try again.');
             });
+          return;
+        }
+
+        // ─── focus area → initiative (sets focusAreaId) ───────────────────
+        if (source.startsWith('fa-') && target.startsWith('proj-')) {
+          const focusAreaId = extractIdFromNodeId(source, /^fa-([^-]+(?:-[^-]+)*?)-strat-/) ?? source.match(/^fa-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
+          const projectId = extractIdFromNodeId(target, /^proj-([^-]+(?:-[^-]+)*?)-strat-/) ?? target.match(/^proj-([^-]+(?:-[^-]+)*?)-strat-/)?.[1];
+
+          if (focusAreaId && projectId) {
+            updateProject(projectId, { focusAreaId })
+              .then(() => {
+                refresh?.();
+              })
+              .catch(err => {
+                console.error('[PlanMode] Failed to set focus area on initiative:', err);
+                alert('Failed to create connection. Please try again.');
+              });
+          }
           return;
         }
 

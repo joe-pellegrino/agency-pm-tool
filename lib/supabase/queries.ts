@@ -301,6 +301,7 @@ function toProject(r: Row, taskIds: string[]): Project {
     strategyId: r.strategy_id as string | undefined,
     pillarId: r.pillar_id as string | undefined,
     clientPillarId: (r.client_pillar_id as string) || null,
+    focusAreaId: (r.focus_area_id as string) || null,
     name: r.name as string,
     description: r.description as string,
     status: r.status as Project['status'],

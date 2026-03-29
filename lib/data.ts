@@ -1298,6 +1298,7 @@ export interface Project {
   strategyId?: string;
   pillarId?: string;
   clientPillarId?: string | null;
+  focusAreaId?: string | null;
   name: string;
   description: string;
   status: 'planning' | 'active' | 'complete' | 'on-hold';

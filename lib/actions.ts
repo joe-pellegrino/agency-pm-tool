@@ -394,6 +394,7 @@ export async function createProject(data: {
   strategyId?: string;
   pillarId?: string;
   clientPillarId?: string | null;
+  focusAreaId?: string | null;
   type?: string;
 }) {
   const id = `proj-${Date.now()}`;
@@ -412,6 +413,7 @@ export async function createProject(data: {
       strategy_id: data.strategyId || null,
       pillar_id: data.pillarId || null,
       client_pillar_id: data.clientPillarId || null,
+      focus_area_id: data.focusAreaId || null,
       type: data.type ?? 'Project',
     });
   if (error) throw new Error(error.message);
@@ -430,6 +432,7 @@ export async function updateProject(id: string, data: Partial<{
   strategyId: string;
   pillarId: string;
   clientPillarId: string | null;
+  focusAreaId: string | null;
   type: string;
 }>) {
   const update: Record<string, unknown> = {};
@@ -443,6 +446,7 @@ export async function updateProject(id: string, data: Partial<{
   if (data.strategyId !== undefined) update.strategy_id = data.strategyId;
   if (data.pillarId !== undefined) update.pillar_id = data.pillarId;
   if (data.clientPillarId !== undefined) update.client_pillar_id = data.clientPillarId;
+  if (data.focusAreaId !== undefined) update.focus_area_id = data.focusAreaId;
   if (data.type !== undefined) update.type = data.type;
   const { data: existingProj } = data.status
     ? await db().from('projects').select('status').eq('id', id).single()

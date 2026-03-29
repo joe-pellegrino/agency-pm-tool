@@ -24,6 +24,7 @@ export function FocusAreaNode({ data }: { data: FocusAreaNodeData }) {
           {focusArea.status}
         </span>
       </div>
+      <Handle type="source" position={Position.Bottom} id="source" className="!w-3 !h-3 !bg-teal-300" />
     </div>
   );
 }
