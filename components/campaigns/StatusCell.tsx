@@ -80,7 +80,7 @@ export default function StatusCell({ status, onChange, readOnly = false }: Statu
       {open && (
         <div style={{
           position: 'absolute',
-          top: 'calc(100% + 4px)',
+          bottom: 'calc(100% + 4px)',
           left: 0,
           zIndex: 50,
           backgroundColor: '#FFFFFF',
@@ -89,9 +89,19 @@ export default function StatusCell({ status, onChange, readOnly = false }: Statu
           boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
           minWidth: '140px',
           overflow: 'hidden',
+          padding: '2px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1px',
         }}>
           {ALL_STATUSES.map(s => {
             const c = STATUS_CONFIG[s];
+            const baseColor = c.bg;
+            const textColor = c.text;
+            const hoverColor = s === status 
+              ? baseColor 
+              : `rgba(${parseInt(baseColor.slice(1, 3), 16)}, ${parseInt(baseColor.slice(3, 5), 16)}, ${parseInt(baseColor.slice(5, 7), 16)}, 0.7)`;
+            
             return (
               <button
                 key={s}
@@ -99,34 +109,36 @@ export default function StatusCell({ status, onChange, readOnly = false }: Statu
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '6px',
                   width: '100%',
                   padding: '8px 12px',
-                  border: 'none',
-                  backgroundColor: s === status ? '#F9FAFB' : 'transparent',
+                  border: s === status ? `1.5px solid ${textColor}` : 'none',
+                  backgroundColor: baseColor,
                   cursor: 'pointer',
                   textAlign: 'left',
                   fontSize: '13px',
-                  color: '#111827',
-                  transition: 'background-color 0.1s',
-                }}
-                onMouseEnter={e => { if (s !== status) (e.currentTarget as HTMLElement).style.backgroundColor = '#F9FAFB'; }}
-                onMouseLeave={e => { if (s !== status) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
-              >
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
                   fontWeight: 600,
-                  backgroundColor: c.bg,
-                  color: c.text,
-                }}>
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: c.dot }} />
-                  {c.label}
-                </span>
+                  color: textColor,
+                  transition: 'all 0.1s',
+                  borderRadius: '4px',
+                }}
+                onMouseEnter={e => {
+                  const btn = e.currentTarget as HTMLElement;
+                  if (s !== status) {
+                    btn.style.opacity = '0.8';
+                    btn.style.transform = 'scale(0.98)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  const btn = e.currentTarget as HTMLElement;
+                  if (s !== status) {
+                    btn.style.opacity = '1';
+                    btn.style.transform = 'scale(1)';
+                  }
+                }}
+              >
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: c.dot, flexShrink: 0 }} />
+                {c.label}
               </button>
             );
           })}
