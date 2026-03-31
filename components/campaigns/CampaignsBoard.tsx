@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Campaign, Client, TeamMember } from '@/lib/data';
+import type { Project, Client } from '@/lib/data';
 import { useAppData } from '@/lib/contexts/AppDataContext';
 import CampaignGroup from './CampaignGroup';
 import CampaignDrawer from './CampaignDrawer';
@@ -10,25 +10,20 @@ import NewCampaignModal from './NewCampaignModal';
 import { Megaphone } from 'lucide-react';
 
 const TABLE_COLUMNS = [
-  { key: 'name',     label: 'Campaign',  sticky: true,  width: 260 },
-  { key: 'status',   label: 'Status',    sticky: false, width: 130 },
-  { key: 'platform', label: 'Platform',  sticky: false, width: 100 },
-  { key: 'owner',    label: 'Owner',     sticky: false, width: 130 },
-  { key: 'priority', label: 'Priority',  sticky: false, width: 100 },
-  { key: 'startDate',label: 'Start',     sticky: false, width: 110 },
-  { key: 'endDate',  label: 'End',       sticky: false, width: 110 },
-  { key: 'budget',   label: 'Budget',    sticky: false, width: 110, align: 'right' as const },
-  { key: 'spend',    label: 'Spend',     sticky: false, width: 100, align: 'right' as const },
-  { key: 'results',  label: 'Results',   sticky: false, width: 90,  align: 'right' as const },
-  { key: 'roas',     label: 'ROAS',      sticky: false, width: 80,  align: 'right' as const },
+  { key: 'name',      label: 'Campaign',  sticky: true,  width: 280 },
+  { key: 'status',    label: 'Status',    sticky: false, width: 130 },
+  { key: 'startDate', label: 'Start',     sticky: false, width: 110 },
+  { key: 'endDate',   label: 'End',       sticky: false, width: 110 },
+  { key: 'progress',  label: 'Progress',  sticky: false, width: 160 },
+  { key: 'tasks',     label: 'Tasks',     sticky: false, width: 80, align: 'right' as const },
 ];
 
 export default function CampaignsBoard() {
-  const { CAMPAIGNS = [], CLIENTS = [], TEAM_MEMBERS = [], loading, error } = useAppData();
+  const { PROJECTS = [], CLIENTS = [], loading, error } = useAppData();
 
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [localProjects, setLocalProjects] = useState<Project[]>([]);
   const [initialized, setInitialized] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
@@ -36,38 +31,39 @@ export default function CampaignsBoard() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  // Sync campaigns from AppData on first load
-  if (!initialized && CAMPAIGNS.length >= 0 && !loading) {
-    setCampaigns(CAMPAIGNS);
+  // Sync from AppData on first load — filter projects where type='campaign'
+  if (!initialized && !loading) {
+    const campaigns = PROJECTS.filter(p => p.type === 'campaign');
+    setLocalProjects(campaigns);
     setInitialized(true);
   }
 
-  const handleUpdated = (updated: Campaign) => {
-    setCampaigns(prev => prev.map(c => c.id === updated.id ? updated : c));
-    if (selectedCampaign?.id === updated.id) setSelectedCampaign(updated);
+  const handleUpdated = (updated: Project) => {
+    setLocalProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
+    if (selectedProject?.id === updated.id) setSelectedProject(updated);
   };
 
-  const handleCreated = (created: Campaign) => {
-    setCampaigns(prev => [created, ...prev]);
+  const handleCreated = (created: Project) => {
+    setLocalProjects(prev => [created, ...prev]);
   };
 
   const handleDeleted = (id: string) => {
-    setCampaigns(prev => prev.filter(c => c.id !== id));
+    setLocalProjects(prev => prev.filter(p => p.id !== id));
   };
 
-  // Filter campaigns
+  // Filter projects
   const filtered = useMemo(() => {
-    let list = campaigns;
+    let list = localProjects;
 
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(c => c.name.toLowerCase().includes(q));
+      list = list.filter(p => p.name.toLowerCase().includes(q));
     }
     if (selectedClientIds.length > 0) {
-      list = list.filter(c => selectedClientIds.includes(c.clientId));
+      list = list.filter(p => selectedClientIds.includes(p.clientId));
     }
     if (selectedStatuses.length > 0) {
-      list = list.filter(c => selectedStatuses.includes(c.status));
+      list = list.filter(p => selectedStatuses.includes(p.status));
     }
     if (sortKey) {
       list = [...list].sort((a, b) => {
@@ -77,37 +73,37 @@ export default function CampaignsBoard() {
         else if (sortKey === 'status') { av = a.status; bv = b.status; }
         else if (sortKey === 'startDate') { av = a.startDate ?? ''; bv = b.startDate ?? ''; }
         else if (sortKey === 'endDate') { av = a.endDate ?? ''; bv = b.endDate ?? ''; }
-        else if (sortKey === 'budget') { av = a.totalBudget ?? 0; bv = b.totalBudget ?? 0; }
+        else if (sortKey === 'progress') { av = a.progress ?? 0; bv = b.progress ?? 0; }
         const cmp = av < bv ? -1 : av > bv ? 1 : 0;
         return sortDir === 'asc' ? cmp : -cmp;
       });
     }
     return list;
-  }, [campaigns, search, selectedClientIds, selectedStatuses, sortKey, sortDir]);
+  }, [localProjects, search, selectedClientIds, selectedStatuses, sortKey, sortDir]);
 
   // Group by client
   const groups = useMemo(() => {
-    const map = new Map<string, Campaign[]>();
-    for (const c of filtered) {
-      if (!map.has(c.clientId)) map.set(c.clientId, []);
-      map.get(c.clientId)!.push(c);
+    const map = new Map<string, Project[]>();
+    for (const p of filtered) {
+      if (!map.has(p.clientId)) map.set(p.clientId, []);
+      map.get(p.clientId)!.push(p);
     }
     return map;
   }, [filtered]);
 
-  // Determine which clients to show (those that appear in the filtered campaigns)
+  // Which clients appear in filtered results
   const activeClients = useMemo(() => {
     return CLIENTS.filter(c => groups.has(c.id));
   }, [CLIENTS, groups]);
 
-  // Also include clients with no campaigns if no filter is active
+  // Show all clients when no filter active (so groups can show empty state)
   const groupClients = useMemo(() => {
     if (selectedClientIds.length > 0 || search.trim() || selectedStatuses.length > 0) {
       return activeClients;
     }
-    // Show all clients (even empty ones)
-    return CLIENTS;
-  }, [CLIENTS, activeClients, selectedClientIds, search, selectedStatuses]);
+    // Only show clients that have at least one campaign
+    return CLIENTS.filter(c => localProjects.some(p => p.clientId === c.id));
+  }, [CLIENTS, activeClients, localProjects, selectedClientIds, search, selectedStatuses]);
 
   const handleSortClick = (key: string) => {
     if (sortKey === key) {
@@ -153,8 +149,8 @@ export default function CampaignsBoard() {
     );
   }
 
-  const totalCount = campaigns.length;
-  const activeCount = campaigns.filter(c => c.status === 'active').length;
+  const totalCount = localProjects.length;
+  const activeCount = localProjects.filter(p => p.status === 'active').length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -191,7 +187,7 @@ export default function CampaignsBoard() {
           )}
         </div>
         <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>
-          Track and manage all client campaigns in one place
+          Initiatives of type &ldquo;campaign&rdquo; — tracked and managed in one place
         </p>
       </div>
 
@@ -273,7 +269,7 @@ export default function CampaignsBoard() {
                     No campaigns yet
                   </p>
                   <p style={{ fontSize: '13px', color: '#9CA3AF', margin: 0 }}>
-                    Click &ldquo;New Campaign&rdquo; to create your first campaign.
+                    Click &ldquo;New Campaign&rdquo; to create your first campaign initiative.
                   </p>
                 </td>
               </tr>
@@ -283,11 +279,10 @@ export default function CampaignsBoard() {
               <CampaignGroup
                 key={client.id}
                 client={client}
-                campaigns={groups.get(client.id) ?? []}
+                projects={groups.get(client.id) ?? []}
                 allClients={CLIENTS}
-                teamMembers={TEAM_MEMBERS}
                 colorIndex={index}
-                onCampaignClick={setSelectedCampaign}
+                onCampaignClick={setSelectedProject}
                 onUpdated={handleUpdated}
                 onCreated={handleCreated}
               />
@@ -297,12 +292,11 @@ export default function CampaignsBoard() {
       </div>
 
       {/* Detail Drawer */}
-      {selectedCampaign && (
+      {selectedProject && (
         <CampaignDrawer
-          campaign={selectedCampaign}
+          project={selectedProject}
           clients={CLIENTS}
-          teamMembers={TEAM_MEMBERS}
-          onClose={() => setSelectedCampaign(null)}
+          onClose={() => setSelectedProject(null)}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
         />

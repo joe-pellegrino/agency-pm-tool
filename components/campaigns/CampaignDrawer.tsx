@@ -1,66 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Campaign, Client, TeamMember } from '@/lib/data';
-import { updateCampaign, deleteCampaign } from '@/lib/actions-campaigns';
-import StatusCell from './StatusCell';
-import { X, Trash2, ExternalLink, Calendar, DollarSign, Target, BarChart3, Tag, StickyNote } from 'lucide-react';
-
-const PLATFORM_LABEL: Record<string, string> = {
-  meta: 'Meta Ads',
-  google_ads: 'Google Ads',
-  email: 'Email',
-  organic: 'Organic',
-  tiktok: 'TikTok',
-  linkedin: 'LinkedIn',
-  other: 'Other',
-};
-
-const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
-  low:    { label: 'Low',    color: '#3B82F6' },
-  medium: { label: 'Medium', color: '#F59E0B' },
-  high:   { label: 'High',   color: '#EF4444' },
-  urgent: { label: 'Urgent', color: '#DC2626' },
-};
+import type { Project, Client } from '@/lib/data';
+import { updateProject, archiveProject } from '@/lib/actions';
+import StatusCell, { type ProjectStatus } from './StatusCell';
+import { X, Trash2, Calendar, Target, BarChart3, StickyNote } from 'lucide-react';
 
 interface CampaignDrawerProps {
-  campaign: Campaign | null;
+  project: Project | null;
   clients: Client[];
-  teamMembers: TeamMember[];
   onClose: () => void;
-  onUpdated: (updated: Campaign) => void;
+  onUpdated: (updated: Project) => void;
   onDeleted: (id: string) => void;
 }
 
 export default function CampaignDrawer({
-  campaign,
+  project,
   clients,
-  teamMembers,
   onClose,
   onUpdated,
   onDeleted,
 }: CampaignDrawerProps) {
-  const [editing, setEditing] = useState<Partial<Campaign>>({});
+  const [editing, setEditing] = useState<Partial<Project>>({});
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   useEffect(() => {
-    if (campaign) setEditing({});
-  }, [campaign?.id]);
+    if (project) setEditing({});
+  }, [project?.id]);
 
-  if (!campaign) return null;
+  if (!project) return null;
 
-  const merged = { ...campaign, ...editing };
+  const merged = { ...project, ...editing };
   const client = clients.find(c => c.id === merged.clientId);
-  const owner = teamMembers.find(m => m.id === merged.ownerId);
-  const priorityCfg = PRIORITY_CONFIG[merged.priority] ?? PRIORITY_CONFIG.medium;
 
   const handleSave = async () => {
     if (Object.keys(editing).length === 0) return;
     setSaving(true);
     try {
-      const updated = await updateCampaign({ id: campaign.id, ...editing });
-      onUpdated(updated);
+      await updateProject(project.id, {
+        name: editing.name,
+        description: editing.description,
+        status: editing.status,
+        startDate: editing.startDate,
+        endDate: editing.endDate,
+        progress: editing.progress,
+      });
+      onUpdated({ ...project, ...editing });
       setEditing({});
     } catch (err) {
       console.error('Failed to update campaign:', err);
@@ -69,17 +55,17 @@ export default function CampaignDrawer({
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`Delete campaign "${campaign.name}"? This cannot be undone.`)) return;
-    setDeleting(true);
+  const handleArchive = async () => {
+    if (!confirm(`Archive campaign "${project.name}"? It will be moved to the archive.`)) return;
+    setArchiving(true);
     try {
-      await deleteCampaign(campaign.id);
-      onDeleted(campaign.id);
+      await archiveProject(project.id);
+      onDeleted(project.id);
       onClose();
     } catch (err) {
-      console.error('Failed to delete campaign:', err);
+      console.error('Failed to archive campaign:', err);
     } finally {
-      setDeleting(false);
+      setArchiving(false);
     }
   };
 
@@ -122,7 +108,7 @@ export default function CampaignDrawer({
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <input
-              value={editing.name ?? campaign.name}
+              value={editing.name ?? project.name}
               onChange={e => setEditing(prev => ({ ...prev, name: e.target.value }))}
               style={{
                 width: '100%',
@@ -139,24 +125,20 @@ export default function CampaignDrawer({
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
               <StatusCell
-                status={merged.status}
+                status={(merged.status as ProjectStatus) ?? 'planning'}
                 onChange={s => setEditing(prev => ({ ...prev, status: s }))}
               />
-              <span style={{
-                fontSize: '12px',
-                color: '#9CA3AF',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}>
+              {client && (
                 <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: priorityCfg.color,
-                }} />
-                {priorityCfg.label} priority
-              </span>
+                  fontSize: '12px',
+                  color: '#9CA3AF',
+                  backgroundColor: '#F3F4F6',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                }}>
+                  {client.name}
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -191,32 +173,32 @@ export default function CampaignDrawer({
               </span>
             </DrawerField>
 
-            <DrawerField label="Platform" icon={<BarChart3 size={14} />}>
-              <select
-                value={editing.platform ?? campaign.platform}
-                onChange={e => setEditing(prev => ({ ...prev, platform: e.target.value as Campaign['platform'] }))}
-                style={{
-                  fontSize: '14px',
-                  color: '#111827',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '4px 8px',
-                  backgroundColor: '#FFFFFF',
-                  cursor: 'pointer',
-                  width: '100%',
-                }}
-              >
-                {Object.entries(PLATFORM_LABEL).map(([val, lbl]) => (
-                  <option key={val} value={val}>{lbl}</option>
-                ))}
-              </select>
+            <DrawerField label="Progress" icon={<BarChart3 size={14} />}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={editing.progress ?? project.progress ?? 0}
+                  onChange={e => setEditing(prev => ({ ...prev, progress: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                  style={{
+                    fontSize: '13px',
+                    color: '#111827',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    padding: '4px 8px',
+                    width: '70px',
+                  }}
+                />
+                <span style={{ fontSize: '12px', color: '#6B7280' }}>%</span>
+              </div>
             </DrawerField>
 
             <DrawerField label="Start Date" icon={<Calendar size={14} />}>
               <input
                 type="date"
-                value={editing.startDate ?? campaign.startDate ?? ''}
-                onChange={e => setEditing(prev => ({ ...prev, startDate: e.target.value || null }))}
+                value={editing.startDate ?? project.startDate ?? ''}
+                onChange={e => setEditing(prev => ({ ...prev, startDate: e.target.value || '' }))}
                 style={{
                   fontSize: '13px',
                   color: '#111827',
@@ -231,8 +213,8 @@ export default function CampaignDrawer({
             <DrawerField label="End Date" icon={<Calendar size={14} />}>
               <input
                 type="date"
-                value={editing.endDate ?? campaign.endDate ?? ''}
-                onChange={e => setEditing(prev => ({ ...prev, endDate: e.target.value || null }))}
+                value={editing.endDate ?? project.endDate ?? ''}
+                onChange={e => setEditing(prev => ({ ...prev, endDate: e.target.value || '' }))}
                 style={{
                   fontSize: '13px',
                   color: '#111827',
@@ -242,121 +224,19 @@ export default function CampaignDrawer({
                   width: '100%',
                 }}
               />
-            </DrawerField>
-
-            <DrawerField label="Daily Budget" icon={<DollarSign size={14} />}>
-              <input
-                type="number"
-                value={editing.dailyBudget ?? campaign.dailyBudget ?? ''}
-                onChange={e => setEditing(prev => ({ ...prev, dailyBudget: e.target.value ? Number(e.target.value) : null }))}
-                placeholder="0.00"
-                style={{
-                  fontSize: '13px',
-                  color: '#111827',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '4px 8px',
-                  width: '100%',
-                }}
-              />
-            </DrawerField>
-
-            <DrawerField label="Total Budget" icon={<DollarSign size={14} />}>
-              <input
-                type="number"
-                value={editing.totalBudget ?? campaign.totalBudget ?? ''}
-                onChange={e => setEditing(prev => ({ ...prev, totalBudget: e.target.value ? Number(e.target.value) : null }))}
-                placeholder="0.00"
-                style={{
-                  fontSize: '13px',
-                  color: '#111827',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '4px 8px',
-                  width: '100%',
-                }}
-              />
-            </DrawerField>
-
-            <DrawerField label="Owner" icon={<Target size={14} />}>
-              <select
-                value={editing.ownerId ?? campaign.ownerId ?? ''}
-                onChange={e => setEditing(prev => ({ ...prev, ownerId: e.target.value || null }))}
-                style={{
-                  fontSize: '13px',
-                  color: '#111827',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '4px 8px',
-                  width: '100%',
-                  backgroundColor: '#FFFFFF',
-                }}
-              >
-                <option value="">Unassigned</option>
-                {teamMembers.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
-            </DrawerField>
-
-            <DrawerField label="Priority" icon={<Tag size={14} />}>
-              <select
-                value={editing.priority ?? campaign.priority}
-                onChange={e => setEditing(prev => ({ ...prev, priority: e.target.value as Campaign['priority'] }))}
-                style={{
-                  fontSize: '13px',
-                  color: '#111827',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '4px 8px',
-                  width: '100%',
-                  backgroundColor: '#FFFFFF',
-                }}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
             </DrawerField>
           </div>
 
-          {/* Objective */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Objective
-            </label>
-            <input
-              value={editing.objective ?? campaign.objective ?? ''}
-              onChange={e => setEditing(prev => ({ ...prev, objective: e.target.value || null }))}
-              placeholder="Campaign objective..."
-              style={{
-                width: '100%',
-                marginTop: '6px',
-                fontSize: '14px',
-                color: '#111827',
-                border: '1px solid #E5E7EB',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                outline: 'none',
-                transition: 'border-color 0.15s',
-                boxSizing: 'border-box',
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = '#6366F1'}
-              onBlur={e => e.currentTarget.style.borderColor = '#E5E7EB'}
-            />
-          </div>
-
-          {/* Notes */}
+          {/* Description */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <StickyNote size={12} />
-              Notes
+              Description
             </label>
             <textarea
-              value={editing.notes ?? campaign.notes ?? ''}
-              onChange={e => setEditing(prev => ({ ...prev, notes: e.target.value || null }))}
-              placeholder="Add notes..."
+              value={editing.description ?? project.description ?? ''}
+              onChange={e => setEditing(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Add description..."
               rows={4}
               style={{
                 width: '100%',
@@ -376,63 +256,23 @@ export default function CampaignDrawer({
             />
           </div>
 
-          {/* Portal link */}
-          {campaign.portalCampaignId && (
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#EFF6FF',
-                borderRadius: '8px',
-                border: '1px solid #BFDBFE',
-              }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#3B82F6', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <ExternalLink size={12} />
-                  PORTAL LINKED
-                </div>
-                {campaign.portalMetrics ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
-                    <MetricTile label="Spend" value={`$${campaign.portalMetrics.totalSpend.toLocaleString()}`} />
-                    <MetricTile label="Results" value={campaign.portalMetrics.totalResults.toLocaleString()} />
-                    {campaign.portalMetrics.avgRoas != null && (
-                      <MetricTile label="ROAS" value={`${campaign.portalMetrics.avgRoas.toFixed(2)}x`} />
-                    )}
-                    {campaign.portalMetrics.avgCostPerResult != null && (
-                      <MetricTile label="Cost/Result" value={`$${campaign.portalMetrics.avgCostPerResult.toFixed(2)}`} />
-                    )}
-                  </div>
-                ) : (
-                  <p style={{ fontSize: '13px', color: '#6B7280' }}>Campaign ID: {campaign.portalCampaignId}</p>
-                )}
+          {/* Task count info */}
+          {project.taskIds && project.taskIds.length > 0 && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: '#EEF2FF',
+              borderRadius: '8px',
+              border: '1px solid #C7D2FE',
+              marginBottom: '20px',
+            }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#6366F1', marginBottom: '2px' }}>
+                LINKED TASKS
+              </div>
+              <div style={{ fontSize: '14px', color: '#4338CA' }}>
+                {project.taskIds.length} task{project.taskIds.length !== 1 ? 's' : ''} linked to this campaign
               </div>
             </div>
           )}
-
-          {/* Portal campaign ID field */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Portal Campaign ID (optional)
-            </label>
-            <input
-              value={editing.portalCampaignId ?? campaign.portalCampaignId ?? ''}
-              onChange={e => setEditing(prev => ({ ...prev, portalCampaignId: e.target.value || null }))}
-              placeholder="Link to portal campaign..."
-              style={{
-                width: '100%',
-                marginTop: '6px',
-                fontSize: '13px',
-                fontFamily: 'monospace',
-                color: '#111827',
-                border: '1px solid #E5E7EB',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                outline: 'none',
-                transition: 'border-color 0.15s',
-                boxSizing: 'border-box',
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = '#6366F1'}
-              onBlur={e => e.currentTarget.style.borderColor = '#E5E7EB'}
-            />
-          </div>
         </div>
 
         {/* Footer */}
@@ -446,8 +286,8 @@ export default function CampaignDrawer({
           backgroundColor: '#F9FAFB',
         }}>
           <button
-            onClick={handleDelete}
-            disabled={deleting}
+            onClick={handleArchive}
+            disabled={archiving}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -463,7 +303,7 @@ export default function CampaignDrawer({
             }}
           >
             <Trash2 size={14} />
-            {deleting ? 'Deleting...' : 'Delete'}
+            {archiving ? 'Archiving...' : 'Archive'}
           </button>
 
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -515,15 +355,6 @@ function DrawerField({ label, icon, children }: { label: string; icon?: React.Re
         {label}
       </div>
       {children}
-    </div>
-  );
-}
-
-function MetricTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ backgroundColor: '#FFFFFF', borderRadius: '6px', padding: '8px 10px', border: '1px solid #BFDBFE' }}>
-      <div style={{ fontSize: '11px', color: '#6B7280', fontWeight: 500 }}>{label}</div>
-      <div style={{ fontSize: '15px', fontWeight: 700, color: '#1E40AF' }}>{value}</div>
     </div>
   );
 }

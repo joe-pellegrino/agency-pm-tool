@@ -29,7 +29,7 @@ function getEndpointForPath(pathname: string): string {
   if (pathname.startsWith('/knowledge-base')) return '/api/data/kb';
   if (pathname.startsWith('/dashboard')) return '/api/data/dashboard';
   if (pathname.startsWith('/campaigns')) return '/api/data/campaigns';
-  
+
   // Client detail pages use scoped endpoint: /clients/[clientId]
   const clientIdMatch = pathname.match(/^\/clients\/([^/?]+)/);
   if (clientIdMatch) {

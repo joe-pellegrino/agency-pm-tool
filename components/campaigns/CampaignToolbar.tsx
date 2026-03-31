@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Plus, Filter } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import type { Client } from '@/lib/data';
 
 interface CampaignToolbarProps {
@@ -14,15 +14,13 @@ interface CampaignToolbarProps {
   onNewCampaign: () => void;
 }
 
-const ALL_STATUSES = ['draft', 'scheduled', 'active', 'paused', 'completed', 'archived'];
+const ALL_STATUSES = ['planning', 'active', 'complete', 'on-hold'];
 
 const STATUS_LABEL: Record<string, string> = {
-  draft: 'Draft',
-  scheduled: 'Scheduled',
+  planning: 'Planning',
   active: 'Active',
-  paused: 'Paused',
-  completed: 'Completed',
-  archived: 'Archived',
+  complete: 'Complete',
+  'on-hold': 'On Hold',
 };
 
 export default function CampaignToolbar({

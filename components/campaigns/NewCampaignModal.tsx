@@ -1,25 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import type { Client } from '@/lib/data';
-import { createCampaign } from '@/lib/actions-campaigns';
-import type { Campaign } from '@/lib/data';
+import type { Client, Project } from '@/lib/data';
+import { createProject } from '@/lib/actions';
 import { X } from 'lucide-react';
 
 interface NewCampaignModalProps {
   clients: Client[];
   defaultClientId?: string;
-  onCreated: (campaign: Campaign) => void;
+  onCreated: (project: Project) => void;
   onClose: () => void;
 }
 
 export default function NewCampaignModal({ clients, defaultClientId, onCreated, onClose }: NewCampaignModalProps) {
   const [name, setName] = useState('');
   const [clientId, setClientId] = useState(defaultClientId ?? clients[0]?.id ?? '');
-  const [platform, setPlatform] = useState<Campaign['platform']>('meta');
-  const [status, setStatus] = useState<Campaign['status']>('draft');
-  const [priority, setPriority] = useState<Campaign['priority']>('medium');
-  const [totalBudget, setTotalBudget] = useState('');
+  const [status, setStatus] = useState<'planning' | 'active' | 'complete' | 'on-hold'>('planning');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,14 +29,30 @@ export default function NewCampaignModal({ clients, defaultClientId, onCreated, 
     setError('');
     setSaving(true);
     try {
-      const created = await createCampaign({
+      const today = new Date().toISOString().split('T')[0];
+      const id = await createProject({
         clientId,
         name: name.trim(),
-        platform,
+        description,
         status,
-        priority,
-        totalBudget: totalBudget ? Number(totalBudget) : null,
+        startDate: startDate || today,
+        endDate: endDate || startDate || today,
+        type: 'campaign',
       });
+
+      const created: Project = {
+        id,
+        clientId,
+        name: name.trim(),
+        description,
+        status,
+        startDate: startDate || today,
+        endDate: endDate || startDate || today,
+        progress: 0,
+        taskIds: [],
+        type: 'campaign',
+      };
+
       onCreated(created);
       onClose();
     } catch (err) {
@@ -139,68 +154,59 @@ export default function NewCampaignModal({ clients, defaultClientId, onCreated, 
               </select>
             </div>
 
-            {/* Platform + Status */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={labelStyle}>Platform</label>
-                <select
-                  value={platform}
-                  onChange={e => setPlatform(e.target.value as Campaign['platform'])}
-                  style={inputStyle}
-                >
-                  <option value="meta">Meta Ads</option>
-                  <option value="google_ads">Google Ads</option>
-                  <option value="email">Email</option>
-                  <option value="organic">Organic</option>
-                  <option value="tiktok">TikTok</option>
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Status</label>
-                <select
-                  value={status}
-                  onChange={e => setStatus(e.target.value as Campaign['status'])}
-                  style={inputStyle}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="active">Active</option>
-                  <option value="paused">Paused</option>
-                </select>
-              </div>
+            {/* Status */}
+            <div>
+              <label style={labelStyle}>Status</label>
+              <select
+                value={status}
+                onChange={e => setStatus(e.target.value as typeof status)}
+                style={inputStyle}
+              >
+                <option value="planning">Planning</option>
+                <option value="active">Active</option>
+                <option value="on-hold">On Hold</option>
+                <option value="complete">Complete</option>
+              </select>
             </div>
 
-            {/* Priority + Budget */}
+            {/* Dates */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label style={labelStyle}>Priority</label>
-                <select
-                  value={priority}
-                  onChange={e => setPriority(e.target.value as Campaign['priority'])}
-                  style={inputStyle}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Total Budget ($)</label>
+                <label style={labelStyle}>Start Date</label>
                 <input
-                  type="number"
-                  value={totalBudget}
-                  onChange={e => setTotalBudget(e.target.value)}
-                  placeholder="0.00"
+                  type="date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
                   style={inputStyle}
                   onFocus={e => e.currentTarget.style.borderColor = '#6366F1'}
                   onBlur={e => e.currentTarget.style.borderColor = '#E5E7EB'}
                 />
               </div>
+              <div>
+                <label style={labelStyle}>End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = '#6366F1'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#E5E7EB'}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label style={labelStyle}>Description</label>
+              <textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Campaign overview..."
+                rows={3}
+                style={{ ...inputStyle, resize: 'vertical' }}
+                onFocus={e => e.currentTarget.style.borderColor = '#6366F1'}
+                onBlur={e => e.currentTarget.style.borderColor = '#E5E7EB'}
+              />
             </div>
           </div>
 

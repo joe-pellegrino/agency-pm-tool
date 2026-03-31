@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { Campaign, Client, TeamMember } from '@/lib/data';
-import { createCampaign } from '@/lib/actions-campaigns';
+import type { Project, Client } from '@/lib/data';
+import { createProject } from '@/lib/actions';
 import CampaignRow from './CampaignRow';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 
@@ -20,20 +20,18 @@ const GROUP_COLORS = [
 
 interface CampaignGroupProps {
   client: Client;
-  campaigns: Campaign[];
+  projects: Project[];
   allClients: Client[];
-  teamMembers: TeamMember[];
   colorIndex: number;
-  onCampaignClick: (campaign: Campaign) => void;
-  onUpdated: (updated: Campaign) => void;
-  onCreated: (created: Campaign) => void;
+  onCampaignClick: (project: Project) => void;
+  onUpdated: (updated: Project) => void;
+  onCreated: (created: Project) => void;
 }
 
 export default function CampaignGroup({
   client,
-  campaigns,
+  projects,
   allClients,
-  teamMembers,
   colorIndex,
   onCampaignClick,
   onUpdated,
@@ -54,7 +52,29 @@ export default function CampaignGroup({
     }
     setCreating(true);
     try {
-      const created = await createCampaign({ clientId: client.id, name });
+      const today = new Date().toISOString().split('T')[0];
+      const id = await createProject({
+        clientId: client.id,
+        name,
+        description: '',
+        status: 'planning',
+        startDate: today,
+        endDate: today,
+        type: 'campaign',
+      });
+      // Build a minimal Project object for optimistic UI update
+      const created: Project = {
+        id,
+        clientId: client.id,
+        name,
+        description: '',
+        status: 'planning',
+        startDate: today,
+        endDate: today,
+        progress: 0,
+        taskIds: [],
+        type: 'campaign',
+      };
       onCreated(created);
       setNewName('');
       setAddingNew(false);
@@ -78,7 +98,7 @@ export default function CampaignGroup({
       {/* Group Header Row */}
       <tr>
         <td
-          colSpan={11}
+          colSpan={6}
           style={{
             padding: 0,
             position: 'sticky',
@@ -130,19 +150,18 @@ export default function CampaignGroup({
               padding: '2px 7px',
               borderRadius: '10px',
             }}>
-              {campaigns.length}
+              {projects.length}
             </span>
           </div>
         </td>
       </tr>
 
-      {/* Campaign rows */}
-      {!collapsed && campaigns.map(campaign => (
+      {/* Project rows */}
+      {!collapsed && projects.map(project => (
         <CampaignRow
-          key={campaign.id}
-          campaign={campaign}
-          client={allClients.find(c => c.id === campaign.clientId)}
-          teamMembers={teamMembers}
+          key={project.id}
+          project={project}
+          client={allClients.find(c => c.id === project.clientId)}
           onCampaignClick={onCampaignClick}
           onUpdated={onUpdated}
         />
@@ -152,7 +171,7 @@ export default function CampaignGroup({
       {!collapsed && (
         <tr>
           <td
-            colSpan={11}
+            colSpan={6}
             style={{
               padding: 0,
               borderBottom: '1px solid #F3F4F6',

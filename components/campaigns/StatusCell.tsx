@@ -1,29 +1,28 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import type { CampaignStatus } from '@/lib/data';
 
-const STATUS_CONFIG: Record<CampaignStatus, { label: string; bg: string; text: string; dot: string }> = {
-  draft:     { label: 'Draft',     bg: '#F3F4F6', text: '#6B7280', dot: '#9CA3AF' },
-  scheduled: { label: 'Scheduled', bg: '#EFF6FF', text: '#3B82F6', dot: '#3B82F6' },
+export type ProjectStatus = 'planning' | 'active' | 'complete' | 'on-hold';
+
+const STATUS_CONFIG: Record<ProjectStatus, { label: string; bg: string; text: string; dot: string }> = {
+  planning:  { label: 'Planning',  bg: '#EFF6FF', text: '#3B82F6', dot: '#3B82F6' },
   active:    { label: 'Active',    bg: '#ECFDF5', text: '#059669', dot: '#10B981' },
-  paused:    { label: 'Paused',    bg: '#FFFBEB', text: '#D97706', dot: '#F59E0B' },
-  completed: { label: 'Completed', bg: '#F5F3FF', text: '#7C3AED', dot: '#8B5CF6' },
-  archived:  { label: 'Archived',  bg: '#F9FAFB', text: '#9CA3AF', dot: '#D1D5DB' },
+  complete:  { label: 'Complete',  bg: '#F5F3FF', text: '#7C3AED', dot: '#8B5CF6' },
+  'on-hold': { label: 'On Hold',   bg: '#FFFBEB', text: '#D97706', dot: '#F59E0B' },
 };
 
-const ALL_STATUSES: CampaignStatus[] = ['draft', 'scheduled', 'active', 'paused', 'completed', 'archived'];
+const ALL_STATUSES: ProjectStatus[] = ['planning', 'active', 'complete', 'on-hold'];
 
 interface StatusCellProps {
-  status: CampaignStatus;
-  onChange: (status: CampaignStatus) => void;
+  status: ProjectStatus;
+  onChange: (status: ProjectStatus) => void;
   readOnly?: boolean;
 }
 
 export default function StatusCell({ status, onChange, readOnly = false }: StatusCellProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.draft;
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.planning;
 
   useEffect(() => {
     if (!open) return;
@@ -36,7 +35,7 @@ export default function StatusCell({ status, onChange, readOnly = false }: Statu
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const handleSelect = (s: CampaignStatus) => {
+  const handleSelect = (s: ProjectStatus) => {
     onChange(s);
     setOpen(false);
   };
