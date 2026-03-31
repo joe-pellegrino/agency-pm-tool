@@ -1,6 +1,41 @@
 export type Priority = 'Low' | 'Medium' | 'High' | 'Urgent';
 export type Status = 'todo' | 'inprogress' | 'review' | 'done';
 
+// ─── Campaign Types ──────────────────────────────────────────────────────────
+
+export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'archived';
+export type CampaignPlatform = 'meta' | 'google_ads' | 'email' | 'organic' | 'tiktok' | 'linkedin' | 'other';
+export type CampaignPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface Campaign {
+  id: string;
+  clientId: string;
+  name: string;
+  platform: CampaignPlatform;
+  status: CampaignStatus;
+  objective: string | null;
+  ownerId: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  dailyBudget: number | null;
+  totalBudget: number | null;
+  notes: string | null;
+  portalCampaignId: string | null;
+  initiativeId: string | null;
+  priority: CampaignPriority;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  // Portal live metrics (populated when portal_campaign_id is set)
+  portalMetrics?: {
+    totalSpend: number;
+    totalResults: number;
+    avgRoas: number | null;
+    totalImpressions: number;
+    avgCostPerResult: number | null;
+  } | null;
+}
+
 export interface TeamMember {
   id: string;
   name: string;

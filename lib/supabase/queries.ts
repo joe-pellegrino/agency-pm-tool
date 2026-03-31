@@ -11,6 +11,7 @@ import type {
   ClientService, ServiceStrategy, ServiceStrategyPillar, ServiceStrategyKPI,
   KBCategory, KBArticle, KBArticleVersion,
   ClientGoal, GoalPillarLink, FocusArea, Outcome, StrategyGoalLink,
+  Campaign,
 } from '@/lib/data';
 
 type AssetVersion = { id: string; date: string; note: string };
@@ -396,6 +397,7 @@ function toKBArticle(r: Row): KBArticle {
 
 export interface AppData {
   CLIENTS: Client[];
+  CAMPAIGNS: Campaign[];
   CLIENT_PILLARS: ClientPillar[];
   CLIENT_PILLAR_KPIS: ClientPillarKpi[];
   STRATEGY_TARGETED_PILLARS: Row[];
@@ -788,6 +790,7 @@ export async function getAllData(): Promise<AppData> {
     STRATEGY_GOAL_LINKS: (strategyGoalLinksRes.data ?? []).map(toStrategyGoalLink),
     FOCUS_AREAS: (focusAreasRes.data ?? []).map(toFocusArea),
     OUTCOMES: (outcomesRes.data ?? []).map(toOutcome),
+    CAMPAIGNS: [],
   };
 }
 
@@ -1400,6 +1403,54 @@ export async function getClientPageData(clientId: string): Promise<ClientPageDat
     GOAL_PILLAR_LINKS,
     FOCUS_AREAS,
     OUTCOMES,
+    PRIORITY_DOT,
+  };
+}
+
+// ─── Campaigns ────────────────────────────────────────────────────────────────
+
+function toCampaign(r: Row): Campaign {
+  return {
+    id: r.id as string,
+    clientId: r.client_id as string,
+    name: r.name as string,
+    platform: (r.platform as Campaign['platform']) || 'meta',
+    status: (r.status as Campaign['status']) || 'draft',
+    objective: (r.objective as string) || null,
+    ownerId: (r.owner_id as string) || null,
+    startDate: (r.start_date as string) || null,
+    endDate: (r.end_date as string) || null,
+    dailyBudget: r.daily_budget != null ? Number(r.daily_budget) : null,
+    totalBudget: r.total_budget != null ? Number(r.total_budget) : null,
+    notes: (r.notes as string) || null,
+    portalCampaignId: (r.portal_campaign_id as string) || null,
+    initiativeId: (r.initiative_id as string) || null,
+    priority: (r.priority as Campaign['priority']) || 'medium',
+    tags: (r.tags as string[]) || [],
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export type CampaignsData = Pick<AppData, 'CAMPAIGNS' | 'CLIENTS' | 'TEAM_MEMBERS' | 'PRIORITY_DOT'>;
+
+export async function getCampaignsData(): Promise<CampaignsData> {
+  const db = createServerClient();
+
+  const [campaignRows, clientRows, teamRows] = await Promise.all([
+    db.from('campaigns').select('*').order('created_at', { ascending: false }),
+    db.from('clients').select('*').order('name'),
+    db.from('team_members').select('*'),
+  ]);
+
+  const CAMPAIGNS: Campaign[] = (campaignRows.data ?? []).map(toCampaign);
+  const CLIENTS: Client[] = (clientRows.data ?? []).map(toClient);
+  const TEAM_MEMBERS: TeamMember[] = (teamRows.data ?? []).map(toTeamMember);
+
+  return {
+    CAMPAIGNS,
+    CLIENTS,
+    TEAM_MEMBERS,
     PRIORITY_DOT,
   };
 }

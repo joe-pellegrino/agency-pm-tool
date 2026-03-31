@@ -29,6 +29,7 @@ import {
   BookOpen,
   TrendingUp,
   CheckCircle,
+  Megaphone,
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -37,6 +38,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/initiatives', label: 'Initiatives', icon: Layers },
+      { href: '/campaigns', label: 'Campaigns', icon: Megaphone },
       { href: '/kanban', label: 'Kanban Board', icon: Kanban },
       { href: '/timeline', label: 'Timeline', icon: GanttChart },
       { href: '/calendar', label: 'Calendar', icon: Calendar },
