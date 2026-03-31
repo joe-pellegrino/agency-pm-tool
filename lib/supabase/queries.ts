@@ -1414,7 +1414,7 @@ export async function getCampaignsData(): Promise<CampaignsData> {
   const db = createServerClient();
 
   const [projectsRes, projectTasksRes, clientsRes, teamRes] = await Promise.all([
-    db.from('projects').select('*').eq('type', 'campaign').is('archived_at', null),
+    db.from('projects').select('*').ilike('type', 'campaign').is('archived_at', null),
     db.from('project_task_links').select('*'),
     db.from('clients').select('*').is('archived_at', null),
     db.from('team_members').select('*'),

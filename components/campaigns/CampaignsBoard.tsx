@@ -33,7 +33,7 @@ export default function CampaignsBoard() {
 
   // Sync from AppData on first load — filter projects where type='campaign'
   if (!initialized && !loading) {
-    const campaigns = PROJECTS.filter(p => p.type === 'campaign');
+    const campaigns = PROJECTS.filter(p => p.type?.toLowerCase() === 'campaign');
     setLocalProjects(campaigns);
     setInitialized(true);
   }

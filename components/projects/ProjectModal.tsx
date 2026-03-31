@@ -38,7 +38,7 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     strategyId: project?.strategyId || '',
     pillarId: project?.pillarId || '',
     clientPillarId: project?.clientPillarId || '',
-    type: project?.type || 'Project',
+    type: project?.type?.toLowerCase() || 'project',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [clientPillars, setClientPillars] = useState<ClientPillar[]>([]);
@@ -196,8 +196,8 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
         <div>
           <label className={labelClass}>Type</label>
           <select value={form.type} onChange={e => set('type', e.target.value)} className={selectClass}>
-            {['Campaign', 'Project', 'Retainer', 'Content Series', 'Event', 'Audit', 'Other'].map(t => (
-              <option key={t} value={t}>{t}</option>
+            {['campaign', 'project', 'retainer', 'content-series', 'event', 'audit', 'other'].map(t => (
+              <option key={t} value={t}>{t.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
             ))}
           </select>
         </div>
