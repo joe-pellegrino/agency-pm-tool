@@ -1,123 +1,161 @@
-# Goals Feature — Implementation Plan
+# Agency PM Tool — Campaign Calendar View + Lato Font
 
-## Context
-Rick wants clients to define their business goals in their own language ("I want more catering sales"). The agency then maps those goals to pillars and KPIs. The loop closes when KPI performance reports back against the client's original goals.
+## Task 1: Change App Font to Lato
 
-## Existing Infrastructure
-- Supabase project: `najrksokhyyhqgokxbys`
-- Existing tables: `client_pillars` (with CRUD in `lib/actions.ts`), `client_pillar_kpis`
-- Existing pages: `app/clients/[clientId]/pillars/page.tsx`, `app/clients/[clientId]/pillars/[pillarId]/page.tsx`
-- UI framework: Next.js, Tailwind, Lucide icons, Sonner toasts, Radix primitives
-- Supabase client: `lib/supabase/` directory, `db()` helper in `lib/actions.ts`
+**What:** Replace the current system font stack with Google Fonts Lato across the entire application.
 
-## Database Changes (Supabase Migration)
+**Files to modify:**
+- `app/layout.tsx` — Import Lato from `next/font/google` and apply to `<body>`
+- `app/globals.css` — Update the `font-family` declaration in `body` rule (line with `-apple-system, BlinkMacSystemFont...`) to use the Lato CSS variable
 
-### New table: `client_goals`
-```sql
-CREATE TABLE client_goals (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,                    -- Client's own words: "I want more catering sales"
-  description TEXT DEFAULT '',            -- Optional elaboration
-  client_pillar_id TEXT REFERENCES client_pillars(id) ON DELETE SET NULL,  -- Agency maps goal → pillar
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'achieved', 'paused')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+**Implementation:**
+1. In `app/layout.tsx`:
+   ```tsx
+   import { Lato } from 'next/font/google';
+   
+   const lato = Lato({ 
+     subsets: ['latin'], 
+     weight: ['300', '400', '700', '900'],
+     display: 'swap',
+   });
+   ```
+   Apply `lato.className` to the `<body>` tag.
 
-CREATE INDEX idx_client_goals_client ON client_goals(client_id);
-CREATE INDEX idx_client_goals_pillar ON client_goals(client_pillar_id);
+2. In `app/globals.css`:
+   Replace the `font-family` line in `body` with:
+   ```css
+   font-family: 'Lato', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+   ```
+   Keep the system fonts as fallback.
+
+**Verification:** Every page should render in Lato. Check sidebar, top bar, tables, modals.
+
+---
+
+## Task 2: Campaign Calendar View (Workfront-Style)
+
+**What:** Add a calendar view toggle to the Campaigns page. Users can switch between the existing table view and a new weekly/monthly calendar view showing campaign cards on a time grid.
+
+**Reference:** Adobe Workfront Planning calendar — campaigns displayed as horizontal bars/cards spanning their date range on a weekly grid, with status colors and assignee avatars.
+
+**Project:** `/home/ubuntu/projects/agency-pm-tool/`
+
+### Data Model
+No schema changes needed. The existing `Project` interface already has everything:
+- `startDate`, `endDate` — date range for calendar placement
+- `status` — color coding (planning=blue, active=green, complete=gray, on-hold=amber)
+- `name` — card label
+- `clientId` — for client name/color grouping
+- `type` — filter to `'campaign'` (same as current CampaignsBoard)
+- `progress` — optional progress bar on card
+
+### Architecture
+
+**New files to create:**
+- `components/campaigns/CampaignCalendar.tsx` — The main calendar grid component
+- `components/campaigns/CampaignCalendarCard.tsx` — Individual campaign card rendered on the calendar
+
+**Files to modify:**
+- `components/campaigns/CampaignsBoard.tsx` — Add view toggle (table vs calendar), render CampaignCalendar when calendar mode is active
+- `components/campaigns/CampaignToolbar.tsx` — Add view toggle buttons (table icon / calendar icon) to the toolbar
+
+### CampaignCalendar.tsx — Detailed Spec
+
+**Layout:** 
+- Full-width grid with day columns
+- Two modes: *Week* (7 columns, Mon-Sun) and *Month* (full month grid, ~4-5 rows of weeks)
+- Default to Week view
+- Navigation arrows (< >) to move forward/backward in time
+- "Today" button to snap back to current week/month
+- Current day column gets a subtle highlight (light indigo background)
+
+**Campaign Cards:**
+- Rendered as horizontal bars spanning from `startDate` to `endDate`
+- Cards span across day columns proportionally
+- If a campaign spans beyond the visible range, the bar clips at the edge with a visual indicator (rounded on visible end, flat/arrow on clipped end)
+- Card content: campaign name (bold, truncated with ellipsis), client name (smaller, muted), optional small status dot
+- Card height: ~32-36px, stacked vertically when multiple campaigns overlap on the same days
+- Click a card → opens the existing `CampaignDrawer` (same as table view click)
+
+**Card Colors by Status:**
+- `planning` — `var(--color-primary-light)` bg, `var(--color-primary)` left border
+- `active` — light green bg (#ECFDF5), green left border (#10B981)
+- `complete` — light gray bg (#F3F4F6), gray left border (#9CA3AF)
+- `on-hold` — light amber bg (#FFFBEB), amber left border (#F59E0B)
+
+**Grid Styling:**
+- Day column headers: abbreviated day name + date number (e.g., "Mon 31")
+- Light gray vertical dividers between days
+- Weekend columns slightly dimmed background
+- Rows auto-expand to fit stacked campaigns
+
+**Empty State:**
+- If no campaigns exist in the visible date range, show centered text: "No campaigns scheduled this week" with a subtle calendar icon
+
+### CampaignCalendarCard.tsx — Detailed Spec
+
+**Props:** `project: Project`, `client: Client`, `daySpan: number`, `startOffset: number`, `isClippedLeft: boolean`, `isClippedRight: boolean`, `onClick: () => void`
+
+**Rendering:**
+- Absolutely positioned within the calendar row
+- Width calculated from `daySpan` × column width
+- Left offset from `startOffset` × column width
+- 4px left border in status color
+- Rounded corners (6px), except flat on clipped sides
+- On hover: slight elevation (box-shadow), cursor pointer
+- Text: campaign name (font-weight 600, 13px), client name below (font-weight 400, 11px, muted color)
+
+### CampaignsBoard.tsx — Modifications
+
+**Add state:**
+```tsx
+const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
 ```
 
-### New junction table: `client_goal_kpis`
-Maps goals to KPIs (many-to-many: a goal can have multiple KPIs proving it, a KPI can serve multiple goals)
-```sql
-CREATE TABLE client_goal_kpis (
-  goal_id UUID NOT NULL REFERENCES client_goals(id) ON DELETE CASCADE,
-  kpi_id TEXT NOT NULL REFERENCES client_pillar_kpis(id) ON DELETE CASCADE,
-  PRIMARY KEY (goal_id, kpi_id)
-);
+**Conditional render:**
+- When `viewMode === 'table'`: render existing table layout (groups, rows, etc.) — NO changes to current behavior
+- When `viewMode === 'calendar'`: render `<CampaignCalendar projects={filtered} clients={CLIENTS} onSelectProject={setSelectedProject} />`
+- The `CampaignDrawer` stays the same in both views, triggered by `selectedProject`
+
+### CampaignToolbar.tsx — Modifications
+
+**Add props:**
+```tsx
+viewMode: 'table' | 'calendar';
+onViewModeChange: (mode: 'table' | 'calendar') => void;
 ```
 
-### RLS Policies
-Add anon read/write policies matching existing `client_pillars` pattern.
+**Add toggle buttons** to the right side of the toolbar (next to the "+ New Campaign" button):
+- Two icon buttons: `LayoutList` (table) and `Calendar` (calendar) from lucide-react
+- Active button gets indigo background, inactive gets transparent with gray icon
+- Small button group with border, similar to how Workfront does it
 
-## Backend Changes (`lib/actions.ts`)
+### Interaction Flow
+1. User lands on `/campaigns` → sees current table view (default)
+2. User clicks calendar icon in toolbar → view switches to calendar
+3. Calendar shows current week by default
+4. User clicks < / > arrows to navigate weeks
+5. User clicks a campaign card → CampaignDrawer opens (same as clicking a table row)
+6. User can toggle back to table view anytime
+7. Filters (search, client, status) apply to both views — the `filtered` array is shared
 
-Add these functions following the existing pattern (use `db()` helper):
-- `getClientGoals(clientId: string)` — fetch all goals for a client, join with pillar name and linked KPIs
-- `createClientGoal(clientId, data)` — insert goal
-- `updateClientGoal(id, data)` — update goal (title, description, pillar mapping, status)
-- `deleteClientGoal(id)` — delete goal + cascade removes junction rows
-- `linkGoalToKpi(goalId, kpiId)` — insert into junction table
-- `unlinkGoalFromKpi(goalId, kpiId)` — delete from junction table
+### Important Notes
+- Do NOT modify the existing table view rendering. Only add the toggle and calendar as additive code.
+- Use CSS variables from globals.css for all colors (light AND dark mode support).
+- The calendar should work in dark mode: check `[data-theme=dark]` selectors in globals.css for the correct dark palette.
+- All styling must be inline styles or CSS-in-JS consistent with the rest of the app (the project uses inline `style={{}}` props, not CSS modules).
+- Import `Calendar`, `LayoutList` from `lucide-react` for the toggle icons.
 
-## TypeScript Types (`lib/data.ts`)
+---
 
-```typescript
-export interface ClientGoal {
-  id: string;
-  clientId: string;
-  title: string;
-  description: string;
-  clientPillarId: string | null;
-  pillarName?: string;        // joined from client_pillars
-  pillarColor?: string;       // joined from client_pillars
-  status: 'active' | 'achieved' | 'paused';
-  linkedKpis?: ClientPillarKpi[];  // joined from junction
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-## Frontend: New Page `app/clients/[clientId]/goals/page.tsx`
-
-### Layout
-- TopBar with client name and "Goals" title
-- "Add Goal" button top-right
-- Goals displayed as cards, grouped by pillar (unmapped goals shown in "Unmapped" section at top)
-
-### Goal Card
-- Title (client's words, prominently displayed)
-- Description (if present, smaller text below)
-- Pillar badge (colored dot + pillar name, or "Unmapped" in gray)
-- Linked KPIs as small chips showing name + current/target
-- Status indicator (active = green, achieved = blue, paused = gray)
-- Edit/Delete actions
-
-### Create/Edit Modal
-- Title input (required) — placeholder: "What does the client want to achieve?"
-- Description textarea (optional)
-- Pillar dropdown — select from existing client pillars, or leave unmapped
-- KPI multi-select — show KPIs from the selected pillar (or all KPIs if no pillar selected)
-- Status dropdown (active/achieved/paused)
-
-## Navigation Update
-
-### Sidebar (`app/MainLayout.tsx` or equivalent)
-Add "Goals" nav item under the client section, between existing items. Icon: `Target` from Lucide.
-
-### Pillar Detail Page Enhancement (`app/clients/[clientId]/pillars/[pillarId]/page.tsx`)
-Add a "Linked Goals" section showing which client goals map to this pillar. Read-only display with links to the goals page.
-
-## Implementation Order
-1. Create Supabase migration file: `supabase/migrations/YYYYMMDD_client_goals.sql`
-2. Run migration against `najrksokhyyhqgokxbys`
-3. Add TypeScript types to `lib/data.ts`
-4. Add action functions to `lib/actions.ts`
-5. Build the goals page `app/clients/[clientId]/goals/page.tsx`
-6. Add navigation link in sidebar/layout
-7. Add "Linked Goals" section to pillar detail page
-8. Run `npx tsc --noEmit` and `npx next build`
-9. Screenshot with Pinchtab
-10. Commit, push, deploy
-
-## DO NOT
-- Do not modify existing pillar or KPI functionality
-- Do not change the Supabase project or connection config
-- Do not add any npm dependencies unless absolutely necessary
-- Do not create stub/placeholder components — everything must be functional
+## Pre-Commit Checklist
+1. `npx tsc --noEmit` — must pass
+2. `npx next build` — must pass  
+3. Screenshot the campaigns page in both table and calendar view using Pinchtab
+4. Commit and push
 
 ## Delivery
-When complete, post results summary directly to Slack channel #rj-client-portal (C0AKS1KDZT5) using:
-`message(action='send', channel='slack', target='C0AKS1KDZT5', message='<results>')`
+Post results summary with screenshots directly to Slack channel #agency-pm-tool (C0AKQJN2VGF) using:
+```
+message(action='send', channel='slack', target='C0AKQJN2VGF', message='<results>')
+```

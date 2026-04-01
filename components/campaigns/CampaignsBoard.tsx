@@ -6,6 +6,7 @@ import { useAppData } from '@/lib/contexts/AppDataContext';
 import CampaignGroup from './CampaignGroup';
 import CampaignDrawer from './CampaignDrawer';
 import CampaignToolbar from './CampaignToolbar';
+import CampaignCalendar from './CampaignCalendar';
 import NewCampaignModal from './NewCampaignModal';
 import { Megaphone } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export default function CampaignsBoard() {
   const [initialized, setInitialized] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
   const [search, setSearch] = useState('');
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -201,95 +203,106 @@ export default function CampaignsBoard() {
         onStatusFilterChange={setSelectedStatuses}
         clients={CLIENTS}
         onNewCampaign={() => setShowNewModal(true)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
-      {/* Board table */}
-      <div style={{
-        flex: 1,
-        overflowX: 'auto',
-        overflowY: 'auto',
-        borderRadius: '10px',
-        border: '1px solid #E5E7EB',
-        backgroundColor: '#FFFFFF',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      }}>
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          minWidth: `${TABLE_COLUMNS.reduce((s, c) => s + c.width, 0)}px`,
+      {/* Calendar view */}
+      {viewMode === 'calendar' ? (
+        <CampaignCalendar
+          projects={filtered}
+          clients={CLIENTS}
+          onSelectProject={setSelectedProject}
+        />
+      ) : (
+        /* Board table */
+        <div style={{
+          flex: 1,
+          overflowX: 'auto',
+          overflowY: 'auto',
+          borderRadius: '10px',
+          border: '1px solid #E5E7EB',
+          backgroundColor: '#FFFFFF',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         }}>
-          {/* Header */}
-          <thead>
-            <tr style={{ backgroundColor: '#F9FAFB' }}>
-              {TABLE_COLUMNS.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={() => handleSortClick(col.key)}
-                  style={{
-                    padding: '10px 12px',
-                    textAlign: (col.align ?? 'left') as 'left' | 'right',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: sortKey === col.key ? '#6366F1' : '#6B7280',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    borderBottom: '2px solid #E5E7EB',
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    position: col.sticky ? 'sticky' : 'static',
-                    left: col.sticky ? 0 : undefined,
-                    zIndex: col.sticky ? 4 : 1,
-                    backgroundColor: '#F9FAFB',
-                    minWidth: col.width,
-                    ...(col.key === 'name' ? { paddingLeft: '16px' } : {}),
-                  }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    {col.label}
-                    {sortKey === col.key && (
-                      <span style={{ fontSize: '10px' }}>{sortDir === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          {/* Groups */}
-          {groupClients.length === 0 ? (
-            <tbody>
-              <tr>
-                <td
-                  colSpan={TABLE_COLUMNS.length}
-                  style={{ padding: '60px 24px', textAlign: 'center' }}
-                >
-                  <Megaphone size={40} color="#D1D5DB" style={{ margin: '0 auto 16px', display: 'block' }} />
-                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#6B7280', margin: '0 0 6px' }}>
-                    No campaigns yet
-                  </p>
-                  <p style={{ fontSize: '13px', color: '#9CA3AF', margin: 0 }}>
-                    Click &ldquo;New Campaign&rdquo; to create your first campaign initiative.
-                  </p>
-                </td>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            minWidth: `${TABLE_COLUMNS.reduce((s, c) => s + c.width, 0)}px`,
+          }}>
+            {/* Header */}
+            <thead>
+              <tr style={{ backgroundColor: '#F9FAFB' }}>
+                {TABLE_COLUMNS.map((col) => (
+                  <th
+                    key={col.key}
+                    onClick={() => handleSortClick(col.key)}
+                    style={{
+                      padding: '10px 12px',
+                      textAlign: (col.align ?? 'left') as 'left' | 'right',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: sortKey === col.key ? '#6366F1' : '#6B7280',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      borderBottom: '2px solid #E5E7EB',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      position: col.sticky ? 'sticky' : 'static',
+                      left: col.sticky ? 0 : undefined,
+                      zIndex: col.sticky ? 4 : 1,
+                      backgroundColor: '#F9FAFB',
+                      minWidth: col.width,
+                      ...(col.key === 'name' ? { paddingLeft: '16px' } : {}),
+                    }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      {col.label}
+                      {sortKey === col.key && (
+                        <span style={{ fontSize: '10px' }}>{sortDir === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </span>
+                  </th>
+                ))}
               </tr>
-            </tbody>
-          ) : (
-            groupClients.map((client, index) => (
-              <CampaignGroup
-                key={client.id}
-                client={client}
-                projects={groups.get(client.id) ?? []}
-                allClients={CLIENTS}
-                colorIndex={index}
-                onCampaignClick={setSelectedProject}
-                onUpdated={handleUpdated}
-                onCreated={handleCreated}
-              />
-            ))
-          )}
-        </table>
-      </div>
+            </thead>
+
+            {/* Groups */}
+            {groupClients.length === 0 ? (
+              <tbody>
+                <tr>
+                  <td
+                    colSpan={TABLE_COLUMNS.length}
+                    style={{ padding: '60px 24px', textAlign: 'center' }}
+                  >
+                    <Megaphone size={40} color="#D1D5DB" style={{ margin: '0 auto 16px', display: 'block' }} />
+                    <p style={{ fontSize: '15px', fontWeight: 600, color: '#6B7280', margin: '0 0 6px' }}>
+                      No campaigns yet
+                    </p>
+                    <p style={{ fontSize: '13px', color: '#9CA3AF', margin: 0 }}>
+                      Click &ldquo;New Campaign&rdquo; to create your first campaign initiative.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            ) : (
+              groupClients.map((client, index) => (
+                <CampaignGroup
+                  key={client.id}
+                  client={client}
+                  projects={groups.get(client.id) ?? []}
+                  allClients={CLIENTS}
+                  colorIndex={index}
+                  onCampaignClick={setSelectedProject}
+                  onUpdated={handleUpdated}
+                  onCreated={handleCreated}
+                />
+              ))
+            )}
+          </table>
+        </div>
+      )}
 
       {/* Detail Drawer */}
       {selectedProject && (

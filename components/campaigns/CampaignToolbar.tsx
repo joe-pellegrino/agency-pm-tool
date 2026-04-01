@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, LayoutList, Calendar } from 'lucide-react';
 import type { Client } from '@/lib/data';
 
 interface CampaignToolbarProps {
@@ -12,6 +12,8 @@ interface CampaignToolbarProps {
   onStatusFilterChange: (statuses: string[]) => void;
   clients: Client[];
   onNewCampaign: () => void;
+  viewMode: 'table' | 'calendar';
+  onViewModeChange: (mode: 'table' | 'calendar') => void;
 }
 
 const ALL_STATUSES = ['planning', 'active', 'complete', 'on-hold'];
@@ -32,6 +34,8 @@ export default function CampaignToolbar({
   onStatusFilterChange,
   clients,
   onNewCampaign,
+  viewMode,
+  onViewModeChange,
 }: CampaignToolbarProps) {
   const toggleClient = (id: string) => {
     if (selectedClientIds.includes(id)) {
@@ -172,6 +176,53 @@ export default function CampaignToolbar({
       )}
 
       <div style={{ flex: 1 }} />
+
+      {/* View toggle */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        border: '1px solid #E5E7EB',
+        borderRadius: '8px',
+        overflow: 'hidden',
+      }}>
+        <button
+          onClick={() => onViewModeChange('table')}
+          title="Table view"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            border: 'none',
+            borderRight: '1px solid #E5E7EB',
+            backgroundColor: viewMode === 'table' ? '#EEF2FF' : '#FFFFFF',
+            color: viewMode === 'table' ? '#6366F1' : '#9CA3AF',
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}
+        >
+          <LayoutList size={14} />
+        </button>
+        <button
+          onClick={() => onViewModeChange('calendar')}
+          title="Calendar view"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            border: 'none',
+            backgroundColor: viewMode === 'calendar' ? '#EEF2FF' : '#FFFFFF',
+            color: viewMode === 'calendar' ? '#6366F1' : '#9CA3AF',
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}
+        >
+          <Calendar size={14} />
+        </button>
+      </div>
 
       {/* New Campaign */}
       <button
