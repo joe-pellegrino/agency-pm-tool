@@ -1,5 +1,5 @@
 import TopBar from '@/components/layout/TopBar';
-import { getAllData, PRIORITY_DOT } from '@/lib/supabase/queries';
+import { getDashboardData, PRIORITY_DOT } from '@/lib/supabase/queries';
 import { AlertCircle, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import DashboardView from './DashboardView';
@@ -58,7 +58,7 @@ function StatCard({ label, value, sub, pct, donutColor }: {
 }
 
 export default async function DashboardPage() {
-  const { TASKS, CLIENTS, TEAM_MEMBERS } = await getAllData();
+  const { TASKS, CLIENTS, TEAM_MEMBERS } = await getDashboardData();
   const totalTasks = TASKS.filter(t => !t.isMilestone).length;
   const doneTasks = TASKS.filter(t => t.status === 'done' && !t.isMilestone).length;
   const inProgressTasks = TASKS.filter(t => t.status === 'inprogress').length;
