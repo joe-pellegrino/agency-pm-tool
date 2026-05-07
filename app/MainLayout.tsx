@@ -1,9 +1,16 @@
 'use client'
 
 import { useSidebar } from '@/components/layout/SidebarContext'
+import { usePathname } from 'next/navigation'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { isCollapsed } = useSidebar()
+  const pathname = usePathname()
+  const isLeadershipOverview = pathname.startsWith('/leadership-overview')
+
+  if (isLeadershipOverview) {
+    return <main>{children}</main>
+  }
 
   return (
     <main
