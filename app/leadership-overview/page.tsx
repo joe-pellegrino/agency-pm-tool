@@ -1,4 +1,3 @@
-import { Inter } from 'next/font/google'
 import {
   Activity,
   ArrowUpRight,
@@ -18,11 +17,6 @@ import {
   Target,
   Users,
 } from 'lucide-react'
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-})
 
 type MetricTone = 'blue' | 'amber' | 'violet' | 'red'
 type ChipTone = 'green' | 'amber' | 'red' | 'blue' | 'slate' | 'violet'
@@ -285,7 +279,6 @@ function MetricCard({ label, value, delta, tone, icon: Icon, points }: {
   const palette = toneClasses(tone)
   return (
     <article className="relative overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_45px_rgba(5,11,24,0.35)] backdrop-blur-xl">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.06),transparent_35%)]" />
       <div className="relative flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
@@ -387,16 +380,13 @@ function ProjectIcon({ accent }: { accent: string }) {
 export default function LeadershipOverviewPage() {
   return (
     <div
-      className={`${inter.className} relative z-[200] -mt-[56px] min-h-[calc(100dvh+56px)] w-full overflow-hidden text-slate-100 lg:-ml-60 lg:w-[calc(100%+15rem)]`}
+      className="relative min-h-[100dvh] w-full overflow-hidden text-slate-100"
       style={{
-        backgroundImage:
-          'radial-gradient(circle at 12% 12%, rgba(94,160,255,0.20), transparent 28%), radial-gradient(circle at 92% 0%, rgba(167,139,250,0.14), transparent 24%), radial-gradient(circle at 50% 110%, rgba(34,211,238,0.10), transparent 28%), linear-gradient(180deg, #07111f 0%, #08101b 100%)',
+        background: 'linear-gradient(180deg, #07111f 0%, #08101b 100%)',
       }}
     >
-      <div className="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:48px_48px]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.06),transparent_28%),radial-gradient(circle_at_80%_15%,rgba(255,255,255,0.04),transparent_24%)]" />
-
-      <div className="relative mx-auto flex min-h-[100dvh] max-w-[1600px] gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:px-7 lg:py-7">
+      <div className="pointer-events-none fixed inset-0 bg-[#08101b]" aria-hidden="true" />
+      <div className="relative z-10 flex min-h-[100dvh] w-full gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
         <aside className="sticky top-4 hidden w-[242px] shrink-0 self-start rounded-[2rem] border border-white/10 bg-slate-950/55 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:block">
           <div className="flex items-center gap-3 rounded-[1.4rem] border border-white/10 bg-white/[0.04] p-3">
             <div className="grid h-11 w-11 place-items-center rounded-[1.1rem] bg-[linear-gradient(135deg,#5ea0ff_0%,#7c3aed_55%,#22d3ee_100%)] shadow-[0_12px_30px_rgba(94,160,255,0.24)]">

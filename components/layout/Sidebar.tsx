@@ -473,6 +473,7 @@ function SidebarContent({ isCollapsed = false, showLogo = true }: { isCollapsed?
 export default function Sidebar() {
   const { isCollapsed, isMobileOpen, closeMobile } = useSidebar()
   const pathname = usePathname()
+  const isLeadershipOverview = pathname.startsWith('/leadership-overview')
 
   // Close mobile sidebar when route changes
   useEffect(() => {
@@ -481,6 +482,10 @@ export default function Sidebar() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
+
+  if (isLeadershipOverview) {
+    return null
+  }
 
   return (
     <>
